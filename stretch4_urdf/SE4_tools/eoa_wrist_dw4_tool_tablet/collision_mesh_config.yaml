@@ -1,0 +1,4 @@
+links:
+  quick_connect_interface_link:
+    action: qem
+    simplification_ratio: 0.1

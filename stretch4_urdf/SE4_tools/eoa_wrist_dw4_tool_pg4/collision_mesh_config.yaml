@@ -1,0 +1,19 @@
+links:
+  pjg_body_link:
+    action: qem
+    simplification_ratio: 0.1
+  finger_right_link:
+    action: qem
+    simplification_ratio: 0.1
+  aruco_fingertip_right_link:
+    action: qem
+    simplification_ratio: 0.1
+  finger_left_link:
+    action: qem
+    simplification_ratio: 0.1
+  aruco_fingertip_left_link:
+    action: qem
+    simplification_ratio: 0.1
+  grasp_frame_link:
+    action: qem
+    simplification_ratio: 0.1

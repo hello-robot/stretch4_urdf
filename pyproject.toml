@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hello-robot-stretch4-urdf"
+# Versioning follow CalVer (YYYY.MM.DD) for PEP 440 compliance
+version = "2026.05.12"
+description = "Stretch 4 URDF"
+readme = { file = "README.md", content-type = "text/markdown" }
+
+authors = [
+    { name = "Hello Robot Inc.", email = "support@hello-robot.com" },
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "click>=8.3.1",
+    "coacd>=1.0.7",
+    "numpy-stl>=3.2.0",
+    "urdf-parser-py>=0.0.4",
+    "yourdfpy>=0.0.58",
+    "numpy",
+    "pyyaml",
+    "open3d",
+    "trimesh",
+    "scikit-learn",
+    "xacrodoc",
+]
+
+[project.urls]
+Repository = "https://github.com/hello-robot/stretch4_urdf"
+
+[project.scripts]
+stretch_urdf_example = "tools.stretch_urdf_example:main"
+stretch_urdf_viz_dex_teleop_ii = "tools.stretch_urdf_viz_dex_teleop_ii:main"
+stretch_urdf_viz = "tools.stretch_urdf_viz:main"
+
+
+[tool.setuptools]
+packages = ["stretch4_urdf", "stretch4_urdf.utils", "tools"]
+
+[tool.setuptools.package-data]
+stretch4_urdf = [
+    "SE4_francis/*.urdf",
+    "SE4_francis/xacro/*.xacro",
+    "SE4_francis/meshes/*.STL",
+    "SE4_tools/*",
+    "SE4_tools/*/*",
+    "SE4_tools/*/*/*",
+    "*.xacro",
+    "utils/*",
+]

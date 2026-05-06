@@ -1,0 +1,222 @@
+<robot name="URDF_DALI_ASSEM_Stretch_Gripper_V4">
+  <link name="quick_connect_interface_link">
+    <inertial>
+      <origin xyz="-1.05071693751233E-05 -0.0452064086553896 -0.00459461227530804" rpy="0 0 0" />
+      <mass value="0.0917733059735497" />
+      <inertia ixx="9.02973239206348E-05" ixy="4.55365506810343E-08" ixz="-2.04823536578236E-08" iyy="3.46670209595715E-05" iyz="2.98792001890469E-06" izz="0.00010426981698513" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="quick_connect_interface_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="gripper_finger_right_link">
+    <inertial>
+      <origin xyz="-0.0197363517714474 -3.17208639429114E-06 -0.102874799750029" rpy="0 0 0" />
+      <mass value="0.0196451967584484" />
+      <inertia ixx="5.78135538944561E-05" ixy="-4.00009790917173E-09" ixz="-6.95117285144869E-06" iyy="6.49200844454336E-05" iyz="-7.11107056414385E-10" izz="7.66306923997872E-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/gripper_finger_right_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="gripper_finger_right_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/gripper_finger_right_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gripper_finger_right_joint" type="revolute">
+    <origin xyz="-0.0222607 -0.0373909 0" rpy="1.5708 0 3.14159" />
+    <parent link="quick_connect_interface_link" />
+    <child link="gripper_finger_right_link" />
+    <axis xyz="0 -1 0" />
+    <limit lower="0.0" upper="0.5" effort="0" velocity="0" />
+  </joint>
+  <link name="gripper_fingertip_right_link">
+    <inertial>
+      <origin xyz="0.0042378 0.00826614 -0.000262101" rpy="1.5708 2.06804e-06 1.29154" />
+      <mass value="0.0147998807271023" />
+      <inertia ixx="9.64023307586724E-07" ixy="6.62027533975613E-08" ixz="1.81440826789025E-08" iyy="2.14573722000318E-06" iyz="2.09664529875143E-09" izz="2.7078314429087E-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 2.06804e-06 1.29154" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/gripper_fingertip_right_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0 1" />
+      </material>
+    </visual>
+    <collision name="gripper_fingertip_right_collision_link">
+      <origin xyz="0 0 0" rpy="1.5708 2.06804e-06 1.29154" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/gripper_fingertip_right_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gripper_fingertip_right_joint" type="fixed">
+    <origin xyz="-0.022168 0 -0.191008" rpy="1.5708 -2.65359e-06 3.14159" />
+    <parent link="gripper_finger_right_link" />
+    <child link="gripper_fingertip_right_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="aruco_fingertip_right_link">
+    <inertial>
+      <origin xyz="-3.30451e-06 -9.90776e-06 -0.000211788" rpy="-1.55974e-06 0 -2.10735e-06" />
+      <mass value="0.000123521493853864" />
+      <inertia ixx="3.33209068564967E-09" ixy="3.3890136803636E-15" ixz="7.624009280208E-14" iyy="3.32883778612981E-09" iyz="2.28587510762548E-13" izz="6.65796010218533E-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="-1.55974e-06 0 -2.10735e-06" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_right_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision name="aruco_fingertip_right_collision_link">
+      <origin xyz="0 0 0" rpy="-1.55974e-06 0 -2.10735e-06" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_right_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="aruco_fingertip_right_joint" type="fixed">
+    <origin xyz="0.00675413 0.0335357 3.80817e-05" rpy="1.37881 1.8123e-06 2.51327" />
+    <parent link="gripper_fingertip_right_link" />
+    <child link="aruco_fingertip_right_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="gripper_finger_left_link">
+    <inertial>
+      <origin xyz="0.0197238425895227 3.17145204552966E-06 -0.102896385741803" rpy="0 0 0" />
+      <mass value="0.0196491261592472" />
+      <inertia ixx="5.78135538944637E-05" ixy="-4.00009790983075E-09" ixz="6.951172851427E-06" iyy="6.49200844454593E-05" iyz="7.11107056532032E-10" izz="7.66306923999677E-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/gripper_finger_left_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="gripper_finger_left_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/gripper_finger_left_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gripper_finger_left_joint" type="revolute">
+    <origin xyz="0.0222607 -0.0373909 0" rpy="1.5708 0 3.14159" />
+    <parent link="quick_connect_interface_link" />
+    <child link="gripper_finger_left_link" />
+    <axis xyz="0 1 0" />
+    <limit lower="0.0" upper="0.5" effort="0" velocity="0" />
+  </joint>
+  <link name="gripper_fingertip_left_link">
+    <inertial>
+      <origin xyz="0.00423776 -0.00826616 -0.000262284" rpy="1.5708 -4.26235e-06 1.85005" />
+      <mass value="0.0147998681120424" />
+      <inertia ixx="9.64022830329192E-07" ixy="-6.62023868881778E-08" ixz="-1.81435948933077E-08" iyy="2.14573771961917E-06" iyz="2.0752568955255E-09" izz="2.70783129740817E-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 -4.26235e-06 1.85005" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/gripper_fingertip_left_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0 1" />
+      </material>
+    </visual>
+    <collision name="gripper_fingertip_left_collision_link">
+      <origin xyz="0 0 0" rpy="1.5708 -4.26235e-06 1.85005" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/gripper_fingertip_left_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gripper_fingertip_left_joint" type="fixed">
+    <origin xyz="0.022168 0 -0.191008" rpy="-1.5708 2.65359e-06 0" />
+    <parent link="gripper_finger_left_link" />
+    <child link="gripper_fingertip_left_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="aruco_fingertip_left_link">
+    <inertial>
+      <origin xyz="-3.30439794457571E-06 -9.90743941906014E-06 -0.000211787813162029" rpy="0 0 0" />
+      <mass value="0.000123521493853862" />
+      <inertia ixx="3.33209068564963E-09" ixy="3.38901368979862E-15" ixz="7.62400928006325E-14" iyy="3.32883778612976E-09" iyz="2.28587510763737E-13" izz="6.65796010218525E-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_left_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision name="aruco_fingertip_left_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_left_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="aruco_fingertip_left_joint" type="fixed">
+    <origin xyz="0.00675395 -0.0335358 3.80134e-05" rpy="1.37881 -2.50583e-06 0.62832" />
+    <parent link="gripper_fingertip_left_link" />
+    <child link="aruco_fingertip_left_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="grasp_center_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="-3.67321e-06 -2.65359e-06 -1.10196e-05" />
+      <mass value="6.54498469497874E-05" />
+      <inertia ixx="1.63625e-10" ixy="0" ixz="0" iyy="1.63625e-10" iyz="0" izz="1.63625e-10" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="-3.67321e-06 -2.65359e-06 -1.10196e-05" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/grasp_center_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision name="grasp_center_collision_link">
+      <origin xyz="0 0 0" rpy="-3.67321e-06 -2.65359e-06 -1.10196e-05" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/grasp_center_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="grasp_center_joint" type="fixed">
+    <origin xyz="0 -0.234538 0" rpy="0 0 -1.5708" />
+    <parent link="quick_connect_interface_link" />
+    <child link="grasp_center_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+</robot>

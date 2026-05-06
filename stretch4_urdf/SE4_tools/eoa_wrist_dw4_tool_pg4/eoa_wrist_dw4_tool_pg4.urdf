@@ -1,0 +1,172 @@
+<robot name="URDF_DALI_ASSEM_Parallel_Jaw_Gripper_V2">
+  <link name="quick_connect_interface_link" />
+  <joint name="quick_connect_interface_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 -1.5708" />
+    <parent link="quick_connect_interface_link" />
+    <child link="pjg_body_link" />
+  </joint>
+  <link name="pjg_body_link">
+    <inertial>
+      <origin xyz="0.0402105559601423 6.82990180219815E-06 6.2136833559984E-05" rpy="0 0 0" />
+      <mass value="0.381434237025036" />
+      <inertia ixx="0.000503295100541258" ixy="3.79871976925119E-08" ixz="-1.70907152312615E-08" iyy="0.000186567551889182" iyz="-2.42662963511479E-08" izz="0.000530331947560273" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/pjg_body_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.298039215686275 0.298039215686275 0.298039215686275 1" />
+      </material>
+    </visual>
+    <collision name="pjg_body_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/pjg_body_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="finger_right_link">
+    <inertial>
+      <origin xyz="-0.014738 0.0878099 0" rpy="1.5708 0 1.5708" />
+      <mass value="0.0246520031759402" />
+      <inertia ixx="5.38962e-06" ixy="6.08848e-08" ixz="0" iyy="6.72897e-06" iyz="0" izz="4.61768e-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/finger_right_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+      </material>
+    </visual>
+    <collision name="finger_right_collision_link">
+      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/finger_right_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="finger_right_joint" type="prismatic">
+    <origin xyz="0.16686 0 0" rpy="0 0 1.5708" />
+    <parent link="pjg_body_link" />
+    <child link="finger_right_link" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.04" upper="0" effort="0" velocity="0" />
+  </joint>
+  <link name="aruco_fingertip_right_link">
+    <inertial>
+      <origin xyz="-0.000211788 9.90742e-06 -3.30525e-06" rpy="1.10715 -1.57079 2.03444" />
+      <mass value="0.000123521493853863" />
+      <inertia ixx="6.65796e-09" ixy="0" ixz="0" iyy="3.32884e-09" iyz="0" izz="3.33209e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.10715 -1.57079 2.03444" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_right_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision name="aruco_fingertip_right_collision_link">
+      <origin xyz="0 0 0" rpy="1.10715 -1.57079 2.03444" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_right_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="aruco_fingertip_right_joint" type="fixed">
+    <origin xyz="-0.0122502 0.06704 0.017" rpy="2.65359e-06 1.57079 3.14159" />
+    <parent link="finger_right_link" />
+    <child link="aruco_fingertip_right_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="finger_left_link">
+    <inertial>
+      <origin xyz="0.0147386 0.0878097 0" rpy="-1.5708 0 1.57079" />
+      <mass value="0.0246520031759402" />
+      <inertia ixx="5.38962e-06" ixy="-6.08848e-08" ixz="0" iyy="6.72897e-06" iyz="0" izz="4.61768e-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="-1.5708 0 1.57079" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/finger_left_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+      </material>
+    </visual>
+    <collision name="finger_left_collision_link">
+      <origin xyz="0 0 0" rpy="-1.5708 0 1.57079" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/finger_left_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="finger_left_joint" type="prismatic">
+    <origin xyz="0.16686 0 0" rpy="0 0 1.5708" />
+    <parent link="pjg_body_link" />
+    <child link="finger_left_link" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.04" upper="0" effort="0" velocity="0" />
+  </joint>
+  <link name="aruco_fingertip_left_link">
+    <inertial>
+      <origin xyz="-0.000211788 9.90742e-06 -3.30525e-06" rpy="1.10715 -1.57079 2.03444" />
+      <mass value="0.000123521493853863" />
+      <inertia ixx="6.65796e-09" ixy="0" ixz="0" iyy="3.32884e-09" iyz="0" izz="3.33209e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.10715 -1.57079 2.03444" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_left_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision name="aruco_fingertip_left_collision_link">
+      <origin xyz="0 0 0" rpy="1.10715 -1.57079 2.03444" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_left_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="aruco_fingertip_left_joint" type="fixed">
+    <origin xyz="0.0122506 0.0670399 0.017" rpy="-1.57079 -1.57079 1.57079" />
+    <parent link="finger_left_link" />
+    <child link="aruco_fingertip_left_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="grasp_frame_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="6.32677e-06 3.67322e-06 -3.67321e-06" />
+      <mass value="6.54498469497874E-05" />
+      <inertia ixx="1.63624617374468E-10" ixy="-1.79366203433577E-43" ixz="-3.58732406867153E-43" iyy="1.63624617374468E-10" iyz="-4.59019916014836E-41" izz="1.63624617374468E-10" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="6.32677e-06 3.67322e-06 -3.67321e-06" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/grasp_frame_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision name="grasp_frame_collision_link">
+      <origin xyz="0 0 0" rpy="6.32677e-06 3.67322e-06 -3.67321e-06" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/grasp_frame_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="grasp_frame_joint" type="fixed">
+    <origin xyz="0.166855 0 0" rpy="0 0 3.67321e-06" />
+    <parent link="pjg_body_link" />
+    <child link="grasp_frame_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+</robot>

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="stretch">
+
+  <xacro:arg name="batch" default="none"/>
+  <xacro:arg name="tool" default="none"/>
+
+  <xacro:property name="model" value="SE4"/>
+  <xacro:property name="version_id" value="${model}_$(arg batch)"/>
+
+  <xacro:arg name="pkg_path" default="none"/>
+  <xacro:arg name="model_dir" default="$(arg pkg_path)/${version_id}"/>
+  <xacro:arg name="tool_dir" default="$(arg pkg_path)/${model}_tools/$(arg tool)"/>
+  <xacro:arg name="model_mesh_dir" default="file://$(arg model_dir)/meshes"/>
+  <xacro:arg name="tool_mesh_dir" default="file://$(arg tool_dir)/meshes"/>
+
+  <xacro:include filename="$(arg model_dir)/xacro/stretch_main.xacro" />
+
+  <xacro:if value="${'$(arg tool)' != 'eoa_wrist_dw4_tool_nil'}">
+    
+    <xacro:include filename="$(arg tool_dir)/$(arg tool).urdf" />
+
+    <joint name="tool_connection_joint" type="fixed">
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 1.5708" />
+      <parent link="tool_attachment_site_link" />
+      <child link="quick_connect_interface_link" />
+      <axis xyz="0 0 0" />
+    </joint>
+
+  </xacro:if>
+
+  <!-- Dummy Base Lidar Link -->
+  <link name="laser" />
+  <joint name="laser_joint" type="fixed">
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+    <parent link="base_link" />
+    <child link="laser" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+
+</robot>

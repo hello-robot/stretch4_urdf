@@ -1,0 +1,20 @@
+links:
+  quick_connect_interface_link:
+    action: qem
+    simplification_ratio: 0.1
+  gripper_finger_right_link:
+    action: convex_hull
+  gripper_finger_left_link:
+    action: convex_hull
+  gripper_fingertip_right_link:
+    action: qem
+    simplification_ratio: 0.1
+  gripper_fingertip_left_link:
+    action: qem
+    simplification_ratio: 0.1
+  aruco_fingertip_right_link:
+    action: bounding_box
+  aruco_fingertip_left_link:
+    action: bounding_box
+  grasp_center_link:
+    action: bounding_box
