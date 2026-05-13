@@ -46,9 +46,9 @@ packages = ["stretch4_urdf", "stretch4_urdf.utils", "tools"]
 
 [tool.setuptools.package-data]
 stretch4_urdf = [
-    "SE4_francis/*.urdf",
-    "SE4_francis/xacro/*.xacro",
-    "SE4_francis/meshes/*.STL",
+    "SE4_francis/*",
+    "SE4_francis/*/*",
+    "SE4_francis/*/*/*",
     "SE4_tools/*",
     "SE4_tools/*/*",
     "SE4_tools/*/*/*",
