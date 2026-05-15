@@ -113,11 +113,11 @@ def merge_arm(robot):
         modified URDF with single arm joint
     """
     all_arm_joints = [
-        "arm_l4_joint",
-        "arm_l3_joint",
-        "arm_l2_joint",
+        "arm_l0_joint",
         "arm_l1_joint",
-        # "arm_l0_joint",
+        "arm_l2_joint",
+        "arm_l3_joint",
+        "arm_l4_joint",
     ]
     prismatic_arm_joints = all_arm_joints[1:]
     removed_arm_joints = all_arm_joints[1:-1]
@@ -130,6 +130,8 @@ def merge_arm(robot):
     for j in prismatic_arm_joints:
         joint = robot.joint_map[j]
         xyz_total = xyz_total + joint.origin[3, :3]
+        if joint.limit is None:
+            continue
         limit_upper_total = limit_upper_total + joint.limit.upper
 
     # Directly connect the proximal and distal parts of the arm
