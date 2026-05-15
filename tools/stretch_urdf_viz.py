@@ -186,10 +186,10 @@ if __name__ == "__main__":
             'left_wheel_joint': [0.0, math.pi],
             'right_wheel_joint': [0.0, math.pi],
             'lift_joint': [0.7, 0.7],
-            'arm_l0_joint': [0.0, 0.0],
             'arm_l1_joint': [0.0, 0.0],
             'arm_l2_joint': [0.0, 0.0],
             'arm_l3_joint': [0.0, 0.0],
+            'arm_l4_joint': [0.0, 0.0],
             'wrist_yaw_joint': [0, 0.0], #math.pi
             'head_pan_joint': [0.0, -(math.pi / 2.0)],
             'head_tilt_joint': [0.5, -0.5]
