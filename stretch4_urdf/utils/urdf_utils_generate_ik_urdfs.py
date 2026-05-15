@@ -37,7 +37,7 @@ def clip_joint_limits(robot: ud.URDF, use_original_limits=True):
             "mobile_base_translation_joint": (None, None),
             "mobile_base_rotation_joint": (None, None),
             "lift_joint": (None, None),
-            "arm_l0_joint": (None, None),
+            "arm_l4_joint": (None, None),
             "wrist_yaw_joint": (None, None),
             "wrist_pitch_joint": (
                 wrist_pitch_lower_limit,
@@ -50,26 +50,25 @@ def clip_joint_limits(robot: ud.URDF, use_original_limits=True):
             "mobile_base_translation_joint": (-0.25, 0.25),
             "mobile_base_rotation_joint": (-(np.pi / 2.0), np.pi / 2.0),
             "lift_joint": (0.01, 1.09),
-            "arm_l0_joint": (0.01, 0.48),
+            "arm_l4_joint": (0.01, 0.48),
             "wrist_yaw_joint": (-(np.pi / 4.0), np.pi),
             "wrist_pitch_joint": (-0.9 * (np.pi / 2.0), np.pi / 20.0),
             "wrist_roll_joint": (-(np.pi / 2.0), np.pi / 2.0),
         }
-
     for j in ik_joint_limits:
-        joint = robot.map_joint.get(j, None)
+        joint = robot.joint_map.get(j, None)
         if joint is not None:
             original_upper = joint.limit.upper
             requested_upper = ik_joint_limits[j][1]
             if requested_upper is not None:
                 new_upper = min(requested_upper, original_upper)
-                robot.map_joint[j].limit.upper = new_upper
+                robot.joint_map[j].limit.upper = new_upper
 
             original_lower = joint.limit.lower
             requested_lower = ik_joint_limits[j][0]
             if requested_lower is not None:
                 new_lower = max(requested_lower, original_lower)
-                robot.map_joint[j].limit.lower = new_lower
+                robot.joint_map[j].limit.lower = new_lower
 
 
 def make_joints_rigid(robot: ud.URDF, ignore_joints=None):
@@ -92,9 +91,9 @@ def make_joints_rigid(robot: ud.URDF, ignore_joints=None):
     if ignore_joints is None:
         ignore_joints = []
 
-    for j in robot.map_joint.keys():
+    for j in robot.joint_map.keys():
         if j not in ignore_joints:
-            joint = robot.map_joint[j]
+            joint = robot.joint_map[j]
             joint.type = "fixed"
 
 
@@ -118,18 +117,18 @@ def merge_arm(robot):
         "arm_l3_joint",
         "arm_l2_joint",
         "arm_l1_joint",
-        "arm_l0_joint",
+        # "arm_l0_joint",
     ]
     prismatic_arm_joints = all_arm_joints[1:]
     removed_arm_joints = all_arm_joints[1:-1]
-    near_proximal_arm_joint = robot.map_joint[all_arm_joints[1]]
-    distal_arm_joint = robot.map_joint[all_arm_joints[-1]]
+    near_proximal_arm_joint = robot.joint_map[all_arm_joints[1]]
+    distal_arm_joint = robot.joint_map[all_arm_joints[-1]]
 
     # Calculate aggregate joint characteristics
     xyz_total = np.array([0.0, 0.0, 0.0])
     limit_upper_total = 0.0
     for j in prismatic_arm_joints:
-        joint = robot.map_joint[j]
+        joint = robot.joint_map[j]
         xyz_total = xyz_total + joint.origin[3, :3]
         limit_upper_total = limit_upper_total + joint.limit.upper
 
@@ -142,7 +141,7 @@ def merge_arm(robot):
 
     # Mark the eliminated joints as "fixed"
     for j in removed_arm_joints:
-        joint = robot.map_joint[j]
+        joint = robot.joint_map[j]
         joint.type = "fixed"
 
 
@@ -360,10 +359,10 @@ def generate_ik_urdfs(
         "wrist_roll_joint",
     ]
     ignore_joints += [
-        "arm_l0_joint",
         "arm_l1_joint",
         "arm_l2_joint",
         "arm_l3_joint",
+        "arm_l4_joint",
     ]
     make_joints_rigid(robot, ignore_joints)
 
@@ -400,7 +399,7 @@ def generate_ik_urdfs(
             "mobile_base_rotation_joint",
             "mobile_base_planar_joint",
             "lift_joint",
-            "arm_l0_joint",
+            "arm_l4_joint",
         ]
         make_joints_rigid(robot_rotary, ignore_joints)
         make_joints_rigid(robot_prismatic, ignore_joints)

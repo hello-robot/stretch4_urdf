@@ -112,10 +112,10 @@ class StretchState:
             'left_wheel_joint': 0.0,
             'right_wheel_joint': 0.0,
             'lift_joint': lift_m,
-            'arm_l0_joint': telescoping_link_m,
             'arm_l1_joint': telescoping_link_m,
             'arm_l2_joint': telescoping_link_m,
             'arm_l3_joint': telescoping_link_m,
+            'arm_l4_joint': telescoping_link_m,
             'wrist_yaw_joint': wrist_yaw_rad,
             'head_pan_joint': head_pan_rad,
             'head_tilt_joint': head_tilt_rad
@@ -198,7 +198,7 @@ if __name__ == "__main__":
 
         cfg_trajectory = {
             'lift_joint': [0.0, 1.0],
-            'arm_l0_joint': [0.0, 0.5],
+            'arm_l4_joint': [0.0, 0.5],
             'mobile_base_rotation_joint': [-0.5, 0.5]
         }
  
@@ -260,7 +260,7 @@ if __name__ == "__main__":
 
     cfg_pose = {
         'lift_joint': 0.5,
-        'arm_l0_joint': 0.25,
+        'arm_l4_joint': 0.25,
         'mobile_base_rotation_joint': 0.0
     }
 
