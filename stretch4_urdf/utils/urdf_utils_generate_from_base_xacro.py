@@ -7,7 +7,9 @@ from xacrodoc import XacroDoc
 
 def get_available_tools(model_name:str):
 
-    available_tools = os.listdir(os.path.join(importlib_resources.files("stretch4_urdf"), f"{model_name}_tools"))
+    tools_dir = os.path.join(importlib_resources.files("stretch4_urdf"), f"{model_name}_tools")
+    # Only include directories, so we ignore .md files or random files
+    available_tools = [d for d in os.listdir(tools_dir) if os.path.isdir(os.path.join(tools_dir, d))]
     if model_name in ["SE4"]: 
         available_tools += ['eoa_wrist_dw4_tool_nil']
 
@@ -29,10 +31,15 @@ def generate_urdf_from_xacro(model_name:str, batch_name:str, tool_name:str, do_a
     urdf_pkg_path = str(importlib_resources.files("stretch4_urdf"))
     xacro_file = os.path.join(urdf_pkg_path, f"{model_name}.xacro")
     model_mesh_dir = os.path.join(urdf_pkg_path, f"{model_name}_{batch_name}/meshes")
-    tool_mesh_dir = os.path.join(urdf_pkg_path, f"{model_name}_tools/{tool_name}/meshes")
-    
-    if not os.path.exists(tool_mesh_dir) or not os.path.exists(model_mesh_dir):
-        raise FileNotFoundError(f"Failed to resolve mesh directories:\n\t{tool_mesh_dir}\n\t{model_mesh_dir}\nIf paths are pointing to an old location, trying re-installing stretch4_urdf to update the paths and re-sourcing your workspace.")
+    if not os.path.exists(model_mesh_dir):
+        raise FileNotFoundError(f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}\nIf paths are pointing to an old location, trying re-installing stretch4_urdf to update the paths and re-sourcing your workspace.")
+
+    if 'nil' in tool_name:
+        tool_mesh_dir = None
+    else:
+        tool_mesh_dir = os.path.join(urdf_pkg_path, f"{model_name}_tools/{tool_name}/meshes")
+        if not os.path.exists(tool_mesh_dir):
+            raise FileNotFoundError(f"Failed to resolve tool mesh directory:\n\t{tool_mesh_dir}\nIf paths are pointing to an old location, trying re-installing stretch4_urdf to update the paths and re-sourcing your workspace.")
 
     xacro_doc = XacroDoc.from_file(
         xacro_file, 
