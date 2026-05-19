@@ -4,9 +4,10 @@ import os
 import tempfile
 import unittest
 
+from yourdfpy import urdf as ud
 from stretch4_urdf.utils.urdf_utils_generate_from_base_xacro import (
     get_available_tools, get_urdf)
-
+from stretch4_urdf.utils.urdf_utils_generate_ik_urdfs import generate_ik_urdfs
 
 class TestUrdfGeneration(unittest.TestCase):
     def test_generate_all_combinations(self):
@@ -61,6 +62,19 @@ class TestUrdfGeneration(unittest.TestCase):
                                 contents = f.read()
                                 self.assertIn('<robot', contents, "File does not contain a <robot> tag")
                                 self.assertIn('</robot>', contents, "File does not close the </robot> tag")
+                            
+                            # Test generate_ik_urdfs
+                            robot = ud.URDF.load(filepath)
+                            output_prefix = f"ik_test_{model}_{batch}_{tool}"
+                            ik_filepaths = generate_ik_urdfs(
+                                robot=robot, 
+                                output_prefix=output_prefix, 
+                                output_dir=temp_dir
+                            )
+                            
+                            self.assertGreater(len(ik_filepaths), 0, "Could not generate IK URDFs for {model}_{batch}_{tool}")
+                            for ik_path in ik_filepaths:
+                                self.assertTrue(os.path.exists(ik_path), f"IK URDF not generated for {ik_path}")
                                 
                             generated_count += 1
                             
