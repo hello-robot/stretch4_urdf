@@ -1,8 +1,10 @@
 import argparse
 import importlib.resources as importlib_resources
+import io
 import os
-
+    
 from xacrodoc import XacroDoc
+from yourdfpy import URDF
 
 
 def get_available_tools(model_name:str):
@@ -168,6 +170,32 @@ def get_urdf(
         return generate_urdf_file(urdf_contents, prefix, output_dir, description)
 
     return urdf_contents
+
+
+def get_joint_limits(urdf_contents: str):
+    """
+    Parses the URDF contents and extracts lower and upper bounds for all joints that have them.
+
+    Parameters
+    ----------
+    urdf_contents : str
+        raw urdf contents
+
+    Returns
+    -------
+    dict
+        A dictionary mapping joint names to a tuple (lower, upper).
+    """
+    try:
+        urdf = URDF.load(io.StringIO(urdf_contents))
+        limits = {}
+        for joint in urdf.robot.joints:
+            if joint.limit:
+                limits[joint.name] = (joint.limit.lower, joint.limit.upper)
+        return limits
+    except Exception as e:
+        print(f"Warning: Failed to parse URDF for joint limits: {e}")
+        return {}
 
 
 def main():
