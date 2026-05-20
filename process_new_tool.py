@@ -161,6 +161,17 @@ def process_tool_urdf(model_name, root_dir):
     
     joint_abs_R, link_abs_R = get_abs_rotations(root)
     
+    # Compensate for new identity transform on tool_connection_joint: rotate CAD to match +90 offset
+    Rz_90 = [
+        [0.0, -1.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0]
+    ]
+    for key in link_abs_R:
+        link_abs_R[key] = mult_matrix(Rz_90, link_abs_R[key])
+    for key in joint_abs_R:
+        joint_abs_R[key] = mult_matrix(Rz_90, joint_abs_R[key])
+
     sensor_opt_old = {}
     for joint in root.findall('joint'):
         if 'optical' in joint.get('name', '').lower():
@@ -208,6 +219,7 @@ def process_tool_urdf(model_name, root_dir):
             is_arm_link = child_name in [f'arm_l{i}_link' for i in range(5)]
             is_wheel = ('wheel' in jname.lower() and jtype in ['continuous', 'revolute'])
             is_grasp = (jname and 'grasp' in jname.lower())
+            is_quick_connect_interface = (child_name == 'quick_connect_interface_link')
             
             is_fingertip_right = ('fingertip' in child_name.lower() and 'right' in child_name.lower() and 'aruco' not in child_name.lower())
             is_fingertip_left = ('fingertip' in child_name.lower() and 'left' in child_name.lower() and 'aruco' not in child_name.lower())
@@ -219,26 +231,24 @@ def process_tool_urdf(model_name, root_dir):
             R_inherited = mult_matrix(R_new_A, R_rel_old)
             changed_for_rule1 = False
             
-            if is_prismatic or is_wrist_rotation or is_arm_link:
+            if is_prismatic or is_wrist_rotation or is_arm_link or is_quick_connect_interface:
                 R_new_B = [[1,0,0],[0,1,0],[0,0,1]]
             elif is_optical_frame:
                 if child_name not in rule4_optical_frames: rule4_optical_frames.append(child_name)
-                # Rule 4 Edit:
-                # Center Head Camera uses outward symmetric mathematical alignment natively mapped.
-                if 'camera_' in child_name.lower() and '_link' in child_name.lower() and '_optical' in child_name.lower():
                     # Rule 4 Edit:
-                    # Center matches Right Head Camera logically natively mapping outward.
-                    if 'center' in child_name.lower():
-                        R_new_B = [
-                            [-R_new_A[0][1], -R_new_A[0][2], R_new_A[0][0]],
-                            [-R_new_A[1][1], -R_new_A[1][2], R_new_A[1][0]],
-                            [-R_new_A[2][1], -R_new_A[2][2], R_new_A[2][0]]
-                        ]
-                    else:
+                    # Center and Right Head Cameras natively map outward to Left/Up.
+                    # All other cameras (Left, Gripper, generic) follow standard ROS mapping (Right/Down).
+                    if 'center' in child_name.lower() or 'right' in child_name.lower():
                         R_new_B = [
                             [R_new_A[0][1], R_new_A[0][2], R_new_A[0][0]],
                             [R_new_A[1][1], R_new_A[1][2], R_new_A[1][0]],
                             [R_new_A[2][1], R_new_A[2][2], R_new_A[2][0]]
+                        ]
+                    else:
+                        R_new_B = [
+                            [-R_new_A[0][1], -R_new_A[0][2], R_new_A[0][0]],
+                            [-R_new_A[1][1], -R_new_A[1][2], R_new_A[1][0]],
+                            [-R_new_A[2][1], -R_new_A[2][2], R_new_A[2][0]]
                         ]
                 else:
                     R_new_B = R_inherited

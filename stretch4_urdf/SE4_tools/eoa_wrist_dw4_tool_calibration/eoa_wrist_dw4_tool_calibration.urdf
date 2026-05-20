@@ -14,7 +14,7 @@
         <color rgba="1 0.752941176470588 1 1" />
       </material>
     </visual>
-    <collision name="frame_quick_connect_interface_collision">
+    <collision name="frame_quick_connect_interface_collision_collision_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="$(arg tool_mesh_dir)/frame_quick_connect_interface_collision.STL" />

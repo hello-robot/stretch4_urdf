@@ -16,13 +16,13 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="base_collision_link">
+      <collision name="base_collision_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/base_collision_link.obj" />
       </geometry>
     </collision>
-  </link>
+</link>
   <joint name="base_ref" type="fixed">
     <origin xyz="0 0 0.028" rpy="0 0 0" />
     <parent link="base_footprint" />
@@ -170,13 +170,13 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="head_collision_link">
+      <collision name="head_collision_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/head_collision_link.obj" />
       </geometry>
     </collision>
-  </link>
+</link>
   <joint name="head_joint" type="fixed">
     <origin xyz="-0.093 -0.098 1.559" rpy="0 0 0" />
     <parent link="base_link" />
@@ -223,14 +223,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_right_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 3.14159" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_right_optical_joint" type="fixed">
     <origin xyz="0.0212 0 0" rpy="1.5708 0 1.5708" />
@@ -252,17 +244,9 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_left_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_left_optical_joint" type="fixed">
-    <origin xyz="0.0212 0 0" rpy="1.5708 0 1.5708" />
+    <origin xyz="0.0212 0 0" rpy="-1.5708 0 -1.5708" />
     <parent link="camera_left_link" />
     <child link="camera_left_optical_link" />
     <axis xyz="0 0 0" />
@@ -281,17 +265,9 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_center_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 -3.14159" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_center_optical_joint" type="fixed">
-    <origin xyz="0.0017 0 0" rpy="-1.5708 0 -1.5708" />
+    <origin xyz="0.0017 0 0" rpy="1.5708 0 1.5708" />
     <parent link="camera_center_link" />
     <child link="camera_center_optical_link" />
     <axis xyz="0 0 0" />
@@ -614,12 +590,12 @@
   </joint>
   <link name="gripper_camera_link">
     <inertial>
-      <origin xyz="0.00250349 0.0120203 0" rpy="1.5708 0 -1.5708" />
+      <origin xyz="-0.0120202832925917 0 -0.00250348660751337" rpy="0 0 0" />
       <mass value="0.0447759731526001" />
       <inertia ixx="1.60232107304684E-05" ixy="-8.65767518586304E-22" ixz="2.63946367478605E-08" iyy="6.92267971098109E-06" iyz="-6.09577361235966E-22" izz="1.36247235159961E-05" />
     </inertial>
     <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 -1.5708" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/gripper_camera_link.STL" />
       </geometry>
@@ -627,22 +603,22 @@
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-    <collision name="gripper_camera_link_collision">
-      <origin xyz="0 0 0" rpy="1.5708 0 -1.5708" />
+    <collision name="gripper_camera_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/gripper_camera_link_collision.STL" />
+        <mesh filename="$(arg model_mesh_dir)/gripper_camera_collision_link.STL" />
       </geometry>
     </collision>
   </link>
   <joint name="gripper_camera_joint" type="fixed">
-    <origin xyz="0.0192 0 0.057" rpy="1.5708 -1.5708 0" />
+    <origin xyz="0.0192 0 0.057" rpy="-3.14159 0 0" />
     <parent link="wrist_roll_link" />
     <child link="gripper_camera_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="gripper_stereo_camera_color_optical_frame">
     <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <origin xyz="0 0 0" rpy="-1.5708 -1.5708 0" />
       <geometry>
         <box size="0.001 0.001 0.001" /></geometry>
       <material name="">
@@ -651,14 +627,14 @@
     </visual>
     </link>
   <joint name="gripper_stereo_camera_color_optical_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="3.14159 0 0" />
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708" />
     <parent link="gripper_camera_link" />
     <child link="gripper_stereo_camera_color_optical_frame" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="gripper_right_camera_color_optical_frame">
     <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <origin xyz="0 0 0" rpy="-1.5708 -1.5708 0" />
       <geometry>
         <box size="0.001 0.001 0.001" /></geometry>
       <material name="">
@@ -667,14 +643,14 @@
     </visual>
     </link>
   <joint name="gripper_right_camera_color_optical_joint" type="fixed">
-    <origin xyz="0 0 0.01" rpy="3.14159 0 0" />
+    <origin xyz="0 0.01 0" rpy="-1.5708 0 -1.5708" />
     <parent link="gripper_camera_link" />
     <child link="gripper_right_camera_color_optical_frame" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="gripper_left_camera_color_optical_frame">
     <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <origin xyz="0 0 0" rpy="-1.5708 -1.5708 0" />
       <geometry>
         <box size="0.001 0.001 0.001" /></geometry>
       <material name="">
@@ -683,7 +659,7 @@
     </visual>
     </link>
   <joint name="gripper_left_camera_color_optical_joint" type="fixed">
-    <origin xyz="0 0 -0.01" rpy="3.14159 0 0" />
+    <origin xyz="0 -0.01 0" rpy="-1.5708 0 -1.5708" />
     <parent link="gripper_camera_link" />
     <child link="gripper_left_camera_color_optical_frame" />
     <axis xyz="0 0 0" />
