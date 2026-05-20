@@ -174,8 +174,21 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     # Copy the base URDF to the new xacro location so we can process it
     shutil.copy(base_urdf, stretch_main_xacro)
 
+    print('Translating link_ convention to _link convention...')
+    import re
+    with open(stretch_main_xacro, 'r') as f:
+        content = f.read()
+    content = re.sub(r'\blink_([a-zA-Z0-9_]+)', r'\1_link', content)
+    content = re.sub(r'\bjoint_([a-zA-Z0-9_]+)', r'\1_joint', content)
+    with open(stretch_main_xacro, 'w') as f:
+        f.write(content)
+
     print('Updating the URDF with collision mesh filepaths. If there is a _collision.STL file, its file path will be used in the collision geometry - replacing the existing mesh in the final XACRO file.')
-    update_urdf_collision_meshes(base_urdf, stretch_main_xacro)
+    temp_urdf = os.path.join(os.path.dirname(base_urdf), 'temp.urdf')
+    shutil.copy(stretch_main_xacro, temp_urdf)
+    update_urdf_collision_meshes(temp_urdf, temp_urdf)
+    shutil.copy(temp_urdf, stretch_main_xacro)
+    os.remove(temp_urdf)
     remove_collision_from_optical_links(stretch_main_xacro, stretch_main_xacro)
     
     print('Ensuring prismatic joints share base link orientation and validating rotation joint axes...')
@@ -186,7 +199,7 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     
     rule5_arm_renamed = False
     for j in root.findall('joint'):
-        if j.get('name') == 'joint_arm_l4':
+        if j.get('name') in ['joint_arm_l4', 'arm_l4_joint']:
             pt = j.find('parent')
             if pt is not None and pt.get('link') == 'lift_link':
                 rule5_arm_renamed = True
@@ -338,6 +351,7 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             is_wheel = ('wheel' in jname.lower() and jtype in ['continuous', 'revolute'])
             is_grasp = (jname and 'grasp' in jname.lower())
             is_tool_attachment_site = (child_name == 'tool_attachment_site_link')
+            is_quick_connect_interface = (child_name == 'quick_connect_interface_link')
             is_link_wrist = (child_name == 'wrist_link')
             
             is_fingertip_right = ('fingertip' in child_name.lower() and 'right' in child_name.lower() and 'aruco' not in child_name.lower())
@@ -350,7 +364,7 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             R_inherited = mult_matrix(R_new_A, R_rel_old)
             changed_for_rule1 = False
             
-            if is_prismatic or is_wrist_rotation or is_arm_link or is_tool_attachment_site or is_link_wrist:
+            if is_prismatic or is_wrist_rotation or is_arm_link or is_tool_attachment_site or is_link_wrist or is_quick_connect_interface:
                 R_new_B = [[1,0,0],[0,1,0],[0,0,1]]
             elif is_optical_frame:
                 diff = abs(R_rel_old[0][0] - 1.0) + abs(R_rel_old[1][1] - 1.0) + abs(R_rel_old[2][2] - 1.0)
@@ -360,20 +374,21 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
                         [-R_inherited[1][1], -R_inherited[1][2], R_inherited[1][0]],
                         [-R_inherited[2][1], -R_inherited[2][2], R_inherited[2][0]]
                     ]
-                elif 'camera_' in child_name.lower() and '_link' in child_name.lower() and '_optical' in child_name.lower():
+                elif 'camera' in child_name.lower() and 'optical' in child_name.lower():
                     # Rule 4 Edit:
-                    # Center matches Right Head Camera logically natively mapping outward.
-                    if 'center' in child_name.lower():
-                        R_new_B = [
-                            [-R_new_A[0][1], -R_new_A[0][2], R_new_A[0][0]],
-                            [-R_new_A[1][1], -R_new_A[1][2], R_new_A[1][0]],
-                            [-R_new_A[2][1], -R_new_A[2][2], R_new_A[2][0]]
-                        ]
-                    else:
+                    # Center and Right Head Cameras natively map outward to Left/Up.
+                    # All other cameras (Left, Gripper, generic) follow standard ROS mapping (Right/Down).
+                    if ('center' in child_name.lower() or 'right' in child_name.lower()) and 'gripper' not in child_name.lower():
                         R_new_B = [
                             [R_new_A[0][1], R_new_A[0][2], R_new_A[0][0]],
                             [R_new_A[1][1], R_new_A[1][2], R_new_A[1][0]],
                             [R_new_A[2][1], R_new_A[2][2], R_new_A[2][0]]
+                        ]
+                    else:
+                        R_new_B = [
+                            [-R_new_A[0][1], -R_new_A[0][2], R_new_A[0][0]],
+                            [-R_new_A[1][1], -R_new_A[1][2], R_new_A[1][0]],
+                            [-R_new_A[2][1], -R_new_A[2][2], R_new_A[2][0]]
                         ]
                 else:
                     R_new_B = R_inherited
@@ -386,6 +401,13 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
                         [R_inherited[1][2], R_inherited[1][1], -R_inherited[1][0]],
                         [R_inherited[2][2], R_inherited[2][1], -R_inherited[2][0]]
                     ]
+                    if 'gripper' in child_name.lower():
+                        # Rotate gripper camera by +90 deg around global Z to point X forward instead of right
+                        R_new_B = [
+                            [-R_new_B[1][0], -R_new_B[1][1], -R_new_B[1][2]],
+                            [ R_new_B[0][0],  R_new_B[0][1],  R_new_B[0][2]],
+                            [ R_new_B[2][0],  R_new_B[2][1],  R_new_B[2][2]]
+                        ]
                 else:
                     R_new_B = R_inherited
                 if child_name not in rule4_sensor_bases: rule4_sensor_bases.append(child_name)
@@ -633,7 +655,7 @@ def get_all_model_names():
     urdf_map = {}
     for entry in entries:
         full_path = os.path.join(urdf_pkg_path, entry)
-        if os.path.isdir(full_path) and not entry.startswith("__") and not entry.endswith("_tools") and entry != "tools":
+        if os.path.isdir(full_path) and not entry.startswith("__") and not entry.endswith("_tools") and entry not in ["tools", "utils"]:
             models.append(entry)
             urdfs = glob.glob(os.path.join(full_path, "*.urdf"))
             if len(urdfs) > 0:

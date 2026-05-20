@@ -68,3 +68,63 @@ links:
     action: bounding_box
   wrist_aruco_link:
     action: bounding_box
+  base_footprint:
+    action: bounding_box
+  link_line_sensor_5:
+    action: bounding_box
+  link_line_sensor_4:
+    action: bounding_box
+  link_line_sensor_3:
+    action: bounding_box
+  link_line_sensor_2:
+    action: bounding_box
+  link_line_sensor_1:
+    action: bounding_box
+  link_line_sensor_0:
+    action: bounding_box
+  link_head:
+    action: bounding_box
+  link_lidar_right:
+    action: bounding_box
+  link_lidar_left:
+    action: bounding_box
+  link_camera_right:
+    action: bounding_box
+  link_camera_left:
+    action: bounding_box
+  link_camera_center:
+    action: bounding_box
+  link_mast:
+    action: bounding_box
+  link_lift:
+    action: bounding_box
+  link_arm_l4:
+    action: bounding_box
+  link_arm_l3:
+    action: bounding_box
+  link_arm_l2:
+    action: bounding_box
+  link_arm_l1:
+    action: bounding_box
+  link_arm_l0:
+    action: bounding_box
+  link_wrist:
+    action: bounding_box
+  link_wrist_yaw:
+    action: bounding_box
+  link_wrist_pitch:
+    action: bounding_box
+  link_wrist_roll:
+    action: bounding_box
+  link_tool_attachment_site:
+    action: bounding_box
+  link_wrist_aruco:
+    action: bounding_box
+  link_wrist_reflector:
+    action: bounding_box
+  link_wheel_2:
+    action: bounding_box
+  link_wheel_1:
+    action: bounding_box
+  link_wheel_0:
+    action: bounding_box
