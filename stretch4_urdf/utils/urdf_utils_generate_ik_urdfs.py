@@ -282,8 +282,9 @@ def generate_robot_from_base_xacro():
         the URDF robot object representing the robot model
     """
 
-    urdf_tmp_file = get_urdf_from_robot_params(output_dir="/tmp")
-    return ud.URDF.load(urdf_tmp_file)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        urdf_tmp_file = get_urdf_from_robot_params(output_dir=tmp_dir)
+        return ud.URDF.load(urdf_tmp_file)
 
 
 def generate_urdf_from_robot(
