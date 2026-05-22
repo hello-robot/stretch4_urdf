@@ -128,167 +128,146 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     base_urdf = urdf_files[0]
     print(f"Found base URDF: {base_urdf}")
 
-    # If the collision_mesh_config.yaml file does not exist, create one using the default values
-    config_path = os.path.join(root_dir, 'collision_mesh_config.yaml')
-    if not os.path.exists(config_path):
-        print(f"Creating default collision_mesh_config.yaml in {root_dir}")
-        import xml.etree.ElementTree as ET
-        tree = ET.parse(base_urdf)
-        root = tree.getroot()
-        
-        # Rule 7: Enforce suffix naming early 
-        for tag in root.iter():
-            for attr in ['name', 'link']:
-                val = tag.get(attr)
-                if val:
-                    if val.startswith('link_'):
-                        tag.set(attr, val[5:] + '_link')
-                    elif val.startswith('joint_'):
-                        tag.set(attr, val[6:] + '_joint')
-                        
-        links_dict = {}
-        for link in root.findall('link'):
-            link_name = link.get('name')
-            visual = link.find('visual')
-            if visual is not None and 'optical' not in link_name.lower():
-                geom = visual.find('geometry')
-                if geom is not None and geom.find('mesh') is not None:
-                    links_dict[link_name] = {'action': 'qem', 'simplification_ratio': 0.1}
-        with open(config_path, 'w') as f:
-            yaml.dump({'links': links_dict}, f, default_flow_style=False, sort_keys=False)
-
-    # Perform collision mesh generation by calling generate_collision_mesh.py CLI
-    print(f"Generating collision meshes for model: {model_name}...")
-    gen_script = os.path.join(os.path.dirname(__file__), 'stretch4_urdf', 'utils', 'generate_collision_mesh.py')
-    try:
-        subprocess.run(['python3', gen_script, '--model', model_name], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error generating collision meshes for {model_name}: {e}")
-
-    # Create the xacro directory if it does not exist
-    os.makedirs(xacro_dir, exist_ok=True)
-
-    # Create the xacro filename
-    stretch_main_xacro = os.path.join(xacro_dir, 'stretch_main.xacro')
-
-    # Copy the base URDF to the new xacro location so we can process it
-    shutil.copy(base_urdf, stretch_main_xacro)
-
-    print('Updating the URDF with collision mesh filepaths. If there is a _collision.STL file, its file path will be used in the collision geometry - replacing the existing mesh in the final XACRO file.')
-    update_urdf_collision_meshes(base_urdf, stretch_main_xacro)
-    remove_collision_from_optical_links(stretch_main_xacro, stretch_main_xacro)
-    
-    print('Ensuring prismatic joints share base link orientation and validating rotation joint axes...')
     import xml.etree.ElementTree as ET
-    import math
-    tree = ET.parse(stretch_main_xacro)
+    tree = ET.parse(base_urdf)
     root = tree.getroot()
-    
-    rule5_arm_renamed = False
+    meshes_path = os.path.join(root_dir, 'meshes')
+
+    def rename_everywhere(old_str, new_str):
+        if not old_str or not new_str or old_str == new_str: return
+        # XML
+        for tag in root.iter():
+            for attr in ['name', 'link', 'filename']:
+                val = tag.get(attr)
+                if val and old_str in val:
+                    tag.set(attr, val.replace(old_str, new_str))
+        # Files
+        if os.path.exists(meshes_path):
+            for filename in os.listdir(meshes_path):
+                if old_str in filename:
+                    old_p = os.path.join(meshes_path, filename)
+                    new_p = os.path.join(meshes_path, filename.replace(old_str, new_str))
+                    if os.path.exists(old_p) and not os.path.exists(new_p):
+                        os.rename(old_p, new_p)
+
+    # Rule 7: Enforce suffix naming
+    for tag in root.iter():
+        for attr in ['name', 'link', 'filename']:
+            val = tag.get(attr)
+            if val:
+                if attr in ['name', 'link']:
+                    if val.startswith('link_'):
+                        rename_everywhere(val, val[5:] + '_link')
+                    elif val.startswith('joint_'):
+                        rename_everywhere(val, val[6:] + '_joint')
+                elif attr == 'filename':
+                    basename = os.path.basename(val)
+                    if basename.startswith('link_'):
+                        name_part, ext = os.path.splitext(basename[5:])
+                        rename_everywhere(basename, name_part + '_link' + ext)
+
+    # Rule 2: Arm Renaming
+    rule2_arm_renamed = False
     for j in root.findall('joint'):
-        if j.get('name') == 'joint_arm_l4':
+        jname = j.get('name') or ""
+        if jname in ['joint_arm_l4', 'arm_l4_joint']:
             pt = j.find('parent')
             if pt is not None and pt.get('link') == 'lift_link':
-                rule5_arm_renamed = True
+                rule2_arm_renamed = True
                 break
                 
-    if rule5_arm_renamed:
+    if rule2_arm_renamed:
         arm_indices = [0, 1, 2, 3, 4]
-        for tag in root.findall('.//'):
-            for attr in ['name', 'link']:
-                val = tag.get(attr)
-                if val and 'arm_l' in val:
-                    for idx in arm_indices:
-                        if f'arm_l{idx}' in val:
-                            tag.set(attr, val.replace(f'arm_l{idx}', f'arm_T{idx}'))
-                            break
-        for tag in root.findall('.//'):
-            for attr in ['name', 'link']:
-                val = tag.get(attr)
-                if val and 'arm_T' in val:
-                    for idx in arm_indices:
-                        if f'arm_T{idx}' in val:
-                            tag.set(attr, val.replace(f'arm_T{idx}', f'arm_l{4-idx}'))
-                            break
-    
-    joint_abs_R, link_abs_R, link_abs_P = get_abs_poses(root)
-    
-    # Rule 6: Rename wheels counter-clockwise based on their absolute positions
-    wheels = []
-    for joint in root.findall('joint'):
-        jname = joint.get('name')
-        jtype = joint.get('type')
-        if jname and 'wheel' in jname.lower() and jtype in ['continuous', 'revolute']:
-            child = joint.find('child')
-            if child is not None:
-                c_link = child.get('link')
-                pos = link_abs_P.get(c_link, [0, 0, 0])
-                wheels.append({'name': jname, 'link': c_link, 'pos': pos})
+        for idx in arm_indices: rename_everywhere(f'arm_l{idx}', f'arm_T{idx}')
+        for idx in arm_indices: rename_everywhere(f'arm_T{idx}', f'arm_l{4-idx}')
 
-    rule6_wheels_renamed = False
+    # Rule 6: Wheel Renaming
+    _, _, link_abs_P = get_abs_poses(root)
+    wheels = []
+    for joint in root.findall("joint"):
+        jname, jtype = joint.get("name"), joint.get("type")
+        if jname and "wheel" in jname.lower() and jtype in ["continuous", "revolute"]:
+            child = joint.find("child")
+            if child is not None:
+                c_link = child.get("link")
+                pos = link_abs_P.get(c_link, [0, 0, 0])
+                wheels.append({"name": jname, "link": c_link, "pos": pos})
+
     if wheels:
-        for w in wheels:
-            w['theta'] = math.atan2(w['pos'][1], w['pos'][0])
-            
+        for w in wheels: w["theta"] = math.atan2(w["pos"][1], w["pos"][0])
         def ang_diff(a1, a2):
             diff = a1 - a2
             while diff > math.pi: diff -= 2*math.pi
             while diff < -math.pi: diff += 2*math.pi
             return diff
-            
-        closest_wheel = min(wheels, key=lambda w: abs(ang_diff(w['theta'], 0)))
-        start_theta = closest_wheel['theta']
-        
-        def counter_clockwise_dist(w):
-            d = w['theta'] - start_theta
+        closest_wheel = min(wheels, key=lambda w: abs(ang_diff(w["theta"], 0)))
+        start_theta = closest_wheel["theta"]
+        def ccw_dist(w):
+            d = w["theta"] - start_theta
             while d < 0: d += 2*math.pi
             while d >= 2*math.pi: d -= 2*math.pi
             return d
-            
-        wheels_sorted = sorted(wheels, key=counter_clockwise_dist)
-        
-        wheel_map = {}
-        import re
+        wheels_sorted = sorted(wheels, key=ccw_dist)
+        wheel_map = []
+        rule6_renamed = False
         for i, w in enumerate(wheels_sorted):
-            m = re.search(r'wheel_(\d+)', w['name'])
-            old_idx = m.group(1) if m else w['name']
-            if old_idx != str(i):
-                rule6_wheels_renamed = True
-                
-            new_jname = w['name']
-            new_lname = w['link']
-            if m:
-                new_jname = w['name'].replace(f'wheel_{old_idx}', f'wheel_{i}')
-            elif 'wheel' in w['name'].lower():
-                # Attempt basic replacement if no numeric index is present
-                new_jname = w['name'].replace('wheel', f'wheel_{i}')
-                
-            m_link = re.search(r'wheel_(\d+)', w['link'])
-            if m_link:
-                new_lname = w['link'].replace(f'wheel_{m_link.group(1)}', f'wheel_{i}')
-            elif 'wheel' in w['link'].lower():
-                new_lname = w['link'].replace('wheel', f'wheel_{i}')
-                
-            wheel_map[w['name']] = new_jname
-            wheel_map[w['link']] = new_lname
-            
-        if rule6_wheels_renamed:
-            for w, w_new in wheel_map.items():
-                w_temp = w_new.replace('wheel_', 'wheelT_')
-                for tag in root.findall('.//'):
-                    for attr in ['name', 'link']:
-                        if tag.get(attr) == w:
-                            tag.set(attr, w_temp)
-                            
-            for w, w_new in wheel_map.items():
-                w_temp = w_new.replace('wheel_', 'wheelT_')
-                for tag in root.findall('.//'):
-                    for attr in ['name', 'link']:
-                        if tag.get(attr) == w_temp:
-                            tag.set(attr, w_new)
-                            
-            # Update absolute poses after rename
-            joint_abs_R, link_abs_R, link_abs_P = get_abs_poses(root)
+            m = re.search(r"wheel_(\d+)", w["name"])
+            old_idx = m.group(1) if m else None
+            if old_idx != str(i): rule6_renamed = True
+            wheel_map.append((f"wheel_{old_idx}" if old_idx else "wheel", f"wheel_{i}"))
+        
+        if rule6_renamed:
+            for old_base, new_base in wheel_map: rename_everywhere(old_base, new_base.replace("wheel_", "wheelT_"))
+            for old_base, new_base in wheel_map: rename_everywhere(new_base.replace("wheel_", "wheelT_"), new_base)
+    
+    # --- PHASE 2: Collision Generation ---
+
+    temp_urdf = os.path.join(root_dir, "convention_corrected.urdf")
+    tree.write(temp_urdf)
+    
+    bak_urdf = base_urdf + ".bak"
+    if os.path.exists(bak_urdf): os.remove(bak_urdf)
+    os.rename(base_urdf, bak_urdf)
+
+    config_path = os.path.join(root_dir, "collision_mesh_config.yaml")
+    if not os.path.exists(config_path):
+        print(f"Creating default collision_mesh_config.yaml in {root_dir}")
+        links_dict = {}
+        for link in root.findall("link"):
+            link_name = link.get("name")
+            visual = link.find("visual")
+            if visual is not None and "optical" not in link_name.lower():
+                geom = visual.find("geometry")
+                if geom is not None and geom.find("mesh") is not None:
+                    links_dict[link_name] = {"action": "qem", "simplification_ratio": 0.1}
+        with open(config_path, "w") as f:
+            yaml.dump({"links": links_dict}, f, default_flow_style=False, sort_keys=False)
+
+    print(f"Generating collision meshes for model: {model_name}...")
+    gen_script = os.path.join(os.path.dirname(__file__), "stretch4_urdf", "utils", "generate_collision_mesh.py")
+    try:
+        subprocess.run(["python3", gen_script, "--model", model_name], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error generating collision meshes for {model_name}: {e}")
+
+    if os.path.exists(base_urdf): os.remove(base_urdf)
+    os.rename(bak_urdf, base_urdf)
+
+    os.makedirs(xacro_dir, exist_ok=True)
+    stretch_main_xacro = os.path.join(xacro_dir, "stretch_main.xacro")
+    
+    print("Updating the URDF with collision mesh filepaths...")
+    update_urdf_collision_meshes(temp_urdf, stretch_main_xacro)
+    remove_collision_from_optical_links(stretch_main_xacro, stretch_main_xacro)
+    if os.path.exists(temp_urdf): os.remove(temp_urdf)
+
+    # --- PHASE 3: Geometric Rules ---
+
+    tree = ET.parse(stretch_main_xacro)
+    root = tree.getroot()
+    
+    print("Applying geometric rules and axis validations...")
+    joint_abs_R, link_abs_R, link_abs_P = get_abs_poses(root)
     sensor_opt_old = {}
     for joint in root.findall('joint'):
         if 'optical' in joint.get('name', '').lower():
@@ -543,7 +522,7 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
         print("  -> 👍 No frames required changes.")
         
     print("""\nRule 2: Proximal to Distal Naming Convention""")
-    if rule5_arm_renamed:
+    if rule2_arm_renamed:
         print("  -> Reversed arm joint/link numerical sequences to enforce proximal-to-distal ordering.")
     else:
         print("  -> 👍 Arm naming sequence is correctly ordered.")
@@ -572,7 +551,7 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
         
     print("""\nRule 6: Wheel Conventions""")
     if 'wheels' in locals() and wheels:
-        if rule6_wheels_renamed:
+        if rule6_renamed:
             print("  -> Renamed wheels to ordered counter-clockwise naming and enforced center-pointing rotation axles.")
         else:
             print("  -> 👍 Wheels matched counter-clockwise naming. Enforced center-pointing rotation axles.")
