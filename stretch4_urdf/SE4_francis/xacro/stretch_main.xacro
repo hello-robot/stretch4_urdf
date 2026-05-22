@@ -16,13 +16,13 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="base_collision_link">
+      <collision name="base_collision_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/base_collision_link.obj" />
       </geometry>
     </collision>
-  </link>
+</link>
   <joint name="base_ref" type="fixed">
     <origin xyz="0 0 0.028" rpy="0 0 0" />
     <parent link="base_footprint" />
@@ -170,13 +170,13 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="head_collision_link">
+      <collision name="head_collision_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/head_collision_link.obj" />
       </geometry>
     </collision>
-  </link>
+</link>
   <joint name="head_joint" type="fixed">
     <origin xyz="-0.093 -0.098 1.559" rpy="0 0 0" />
     <parent link="base_link" />
@@ -223,14 +223,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_right_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 3.14159" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_right_optical_joint" type="fixed">
     <origin xyz="0.0212 0 0" rpy="1.5708 0 1.5708" />
@@ -252,14 +244,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_left_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_left_optical_joint" type="fixed">
     <origin xyz="0.0212 0 0" rpy="1.5708 0 1.5708" />
@@ -281,14 +265,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_center_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 -3.14159" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_center_optical_joint" type="fixed">
     <origin xyz="0.0017 0 0" rpy="-1.5708 0 -1.5708" />
@@ -353,7 +329,7 @@
     <axis xyz="0 0 1" />
     <limit lower="0" upper="1.2" effort="0" velocity="0" />
   </joint>
-  <link name="arm_l0_link">
+  <link name="arm_l4_link">
     <inertial>
       <origin xyz="0.0146277 -0.0397927 0.0182873" rpy="0 1.5708 0" />
       <mass value="2.95349364666659" />
@@ -368,20 +344,20 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="arm_l0_collision_link">
+    <collision name="arm_l4_collision_link">
       <origin xyz="0 0 0" rpy="0 1.5708 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/arm_l4_collision_link.STL" />
       </geometry>
     </collision>
   </link>
-  <joint name="arm_l0_joint" type="fixed">
+  <joint name="arm_l4_joint" type="fixed">
     <origin xyz="-0.0295 0.0994 -0.0128595" rpy="0 0 0" />
     <parent link="lift_link" />
-    <child link="arm_l0_link" />
+    <child link="arm_l4_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="arm_l1_link">
+  <link name="arm_l3_link">
     <inertial>
       <origin xyz="0.125319 0 0.00214616" rpy="0 1.5708 0" />
       <mass value="0.211728696447344" />
@@ -396,17 +372,17 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="arm_l1_collision_link">
+    <collision name="arm_l3_collision_link">
       <origin xyz="0 0 0" rpy="0 1.5708 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/arm_l3_collision_link.STL" />
       </geometry>
     </collision>
   </link>
-  <joint name="arm_l1_joint" type="prismatic">
+  <joint name="arm_l3_joint" type="prismatic">
     <origin xyz="0.0055 0 0" rpy="0 0 0" />
-    <parent link="arm_l0_link" />
-    <child link="arm_l1_link" />
+    <parent link="arm_l4_link" />
+    <child link="arm_l3_link" />
     <axis xyz="1 0 0" />
     <limit lower="0" upper="0.13" effort="0" velocity="0" />
   </joint>
@@ -434,12 +410,12 @@
   </link>
   <joint name="arm_l2_joint" type="prismatic">
     <origin xyz="0.0135 0 0" rpy="0 0 0" />
-    <parent link="arm_l1_link" />
+    <parent link="arm_l3_link" />
     <child link="arm_l2_link" />
     <axis xyz="1 0 0" />
     <limit lower="0" upper="0.13" effort="0" velocity="0" />
   </joint>
-  <link name="arm_l3_link">
+  <link name="arm_l1_link">
     <inertial>
       <origin xyz="0.127806 0 0.00210076" rpy="0 1.5708 0" />
       <mass value="0.182379618165529" />
@@ -454,21 +430,21 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="arm_l3_collision_link">
+    <collision name="arm_l1_collision_link">
       <origin xyz="0 0 0" rpy="0 1.5708 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/arm_l1_collision_link.STL" />
       </geometry>
     </collision>
   </link>
-  <joint name="arm_l3_joint" type="prismatic">
+  <joint name="arm_l1_joint" type="prismatic">
     <origin xyz="0.0135 0 0" rpy="0 0 0" />
     <parent link="arm_l2_link" />
-    <child link="arm_l3_link" />
+    <child link="arm_l1_link" />
     <axis xyz="1 0 0" />
     <limit lower="0" upper="0.13" effort="0" velocity="0" />
   </joint>
-  <link name="arm_l4_link">
+  <link name="arm_l0_link">
     <inertial>
       <origin xyz="0.105 0 0.00206007" rpy="0 1.5708 0" />
       <mass value="0.131482025176648" />
@@ -483,17 +459,17 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="arm_l4_collision_link">
+    <collision name="arm_l0_collision_link">
       <origin xyz="0 0 0" rpy="0 1.5708 0" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/arm_l0_collision_link.STL" />
       </geometry>
     </collision>
   </link>
-  <joint name="arm_l4_joint" type="prismatic">
+  <joint name="arm_l0_joint" type="prismatic">
     <origin xyz="0.01375 0 0" rpy="0 0 0" />
-    <parent link="arm_l3_link" />
-    <child link="arm_l4_link" />
+    <parent link="arm_l1_link" />
+    <child link="arm_l0_link" />
     <axis xyz="1 0 0" />
     <limit lower="0" upper="0.13" effort="0" velocity="0" />
   </joint>
@@ -521,7 +497,7 @@
   </link>
   <joint name="wrist_joint" type="fixed">
     <origin xyz="0.24715 0 -0.03672" rpy="0 0 0" />
-    <parent link="arm_l4_link" />
+    <parent link="arm_l0_link" />
     <child link="wrist_link" />
     <axis xyz="0 0 0" />
   </joint>
@@ -614,12 +590,12 @@
   </joint>
   <link name="gripper_camera_link">
     <inertial>
-      <origin xyz="0.00250349 0.0120203 0" rpy="1.5708 0 -1.5708" />
+      <origin xyz="0 0.0120203 -0.00250349" rpy="0 0 -1.5708" />
       <mass value="0.0447759731526001" />
       <inertia ixx="1.60232107304684E-05" ixy="-8.65767518586304E-22" ixz="2.63946367478605E-08" iyy="6.92267971098109E-06" iyz="-6.09577361235966E-22" izz="1.36247235159961E-05" />
     </inertial>
     <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 -1.5708" />
+      <origin xyz="0 0 0" rpy="0 0 -1.5708" />
       <geometry>
         <mesh filename="$(arg model_mesh_dir)/gripper_camera_link.STL" />
       </geometry>
@@ -627,22 +603,22 @@
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-    <collision name="gripper_camera_link_collision">
-      <origin xyz="0 0 0" rpy="1.5708 0 -1.5708" />
+    <collision name="gripper_camera_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 -1.5708" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/gripper_camera_link_collision.STL" />
+        <mesh filename="$(arg model_mesh_dir)/gripper_camera_collision_link.STL" />
       </geometry>
     </collision>
   </link>
   <joint name="gripper_camera_joint" type="fixed">
-    <origin xyz="0.0192 0 0.057" rpy="1.5708 -1.5708 0" />
+    <origin xyz="0.0192 0 0.057" rpy="-3.14159 0 -1.5708" />
     <parent link="wrist_roll_link" />
     <child link="gripper_camera_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="gripper_stereo_camera_color_optical_frame">
     <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
         <box size="0.001 0.001 0.001" /></geometry>
       <material name="">
@@ -658,7 +634,7 @@
   </joint>
   <link name="gripper_right_camera_color_optical_frame">
     <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
         <box size="0.001 0.001 0.001" /></geometry>
       <material name="">
@@ -667,14 +643,14 @@
     </visual>
     </link>
   <joint name="gripper_right_camera_color_optical_joint" type="fixed">
-    <origin xyz="0 0 0.01" rpy="3.14159 0 0" />
+    <origin xyz="0.01 0 0" rpy="3.14159 0 0" />
     <parent link="gripper_camera_link" />
     <child link="gripper_right_camera_color_optical_frame" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="gripper_left_camera_color_optical_frame">
     <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 1.5708" />
+      <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
         <box size="0.001 0.001 0.001" /></geometry>
       <material name="">
@@ -683,7 +659,7 @@
     </visual>
     </link>
   <joint name="gripper_left_camera_color_optical_joint" type="fixed">
-    <origin xyz="0 0 -0.01" rpy="3.14159 0 0" />
+    <origin xyz="-0.01 0 0" rpy="3.14159 0 0" />
     <parent link="gripper_camera_link" />
     <child link="gripper_left_camera_color_optical_frame" />
     <axis xyz="0 0 0" />

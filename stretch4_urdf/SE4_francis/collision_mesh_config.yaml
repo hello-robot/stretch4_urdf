@@ -68,3 +68,13 @@ links:
     action: bounding_box
   wrist_aruco_link:
     action: bounding_box
+  wrist_link_yaw:
+    action: bounding_box
+  wrist_link_pitch:
+    action: bounding_box
+  wrist_link_roll:
+    action: bounding_box
+  wrist_link_aruco:
+    action: bounding_box
+  wrist_link_reflector:
+    action: bounding_box

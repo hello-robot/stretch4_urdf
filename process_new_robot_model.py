@@ -137,10 +137,16 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
         if not old_str or not new_str or old_str == new_str: return
         # XML
         for tag in root.iter():
-            for attr in ['name', 'link', 'filename']:
+            for attr in ['name', 'link']:
                 val = tag.get(attr)
-                if val and old_str in val:
-                    tag.set(attr, val.replace(old_str, new_str))
+                if val == old_str:
+                    tag.set(attr, new_str)
+            
+            # For filename, use substring replacement since it's often a path
+            val = tag.get('filename')
+            if val and old_str in val:
+                tag.set('filename', val.replace(old_str, new_str))
+
         # Files
         if os.path.exists(meshes_path):
             for filename in os.listdir(meshes_path):
@@ -149,22 +155,6 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
                     new_p = os.path.join(meshes_path, filename.replace(old_str, new_str))
                     if os.path.exists(old_p) and not os.path.exists(new_p):
                         os.rename(old_p, new_p)
-
-    # Rule 7: Enforce suffix naming
-    for tag in root.iter():
-        for attr in ['name', 'link', 'filename']:
-            val = tag.get(attr)
-            if val:
-                if attr in ['name', 'link']:
-                    if val.startswith('link_'):
-                        rename_everywhere(val, val[5:] + '_link')
-                    elif val.startswith('joint_'):
-                        rename_everywhere(val, val[6:] + '_joint')
-                elif attr == 'filename':
-                    basename = os.path.basename(val)
-                    if basename.startswith('link_'):
-                        name_part, ext = os.path.splitext(basename[5:])
-                        rename_everywhere(basename, name_part + '_link' + ext)
 
     # Rule 2: Arm Renaming
     rule2_arm_renamed = False
@@ -178,8 +168,14 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
                 
     if rule2_arm_renamed:
         arm_indices = [0, 1, 2, 3, 4]
-        for idx in arm_indices: rename_everywhere(f'arm_l{idx}', f'arm_T{idx}')
-        for idx in arm_indices: rename_everywhere(f'arm_T{idx}', f'arm_l{4-idx}')
+        for idx in arm_indices:
+            rename_everywhere(f'link_arm_l{idx}', f'link_arm_T{idx}')
+            rename_everywhere(f'joint_arm_l{idx}', f'joint_arm_T{idx}')
+            rename_everywhere(f'arm_l{idx}', f'arm_T{idx}')
+        for idx in arm_indices:
+            rename_everywhere(f'link_arm_T{idx}', f'link_arm_l{4-idx}')
+            rename_everywhere(f'joint_arm_T{idx}', f'joint_arm_l{4-idx}')
+            rename_everywhere(f'arm_T{idx}', f'arm_l{4-idx}')
 
     # Rule 6: Wheel Renaming
     _, _, link_abs_P = get_abs_poses(root)
@@ -217,8 +213,34 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             wheel_map.append((f"wheel_{old_idx}" if old_idx else "wheel", f"wheel_{i}"))
         
         if rule6_renamed:
+            for old_base, new_base in wheel_map: rename_everywhere(f"link_{old_base}", f"link_{new_base.replace('wheel_', 'wheelT_')}")
+            for old_base, new_base in wheel_map: rename_everywhere(f"joint_{old_base}", f"joint_{new_base.replace('wheel_', 'wheelT_')}")
             for old_base, new_base in wheel_map: rename_everywhere(old_base, new_base.replace("wheel_", "wheelT_"))
+
+            for old_base, new_base in wheel_map: rename_everywhere(f"link_{new_base.replace('wheel_', 'wheelT_')}", f"link_{new_base}")
+            for old_base, new_base in wheel_map: rename_everywhere(f"joint_{new_base.replace('wheel_', 'wheelT_')}", f"joint_{new_base}")
             for old_base, new_base in wheel_map: rename_everywhere(new_base.replace("wheel_", "wheelT_"), new_base)
+
+    # Rule 7: Enforce suffix naming
+    renames = {}
+    for tag in root.iter():
+        for attr in ['name', 'link', 'filename']:
+            val = tag.get(attr)
+            if val:
+                if attr in ['name', 'link']:
+                    if val.startswith('link_'):
+                        renames[val] = val[5:] + '_link'
+                    elif val.startswith('joint_'):
+                        renames[val] = val[6:] + '_joint'
+                elif attr == 'filename':
+                    basename = os.path.basename(val)
+                    if basename.startswith('link_'):
+                        name_part, ext = os.path.splitext(basename[5:])
+                        renames[basename] = name_part + '_link' + ext
+    
+    # Sort by length descending to avoid partial renames (e.g., link_wrist vs link_wrist_pitch)
+    for old_name in sorted(renames.keys(), key=len, reverse=True):
+        rename_everywhere(old_name, renames[old_name])
     
     # --- PHASE 2: Collision Generation ---
 
