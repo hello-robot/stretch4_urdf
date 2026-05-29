@@ -6,7 +6,7 @@ import unittest
 
 from yourdfpy import urdf as ud
 from stretch4_urdf.utils.urdf_utils_generate_from_base_xacro import (
-    get_available_tools, get_urdf)
+    get_available_tools, get_urdf, get_urdf_calibrated)
 from stretch4_urdf.utils.urdf_utils_generate_ik_urdfs import generate_ik_urdfs
 
 class TestUrdfGeneration(unittest.TestCase):
@@ -62,6 +62,18 @@ class TestUrdfGeneration(unittest.TestCase):
                                 contents = f.read()
                                 self.assertIn('<robot', contents, "File does not contain a <robot> tag")
                                 self.assertIn('</robot>', contents, "File does not close the </robot> tag")
+                            
+                            filepath_calibrated = get_urdf_calibrated(
+                                model_name=model,
+                                batch_name=batch,
+                                tool_name=tool,
+                                output_dir=temp_dir
+                            )
+                            self.assertTrue(os.path.exists(filepath_calibrated), f"Calibrated URDF could not be generated for {model}_{batch}_{tool}")
+                            with open(filepath_calibrated, 'r') as f:
+                                contents_calibrated = f.read()
+                                self.assertIn('<robot', contents_calibrated, "Calibrated file does not contain a <robot> tag")
+                                self.assertIn('</robot>', contents_calibrated, "Calibrated file does not close the </robot> tag")
                             
                             # Test generate_ik_urdfs
                             robot = ud.URDF.load(filepath)

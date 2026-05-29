@@ -1,7 +1,9 @@
 import argparse
 import importlib.resources as importlib_resources
 import os
+import xml.etree.ElementTree as ET
 
+import yaml
 from xacrodoc import XacroDoc
 
 
@@ -99,7 +101,7 @@ def generate_urdf_file(urdf_contents: str, output_prefix: str, output_dir: str, 
 
     return filename
 
-def get_urdf_from_robot_params(do_add_file_prefix_to_absolute_paths: bool = True, output_dir: str|None = None, prefix: str|None = None,):
+def get_urdf_from_robot_params(apply_calibration: bool = True, do_add_file_prefix_to_absolute_paths: bool = True, output_dir: str|None = None, prefix: str|None = None,):
     """
     Generates Robot URDF contents from the model's base xacro, and optionally saves it to a file if a directory is provided.
     
@@ -115,7 +117,82 @@ def get_urdf_from_robot_params(do_add_file_prefix_to_absolute_paths: bool = True
         str: raw urdf contents
     """
     model_name, batch_name, tool_name = get_robot_params()
-    return get_urdf(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
+    if apply_calibration: 
+        return get_urdf_calibrated(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
+    else:
+        return get_urdf(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
+
+def get_urdf_calibrated(
+    model_name:str,
+    batch_name:str,
+    tool_name:str,
+    do_add_file_prefix_to_absolute_paths: bool = True,
+    output_dir: str|None = None,
+    prefix: str|None = None,
+    description: str = "calibrated"
+    ):
+    """
+    Generates Robot URDF contents from the base xacro, applies joint calibration values 
+    from stretch_calibration_values.yaml if available, and optionally saves it.
+    """
+
+    urdf_contents = get_urdf(
+        model_name, 
+        batch_name, 
+        tool_name, 
+        do_add_file_prefix_to_absolute_paths=do_add_file_prefix_to_absolute_paths, 
+        output_dir=None
+    )
+
+    fleet_path = os.environ.get("HELLO_FLEET_PATH")
+    fleet_id = os.environ.get("HELLO_FLEET_ID")
+    
+    if fleet_path and fleet_id:
+        calib_file = os.path.join(fleet_path, fleet_id, "stretch_calibration_values.yaml")
+        if os.path.exists(calib_file):
+            with open(calib_file, 'r') as f:
+                calib_data = yaml.safe_load(f)
+            
+            root = ET.fromstring(urdf_contents)
+            
+            if calib_data and "robot_calibration" in calib_data and "joints" in calib_data["robot_calibration"]:
+                joints_calib = calib_data["robot_calibration"]["joints"]
+                for joint in root.findall('joint'):
+                    name = joint.get('name')
+                    if name in joints_calib:
+                        joint_data = joints_calib[name]
+                        
+                        # Confirm that the joint in URDF has the same parent link as specified in the calibration
+                        parent_elem = joint.find('parent')
+                        if parent_elem is not None and 'parent' in joint_data:
+                            if parent_elem.get('link') != joint_data['parent']:
+                                print(f"Warning: Parent link mismatch for joint '{name}'. Expected: {joint_data['parent']}, but found: {parent_elem.get('link')}. Skipping calibration.")
+                                continue
+                        
+                        #TODO: Threshold for calibration delta? 
+                        
+                        origin = joint.find('origin')
+                        if origin is None:
+                            origin = ET.SubElement(joint, 'origin')
+                        
+                        if 'xyz' in joint_data:
+                            origin.set('xyz', str(joint_data['xyz']))
+                        if 'rpy' in joint_data:
+                            origin.set('rpy', str(joint_data['rpy']))
+                
+                urdf_contents = ET.tostring(root, encoding='unicode', xml_declaration=True)
+        else:
+            print(f"Warning: Calibration file not found at {calib_file}")
+    else:
+        print("Warning: HELLO_FLEET_PATH or HELLO_FLEET_ID not set. Cannot load calibration.")
+
+    if output_dir is not None:
+        if prefix is None:
+            prefix = f"{model_name}_{batch_name}_{tool_name}"
+        return generate_urdf_file(urdf_contents, prefix, output_dir, description)
+
+    return urdf_contents
+    
 
 def get_urdf(
     model_name:str,
@@ -125,7 +202,6 @@ def get_urdf(
     output_dir: str|None = None,
     prefix: str|None = None,
     description: str = "unmodified"
-
     ):
     """
     Generates Robot URDF contents from the base xacro, and optionally saves it to a file if a directory is provided.
