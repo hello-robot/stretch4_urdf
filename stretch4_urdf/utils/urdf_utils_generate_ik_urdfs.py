@@ -1,6 +1,7 @@
 import argparse
 import tempfile
-import copy 
+import copy
+import os
 
 import numpy as np
 from yourdfpy import urdf as ud
@@ -313,6 +314,7 @@ def generate_urdf_from_robot(
     str
         filepath of the generated URDF
     """
+    os.makedirs(output_dir, exist_ok=True)
 
     filename = f"{output_dir}/{output_prefix}_{description}.urdf"
     robot.write_xml_file(filename)
@@ -352,6 +354,7 @@ def generate_ik_urdfs(
         full IK version, and the second will be the rigid
         wrist version.
     """
+    os.makedirs(output_dir, exist_ok=True)
 
     clip_joint_limits(robot)
 
