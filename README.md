@@ -24,8 +24,27 @@ The URDF and meshes are installed to your Python site directory. You can load th
 
 ```
 from stretch4_urdf import get_urdf
-print(get_urdf())
+
+# configure the specifications for your robot
+model_name = "SE4"
+batch_name = "francis"
+tool_name = "eoa_wrist_dw4_tool_sg4"
+
+print(get_urdf(
+    model_name=model_name,
+    batch_name=batch_name,
+    tool_name=tool_name,
+))
 ```
+
+Currently supported options for the `model_name`, `batch_name`, and `tool_name` are:
+
+```python
+model_name = ["SE4"]
+batch_name = ["francis"]
+tool_name = ["eoa_wrist_dw4_tool_sg4"]
+```
+
 
 A single composable xacro combines a robot's base model with its attached tool. Util functions will handle processing the xacro file and return the URDF for the robot's current configuration:
 
