@@ -171,7 +171,7 @@ def generate_urdf_file(
     model_name: str | None = None,
     batch_name: str | None = None,
     tool_name: str | None = None,
-    output_dir: str,
+    output_dir: str = "temp",
     *,
     output_prefix: str | None = None,
     use_calibration: bool = True,
@@ -252,19 +252,20 @@ def generate_urdf_obj(
 def generate_urdf_file_from_robot_params(
     apply_calibration: bool = True, 
     do_add_file_prefix_to_absolute_paths: bool = True, 
-    output_dir: str|None = None, 
+    output_dir: str = "temp",
     prefix: str|None = None,
 ) -> str:
     """
-    Generates Robot URDF contents from the model's base xacro, and optionally saves it to a file if a directory is provided.
+    Generates Robot URDF contents from the model's base xacro and saves it to a file.
     
     Args:
+        `apply_calibration` (`bool`): Whether to apply joint calibration values.
+        `do_add_file_prefix_to_absolute_paths` (`bool`): Whether to add the file:// prefix to absolute paths.
         `output_dir` (`str`): Directory to save the output URDF file.
-        `prefix` (`str`): Prefix for the output URDF file.
+        `prefix` (`str`): Optional filename prefix for the saved URDF file.
     
-
     Returns:
-        `str`: the resolved filepath of the generated URDF file
+        `str`: The resolved file path of the generated URDF file.
     """ 
 
     model_name, batch_name, tool_name = get_robot_params()
