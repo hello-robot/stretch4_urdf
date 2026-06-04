@@ -132,9 +132,9 @@ def xacro2urdf_string(
 
 
 def generate_urdf_string(
-    model_name: str,
-    batch_name: str,
-    tool_name: str,
+    model_name: str | None = None,
+    batch_name: str | None = None,
+    tool_name: str | None = None,
     *,
     use_calibration: bool = True,
     do_add_file_prefix_to_absolute_paths: bool = True
@@ -145,9 +145,9 @@ def generate_urdf_string(
     Falls back to hardware configuration via stretch4_body if arguments are omitted.
 
     Args:
-        `model_name` (`str`): Name of the model.
-        `batch_name` (`str`): Name of the batch.
-        `tool_name` (`str`): Name of the tool.
+        `model_name` (`str | None`): Name of the model.
+        `batch_name` (`str | None`): Name of the batch.
+        `tool_name` (`str | None`): Name of the tool.
         `use_calibration` (`bool`): Whether to apply joint calibration values.
         `do_add_file_prefix_to_absolute_paths` (`bool`): Whether to add the file:// prefix to absolute paths.
 
@@ -168,9 +168,9 @@ def generate_urdf_string(
 
 
 def generate_urdf_file(
-    model_name: str,
-    batch_name: str,
-    tool_name: str,
+    model_name: str | None = None,
+    batch_name: str | None = None,
+    tool_name: str | None = None,
     output_dir: str,
     *,
     output_prefix: str | None = None,
@@ -182,9 +182,9 @@ def generate_urdf_file(
 
     Args:
         `output_dir` (`str`): Directory where the output URDF file will be saved.
-        `model_name` (`str`): Name of the model.
-        `batch_name` (`str`): Name of the batch.
-        `tool_name` (`str`): Name of the tool.
+        `model_name` (`str | None`): Name of the model.
+        `batch_name` (`str | None`): Name of the batch.
+        `tool_name` (`str | None`): Name of the tool.
         `output_prefix` (`str`): Optional filename prefix for the saved URDF file.
         `use_calibration` (`bool`): Whether to apply joint calibration values.
         `do_add_file_prefix_to_absolute_paths` (`bool`): Whether to add the file:// prefix to absolute paths.
@@ -219,9 +219,9 @@ def generate_urdf_file(
 
 
 def generate_urdf_obj(
-    model_name: str,
-    batch_name: str,
-    tool_name: str,
+    model_name: str | None = None,
+    batch_name: str | None = None,
+    tool_name: str | None = None,
     *,
     use_calibration: bool = True,
     do_add_file_prefix_to_absolute_paths: bool = True
@@ -230,9 +230,9 @@ def generate_urdf_obj(
     Generates a parsed yourdfpy URDF object directly out of the pipeline configurations.
 
     Args:
-        `model_name` (`str`): Name of the model.
-        `batch_name` (`str`): Name of the batch.
-        `tool_name` (`str`): Name of the tool.
+        `model_name` (`str | None`): Name of the model.
+        `batch_name` (`str | None`): Name of the batch.
+        `tool_name` (`str | None`): Name of the tool.
         `use_calibration` (`bool`): Whether to apply joint calibration values.
         `do_add_file_prefix_to_absolute_paths` (`bool`): Whether to add the file:// prefix to absolute paths.
 
