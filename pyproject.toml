@@ -30,6 +30,7 @@ dependencies = [
     "trimesh",
     "scikit-learn",
     "xacrodoc",
+    "hello-robot-stretch4-body>=2026.5.27",
 ]
 
 [project.urls]

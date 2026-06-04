@@ -5,7 +5,7 @@ import copy
 import numpy as np
 from yourdfpy import urdf as ud
 
-from stretch4_urdf import get_urdf_from_robot_params
+from .urdf_utils_generate_from_base_xacro import generate_urdf_file_from_robot_params
 
 wrist_pitch_lower_limit = -0.8 * (np.pi / 2.0)
 
@@ -283,7 +283,7 @@ def generate_robot_from_base_xacro():
     """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        urdf_tmp_file = get_urdf_from_robot_params(output_dir=tmp_dir)
+        urdf_tmp_file = generate_urdf_file_from_robot_params(output_dir=tmp_dir)
         return ud.URDF.load(urdf_tmp_file)
 
 
