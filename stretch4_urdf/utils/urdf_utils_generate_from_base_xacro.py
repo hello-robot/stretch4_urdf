@@ -182,7 +182,7 @@ def get_urdf_calibrated(
                         if 'rpy' in joint_data:
                             origin.set('rpy', str(joint_data['rpy']))
                 
-                urdf_contents = ET.tostring(root, encoding='unicode', xml_declaration=True)
+                urdf_contents = str(ET.tostring(root, encoding='unicode', xml_declaration=True))
         else:
             print(f"Warning: Calibration file not found at {calib_file}")
     else:

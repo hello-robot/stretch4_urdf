@@ -75,8 +75,9 @@ class TestUrdfGeneration(unittest.TestCase):
                                 self.assertIn('<robot', contents_calibrated, "Calibrated file does not contain a <robot> tag")
                                 self.assertIn('</robot>', contents_calibrated, "Calibrated file does not close the </robot> tag")
                             
-                            # Test generate_ik_urdfs
                             robot = ud.URDF.load(filepath)
+                            robot_calibrated = ud.URDF.load(filepath_calibrated)
+                            # Test generate_ik_urdfs
                             output_prefix = f"ik_test_{model}_{batch}_{tool}"
                             ik_filepaths = generate_ik_urdfs(
                                 robot=robot, 
