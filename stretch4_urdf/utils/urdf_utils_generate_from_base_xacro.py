@@ -8,10 +8,11 @@ import yaml
 from stretch4_body.core.robot_params import RobotParams
 from xacrodoc import XacroDoc
 from yourdfpy import URDF
-from logging import getLogger
+import logging
+import stretch4_body.core.hello_utils as hello_utils
 
 
-logger = getLogger(__name__) 
+logger = logging.getLogger("urdf_utils")
 
 def get_available_tools(model_name:str):
 
@@ -277,8 +278,24 @@ def get_joint_limits(urdf_contents: str):
         return {}
 
 
-def main():
+def setup_logging():
+    try:
+        _, robot_params = RobotParams.get_params()
+        logging_params = robot_params['logging'].copy()
+        # Update filename to be specific to this tool
+        if 'file_handler' in logging_params['handlers']:
+            logging_params['handlers']['file_handler']['filename'] = hello_utils.get_stretch_directory('log/stretch_body_logger/') + 'stretch4_urdf.log'
+        logging.config.dictConfig(logging_params)
+    except:
+        # Fallback to basic configuration if robot_params cannot be loaded
+        logging.basicConfig(
+            level=logging.INFO,
+            format="[%(asctime)s] [%(name)s] [%(levelname)s]: %(message)s",
+            datefmt="%m/%d/%Y %H:%M:%S"
+        )
 
+def main():
+    setup_logging()
     parser = argparse.ArgumentParser(
         description="Generate Robot URDF from the base xacro file."
     )
