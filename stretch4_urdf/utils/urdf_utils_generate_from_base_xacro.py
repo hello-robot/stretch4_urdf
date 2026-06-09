@@ -8,7 +8,10 @@ import yaml
 from stretch4_body.core.robot_params import RobotParams
 from xacrodoc import XacroDoc
 from yourdfpy import URDF
+from logging import getLogger
 
+
+logger = getLogger(__name__) 
 
 def get_available_tools(model_name:str):
 
@@ -154,13 +157,13 @@ def get_urdf_calibrated(
         if os.path.exists(calib_file):
             with open(calib_file, 'r') as f:
                 calib_data = yaml.safe_load(f)
-            
             root = ET.fromstring(urdf_contents)
             
             if calib_data and "robot_calibration" in calib_data and "joints" in calib_data["robot_calibration"]:
                 joints_calib = calib_data["robot_calibration"]["joints"]
                 for joint in root.findall('joint'):
                     name = joint.get('name')
+                    logger.info(f"Applying calibration to {name}")
                     if name in joints_calib:
                         joint_data = joints_calib[name]
                         
@@ -168,7 +171,7 @@ def get_urdf_calibrated(
                         parent_elem = joint.find('parent')
                         if parent_elem is not None and 'parent' in joint_data:
                             if parent_elem.get('link') != joint_data['parent']:
-                                print(f"Warning: Parent link mismatch for joint '{name}'. Expected: {joint_data['parent']}, but found: {parent_elem.get('link')}. Skipping calibration.")
+                                logger.warning(f"Parent link mismatch for joint '{name}'. Expected: {joint_data['parent']}, but found: {parent_elem.get('link')}. Skipping calibration.")
                                 continue
                         
                         #TODO: Threshold for calibration delta? 
@@ -184,9 +187,9 @@ def get_urdf_calibrated(
                 
                 urdf_contents = ET.tostring(root, encoding='unicode')
         else:
-            print(f"Warning: Calibration file not found at {calib_file}")
+            logger.warning(f"Calibration file not found at {calib_file}")
     else:
-        print("Warning: HELLO_FLEET_PATH or HELLO_FLEET_ID not set. Cannot load calibration.")
+        logger.warning("HELLO_FLEET_PATH or HELLO_FLEET_ID not set. Cannot load calibration.")
 
     if output_dir is not None:
         if prefix is None:
@@ -230,8 +233,8 @@ def get_urdf(
     str
         raw urdf contents or the filepath the contents were saved to if an output_dir is provided
     """
+    logger.info(f"Loading robot model: {model_name}, batch: {batch_name}, tool: {tool_name}")
 
-    print(f"GETTING URDF FOR MODEL: {model_name}, BATCH: {batch_name}, TOOL: {tool_name}")
     available_tools = get_available_tools(model_name)
     if tool_name not in available_tools: 
         raise ValueError(f"Unexpected tool for model {model_name}: {tool_name}\nTools available for {model_name}:\n"
@@ -270,7 +273,7 @@ def get_joint_limits(urdf_contents: str):
                 limits[joint.name] = (joint.limit.lower, joint.limit.upper)
         return limits
     except Exception as e:
-        print(f"Warning: Failed to parse URDF for joint limits: {e}")
+        logger.warning(f"Failed to parse URDF for joint limits: {e}")
         return {}
 
 
