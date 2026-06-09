@@ -2,10 +2,17 @@ import argparse
 import importlib.resources as importlib_resources
 import io
 import os
-    
+import xml.etree.ElementTree as ET
+
+import yaml
+from stretch4_body.core.robot_params import RobotParams
 from xacrodoc import XacroDoc
 from yourdfpy import URDF
+import logging
+import stretch4_body.core.hello_utils as hello_utils
 
+
+logger = logging.getLogger("urdf_utils")
 
 def get_available_tools(model_name:str):
 
@@ -64,7 +71,6 @@ def get_robot_params():
         tuple[str, str, str]: model_name, batch_name, tool_name
     """
     try:
-        from stretch4_body.core.robot_params import RobotParams
         _, robot_params = RobotParams.get_params()
         model_name = robot_params["robot"]["model_name"]
         batch_name = robot_params["robot"]["batch_name"]
@@ -101,7 +107,7 @@ def generate_urdf_file(urdf_contents: str, output_prefix: str, output_dir: str, 
 
     return filename
 
-def get_urdf_from_robot_params(do_add_file_prefix_to_absolute_paths: bool = True, output_dir: str|None = None, prefix: str|None = None,):
+def get_urdf_from_robot_params(apply_calibration: bool = True, do_add_file_prefix_to_absolute_paths: bool = True, output_dir: str|None = None, prefix: str|None = None,):
     """
     Generates Robot URDF contents from the model's base xacro, and optionally saves it to a file if a directory is provided.
     
@@ -117,7 +123,82 @@ def get_urdf_from_robot_params(do_add_file_prefix_to_absolute_paths: bool = True
         str: raw urdf contents
     """
     model_name, batch_name, tool_name = get_robot_params()
-    return get_urdf(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
+    if apply_calibration: 
+        return get_urdf_calibrated(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
+    else:
+        return get_urdf(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
+
+def get_urdf_calibrated(
+    model_name:str,
+    batch_name:str,
+    tool_name:str,
+    do_add_file_prefix_to_absolute_paths: bool = True,
+    output_dir: str|None = None,
+    prefix: str|None = None,
+    description: str = "calibrated"
+    ):
+    """
+    Generates Robot URDF contents from the base xacro, applies joint calibration values 
+    from stretch_calibration_values.yaml if available, and optionally saves it.
+    """
+
+    urdf_contents = get_urdf(
+        model_name, 
+        batch_name, 
+        tool_name, 
+        do_add_file_prefix_to_absolute_paths=do_add_file_prefix_to_absolute_paths, 
+        output_dir=None
+    )
+
+    fleet_path = os.environ.get("HELLO_FLEET_PATH")
+    fleet_id = os.environ.get("HELLO_FLEET_ID")
+    
+    if fleet_path and fleet_id:
+        calib_file = os.path.join(fleet_path, fleet_id, "stretch_calibration_values.yaml")
+        if os.path.exists(calib_file):
+            with open(calib_file, 'r') as f:
+                calib_data = yaml.safe_load(f)
+            root = ET.fromstring(urdf_contents)
+            
+            if calib_data and "robot_calibration" in calib_data and "joints" in calib_data["robot_calibration"]:
+                joints_calib = calib_data["robot_calibration"]["joints"]
+                for joint in root.findall('joint'):
+                    name = joint.get('name')
+                    logger.info(f"Applying calibration to {name}")
+                    if name in joints_calib:
+                        joint_data = joints_calib[name]
+                        
+                        # Confirm that the joint in URDF has the same parent link as specified in the calibration
+                        parent_elem = joint.find('parent')
+                        if parent_elem is not None and 'parent' in joint_data:
+                            if parent_elem.get('link') != joint_data['parent']:
+                                logger.warning(f"Parent link mismatch for joint '{name}'. Expected: {joint_data['parent']}, but found: {parent_elem.get('link')}. Skipping calibration.")
+                                continue
+                        
+                        #TODO: Threshold for calibration delta? 
+                        
+                        origin = joint.find('origin')
+                        if origin is None:
+                            origin = ET.SubElement(joint, 'origin')
+                        
+                        if 'xyz' in joint_data:
+                            origin.set('xyz', str(joint_data['xyz']))
+                        if 'rpy' in joint_data:
+                            origin.set('rpy', str(joint_data['rpy']))
+                
+                urdf_contents = ET.tostring(root, encoding='unicode')
+        else:
+            logger.warning(f"Calibration file not found at {calib_file}")
+    else:
+        logger.warning("HELLO_FLEET_PATH or HELLO_FLEET_ID not set. Cannot load calibration.")
+
+    if output_dir is not None:
+        if prefix is None:
+            prefix = f"{model_name}_{batch_name}_{tool_name}"
+        return generate_urdf_file(urdf_contents, prefix, output_dir, description)
+
+    return urdf_contents
+    
 
 def get_urdf(
     model_name:str,
@@ -127,7 +208,6 @@ def get_urdf(
     output_dir: str|None = None,
     prefix: str|None = None,
     description: str = "unmodified"
-
     ):
     """
     Generates Robot URDF contents from the base xacro, and optionally saves it to a file if a directory is provided.
@@ -154,8 +234,8 @@ def get_urdf(
     str
         raw urdf contents or the filepath the contents were saved to if an output_dir is provided
     """
+    logger.info(f"Loading robot model: {model_name}, batch: {batch_name}, tool: {tool_name}")
 
-    print(f"GETTING URDF FOR MODEL: {model_name}, BATCH: {batch_name}, TOOL: {tool_name}")
     available_tools = get_available_tools(model_name)
     if tool_name not in available_tools: 
         raise ValueError(f"Unexpected tool for model {model_name}: {tool_name}\nTools available for {model_name}:\n"
@@ -194,12 +274,28 @@ def get_joint_limits(urdf_contents: str):
                 limits[joint.name] = (joint.limit.lower, joint.limit.upper)
         return limits
     except Exception as e:
-        print(f"Warning: Failed to parse URDF for joint limits: {e}")
+        logger.warning(f"Failed to parse URDF for joint limits: {e}")
         return {}
 
 
-def main():
+def setup_logging():
+    try:
+        _, robot_params = RobotParams.get_params()
+        logging_params = robot_params['logging'].copy()
+        # Update filename to be specific to this tool
+        if 'file_handler' in logging_params['handlers']:
+            logging_params['handlers']['file_handler']['filename'] = hello_utils.get_stretch_directory('log/stretch_body_logger/') + 'stretch4_urdf.log'
+        logging.config.dictConfig(logging_params)
+    except:
+        # Fallback to basic configuration if robot_params cannot be loaded
+        logging.basicConfig(
+            level=logging.INFO,
+            format="[%(asctime)s] [%(name)s] [%(levelname)s]: %(message)s",
+            datefmt="%m/%d/%Y %H:%M:%S"
+        )
 
+def main():
+    setup_logging()
     parser = argparse.ArgumentParser(
         description="Generate Robot URDF from the base xacro file."
     )
