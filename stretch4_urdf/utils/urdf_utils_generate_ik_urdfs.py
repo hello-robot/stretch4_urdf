@@ -1,6 +1,7 @@
 import argparse
 import tempfile
-import copy 
+import copy
+import os
 
 import numpy as np
 from yourdfpy import urdf as ud
@@ -71,7 +72,7 @@ def clip_joint_limits(robot: ud.URDF, use_original_limits=True):
                 robot.joint_map[j].limit.lower = new_lower
 
 
-def make_joints_rigid(robot: ud.URDF, ignore_joints=None):
+def _make_joints_rigid(robot: ud.URDF, ignore_joints=None):
     """
     Change any joint that should be immobile for end effector IK
     into a fixed joint.
@@ -313,46 +314,25 @@ def generate_urdf_from_robot(
     str
         filepath of the generated URDF
     """
+    os.makedirs(output_dir, exist_ok=True)
 
     filename = f"{output_dir}/{output_prefix}_{description}.urdf"
     robot.write_xml_file(filename)
 
     return filename
 
+def _make_rigid_wrist_ik_urdf(robot: ud.URDF):
+    ignore_joints = [
+        "mobile_base_translation_joint",
+        "mobile_base_rotation_joint",
+        "mobile_base_planar_joint",
+        "lift_joint",
+        "arm_l4_joint",
+    ]
+    _make_joints_rigid(robot, ignore_joints)
+    return robot
 
-def generate_ik_urdfs(
-    robot: ud.URDF,
-    output_prefix: str,
-    output_dir: str,
-    rigid_wrist_urdf: bool = True,
-    is_merge_arm: bool = True,
-):
-    """
-    Generates URDFs for IK packages. The latest calibrated
-    URDF is used as a starting point, then these modifications
-    are applied:
-      1. Clip joint limits
-      2. Make non-IK joints rigid
-      3. Merge arm joints
-      4. Add virtual rotary base joint
-      5. (optionally) Make wrist joints rigid
-
-    Parameters
-    ----------
-    output_prefix : str
-        this gets prepended to the output filenames
-    rigid_wrist_urdf : bool or None
-        whether to also generate a IK URDF with a fixed dex wrist
-
-    Returns
-    -------
-    list(str)
-        one or two filepaths, depending on `rigid_wrist_urdf`,
-        to the generated URDFs. The first element will be the
-        full IK version, and the second will be the rigid
-        wrist version.
-    """
-
+def _make_ik_urdf(robot: ud.URDF, is_merge_arm: bool):
     clip_joint_limits(robot)
 
     ignore_joints = [
@@ -367,70 +347,105 @@ def generate_ik_urdfs(
         "arm_l3_joint",
         "arm_l4_joint",
     ]
-    make_joints_rigid(robot, ignore_joints)
+    _make_joints_rigid(robot, ignore_joints)
 
     if is_merge_arm:
         merge_arm(robot)
+    
+    return robot
+
+def make_rotary_ik_urdf(robot: ud.URDF, output_prefix: str, output_dir: str, is_fixed_wrist:bool, is_merge_arm: bool):    
+    os.makedirs(output_dir, exist_ok=True)
 
     robot_rotary = copy.copy(robot)
-    robot_prismatic = copy.copy(robot)
-    robot_planar = copy.copy(robot)
+    robot_rotary = _make_ik_urdf(robot_rotary, is_merge_arm)
 
     add_virtual_rotary_joint(robot_rotary)
-    add_virtual_prismatic_joint(robot_prismatic)
+    
+    if not is_fixed_wrist:
+        return generate_urdf_from_robot(
+            robot_rotary, output_prefix, output_dir, "base_rotation_ik"
+        )
+       
+    robot_rotary = _make_rigid_wrist_ik_urdf(robot_rotary)
+    return generate_urdf_from_robot(
+        robot_rotary, output_prefix, output_dir, "base_rotation_ik_with_fixed_wrist"
+    )
+
+def make_translation_ik_urdf(robot: ud.URDF, output_prefix: str, output_dir: str, is_fixed_wrist:bool, is_merge_arm: bool):    
+    os.makedirs(output_dir, exist_ok=True)
+
+    robot_translation = copy.copy(robot)
+    robot_translation = _make_ik_urdf(robot_translation, is_merge_arm)
+
+    add_virtual_prismatic_joint(robot_translation)
+    
+    if not is_fixed_wrist:
+        return generate_urdf_from_robot(
+            robot_translation, output_prefix, output_dir, "base_translation_ik"
+        )
+       
+    robot_translation = _make_rigid_wrist_ik_urdf(robot_translation)
+    return generate_urdf_from_robot(
+        robot_translation, output_prefix, output_dir, "base_translation_ik_with_fixed_wrist"
+    )
+
+def make_planar_ik_urdf(robot: ud.URDF, output_prefix: str, output_dir: str, is_fixed_wrist:bool, is_merge_arm: bool):    
+    os.makedirs(output_dir, exist_ok=True)
+
+    robot_planar = copy.copy(robot)
+    robot_planar = _make_ik_urdf(robot_planar, is_merge_arm)
+
     add_virtual_planar_joint(robot_planar)
-
-    ret = []
-    fpath = generate_urdf_from_robot(
-        robot_rotary, output_prefix, output_dir, "base_rotation_ik"
-    )
-    ret.append(fpath)
-
-    fpath = generate_urdf_from_robot(
-        robot_prismatic, output_prefix, output_dir, "base_translation_ik"
-    )
-    ret.append(fpath)
-
-    fpath = generate_urdf_from_robot(
-        robot_planar, output_prefix, output_dir, "base_planar_ik"
-    )
-    ret.append(fpath)
-
-    if rigid_wrist_urdf:
-        ignore_joints = [
-            "mobile_base_translation_joint",
-            "mobile_base_rotation_joint",
-            "mobile_base_planar_joint",
-            "lift_joint",
-            "arm_l4_joint",
-        ]
-        make_joints_rigid(robot_rotary, ignore_joints)
-        make_joints_rigid(robot_prismatic, ignore_joints)
-        make_joints_rigid(robot_planar, ignore_joints)
-
-        fpath = generate_urdf_from_robot(
-            robot_rotary, output_prefix, output_dir, "base_rotation_ik_with_fixed_wrist"
+    
+    if not is_fixed_wrist:
+        return generate_urdf_from_robot(
+            robot_planar, output_prefix, output_dir, "base_planar_ik"
         )
-        ret.append(fpath)
+       
+    robot_planar = _make_rigid_wrist_ik_urdf(robot_planar)
+    return generate_urdf_from_robot(
+        robot_planar, output_prefix, output_dir, "base_planar_ik_with_fixed_wrist"
+    )
 
-        fpath = generate_urdf_from_robot(
-            robot_prismatic,
-            output_prefix,
-            output_dir,
-            "base_translation_ik_with_fixed_wrist",
-        )
-        ret.append(fpath)
 
-        fpath = generate_urdf_from_robot(
-            robot_planar,
-            output_prefix,
-            output_dir,
-            "base_planar_ik_with_fixed_wrist",
-        )
-        ret.append(fpath)
+def generate_ik_urdfs(
+    robot: ud.URDF,
+    output_prefix: str,
+    output_dir: str,
+    is_merge_arm: bool = True,
+):
+    """
+    Generates URDFs for IK packages. The latest calibrated
+    URDF is used as a starting point, then these modifications
+    are applied:
+      1. Clip joint limits
+      2. Make non-IK joints rigid
+      3. (optionally, if is_merge_arm=True) Merge arm joints
+      4. Add virtual rotary base joint
 
-    return ret
+    Parameters
+    ----------
+    output_prefix : str
+        this gets prepended to the output filenames
 
+    Returns
+    -------
+    list(str)
+        one or two filepaths, depending on `rigid_wrist_urdf`,
+        to the generated URDFs. The first element will be the
+        full IK version, and the second will be the rigid
+        wrist version.
+    """
+
+    return [
+        make_rotary_ik_urdf(robot, output_prefix, output_dir, is_fixed_wrist=False, is_merge_arm=is_merge_arm),
+        make_translation_ik_urdf(robot, output_prefix, output_dir, is_fixed_wrist=False, is_merge_arm=is_merge_arm),
+        make_planar_ik_urdf(robot, output_prefix, output_dir, is_fixed_wrist=False, is_merge_arm=is_merge_arm),
+        make_rotary_ik_urdf(robot, output_prefix, output_dir, is_fixed_wrist=True, is_merge_arm=is_merge_arm),
+        make_translation_ik_urdf(robot, output_prefix, output_dir, is_fixed_wrist=True, is_merge_arm=is_merge_arm),
+        make_planar_ik_urdf(robot, output_prefix, output_dir, is_fixed_wrist=True, is_merge_arm=is_merge_arm),
+    ]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -461,6 +476,7 @@ if __name__ == "__main__":
 
     if no_merge_arm:
         print("Not merging arm links and joints")
+
 
     robot = generate_robot_from_base_xacro()
     print(generate_ik_urdfs(robot, args.prefix, args.output_dir))
