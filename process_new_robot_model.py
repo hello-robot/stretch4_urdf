@@ -356,8 +356,8 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             
             is_fingertip_right = ('fingertip' in child_name.lower() and 'right' in child_name.lower() and 'aruco' not in child_name.lower())
             is_fingertip_left = ('fingertip' in child_name.lower() and 'left' in child_name.lower() and 'aruco' not in child_name.lower())
-            is_sensor_base = child_name in sensor_opt_old
-            is_optical_frame = ('optical' in jname.lower() or 'lidar' in child_name.lower())
+            is_sensor_base = any(x in child_name.lower() for x in ['camera_', 'line_sensor_', 'gripper_camera_']) and 'optical' not in child_name.lower()
+            is_optical_frame = ('optical' in jname.lower() or 'optical' in child_name.lower() or 'lidar' in child_name.lower())
             
             R_old_B = link_abs_R.get(child_name, [[1,0,0],[0,1,0],[0,0,1]])
             R_rel_old = mult_matrix(transpose(R_old_A) if 'R_old_A' in locals() else transpose(link_abs_R.get(curr, [[1,0,0],[0,1,0],[0,0,1]])), R_old_B)
@@ -367,49 +367,49 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             if is_prismatic or is_wrist_rotation or is_arm_link or is_tool_attachment_site or is_link_wrist or is_quick_connect_interface:
                 R_new_B = [[1,0,0],[0,1,0],[0,0,1]]
             elif is_optical_frame:
-                diff = abs(R_rel_old[0][0] - 1.0) + abs(R_rel_old[1][1] - 1.0) + abs(R_rel_old[2][2] - 1.0)
-                if diff < 0.1:
-                    R_new_B = [
-                        [-R_inherited[0][1], -R_inherited[0][2], R_inherited[0][0]],
-                        [-R_inherited[1][1], -R_inherited[1][2], R_inherited[1][0]],
-                        [-R_inherited[2][1], -R_inherited[2][2], R_inherited[2][0]]
-                    ]
-                elif 'camera' in child_name.lower() and 'optical' in child_name.lower():
-                    # Rule 4 Edit:
-                    # Center and Right Head Cameras natively map outward to Left/Up.
-                    # All other cameras (Left, Gripper, generic) follow standard ROS mapping (Right/Down).
-                    if ('center' in child_name.lower() or 'right' in child_name.lower()) and 'gripper' not in child_name.lower():
+                if 'lidar' in child_name.lower():
+                    if 'left' in child_name.lower():
                         R_new_B = [
-                            [R_new_A[0][1], R_new_A[0][2], R_new_A[0][0]],
-                            [R_new_A[1][1], R_new_A[1][2], R_new_A[1][0]],
-                            [R_new_A[2][1], R_new_A[2][2], R_new_A[2][0]]
+                            [R_new_A[0][2], -R_new_A[0][1], R_new_A[0][0]],
+                            [R_new_A[1][2], -R_new_A[1][1], R_new_A[1][0]],
+                            [R_new_A[2][2], -R_new_A[2][1], R_new_A[2][0]]
+                        ]
+                    elif 'right' in child_name.lower():
+                        R_new_B = [
+                            [R_new_A[0][2], R_new_A[0][1], -R_new_A[0][0]],
+                            [R_new_A[1][2], R_new_A[1][1], -R_new_A[1][0]],
+                            [R_new_A[2][2], R_new_A[2][1], -R_new_A[2][0]]
                         ]
                     else:
                         R_new_B = [
-                            [-R_new_A[0][1], -R_new_A[0][2], R_new_A[0][0]],
-                            [-R_new_A[1][1], -R_new_A[1][2], R_new_A[1][0]],
-                            [-R_new_A[2][1], -R_new_A[2][2], R_new_A[2][0]]
+                            [R_new_A[0][2], -R_new_A[0][1], R_new_A[0][0]],
+                            [R_new_A[1][2], -R_new_A[1][1], R_new_A[1][0]],
+                            [R_new_A[2][2], -R_new_A[2][1], R_new_A[2][0]]
                         ]
                 else:
-                    R_new_B = R_inherited
-                if child_name not in rule4_optical_frames: rule4_optical_frames.append(child_name)
-            elif is_sensor_base:
-                if 'camera_' in child_name.lower() and '_link' in child_name.lower() and 'optical' not in child_name.lower():
-                    # Base frames geometrically map native X definitively unequivocally explicitly parallel firmly dynamically into optical Z
                     R_new_B = [
-                        [R_inherited[0][2], R_inherited[0][1], -R_inherited[0][0]],
-                        [R_inherited[1][2], R_inherited[1][1], -R_inherited[1][0]],
-                        [R_inherited[2][2], R_inherited[2][1], -R_inherited[2][0]]
+                        [-R_new_A[0][1], -R_new_A[0][2], R_new_A[0][0]],
+                        [-R_new_A[1][1], -R_new_A[1][2], R_new_A[1][0]],
+                        [-R_new_A[2][1], -R_new_A[2][2], R_new_A[2][0]]
                     ]
-                    if 'gripper' in child_name.lower():
-                        # Rotate gripper camera by +90 deg around global Z to point X forward instead of right
+                if child_name not in rule4_optical_frames: 
+                    rule4_optical_frames.append(child_name)
+            elif is_sensor_base:
+                if 'camera' in child_name.lower() and ('left' in child_name.lower() or 'right' in child_name.lower() or 'center' in child_name.lower()) and 'gripper' not in child_name.lower():
+                    if 'left' in child_name.lower():
                         R_new_B = [
-                            [-R_new_B[1][0], -R_new_B[1][1], -R_new_B[1][2]],
-                            [ R_new_B[0][0],  R_new_B[0][1],  R_new_B[0][2]],
-                            [ R_new_B[2][0],  R_new_B[2][1],  R_new_B[2][2]]
+                            [R_new_A[0][0], -R_new_A[0][2], R_new_A[0][1]],
+                            [R_new_A[1][0], -R_new_A[1][2], R_new_A[1][1]],
+                            [R_new_A[2][0], -R_new_A[2][2], R_new_A[2][1]]
+                        ]
+                    else:
+                        R_new_B = [
+                            [R_new_A[0][0], R_new_A[0][2], -R_new_A[0][1]],
+                            [R_new_A[1][0], R_new_A[1][2], -R_new_A[1][1]],
+                            [R_new_A[2][0], R_new_A[2][2], -R_new_A[2][1]]
                         ]
                 else:
-                    R_new_B = R_inherited
+                    R_new_B = [row[:] for row in R_new_A]
                 if child_name not in rule4_sensor_bases: rule4_sensor_bases.append(child_name)
             elif is_grasp:
                 R_new_B = [[0, 1, 0], [-1, 0, 0], [0, 0, 1]]
