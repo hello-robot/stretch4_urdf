@@ -1,13 +1,5 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="stretch">
   <link name="base_footprint">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
     </link>
   <link name="base_link">
     <inertial>
@@ -18,7 +10,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/base_link.obj" />
+        <mesh filename="$(arg model_mesh_dir)/base_link.OBJ" />
       </geometry>
       <material name="">
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
@@ -27,7 +19,7 @@
     <collision name="base_collision_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/base_collision_link.obj" />
+        <mesh filename="$(arg model_mesh_dir)/base_collision_link.OBJ" />
       </geometry>
     </collision>
   </link>
@@ -43,21 +35,7 @@
       <mass value="0.00213836003346436" />
       <inertia ixx="2.88698160050487E-07" ixy="-7.07831726662329E-09" ixz="5.64135957062429E-10" iyy="6.64615782289849E-08" iyz="2.73972720709955E-10" izz="2.34959277592962E-07" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_5_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision name="line_sensor_5_collision_link">
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_5_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="line_sensor_5_joint" type="fixed">
     <origin xyz="0.0613832 0.178319 0.0527014" rpy="0 0.453786 1.0472" />
@@ -66,14 +44,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="line_sensor_5_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="-3.14159 -1.5708 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     </link>
   <joint name="line_sensor_5_optical_joint" type="fixed">
     <origin xyz="0.00286 0 0" rpy="-1.5708 0 -1.5708" />
@@ -87,21 +57,7 @@
       <mass value="0.00213836003346436" />
       <inertia ixx="2.88698160050488E-07" ixy="-7.07831726662323E-09" ixz="5.64135957060017E-10" iyy="6.6461578228985E-08" iyz="2.73972720708404E-10" izz="2.34959277592962E-07" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_4_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision name="line_sensor_4_collision_link">
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_4_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="line_sensor_4_joint" type="fixed">
     <origin xyz="-0.0613832 0.178319 0.0527014" rpy="0 0.453786 2.0944" />
@@ -110,14 +66,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="line_sensor_4_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="3.14159 -1.5708 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     </link>
   <joint name="line_sensor_4_optical_joint" type="fixed">
     <origin xyz="0.00286 0 0" rpy="-1.5708 0 -1.5708" />
@@ -131,21 +79,7 @@
       <mass value="0.00213836003346444" />
       <inertia ixx="2.88698160050477E-07" ixy="-7.07831726660264E-09" ixz="5.64135957061256E-10" iyy="6.64615782289998E-08" iyz="2.73972720709257E-10" izz="2.34959277592965E-07" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_3_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision name="line_sensor_3_collision_link">
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_3_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="line_sensor_3_joint" type="fixed">
     <origin xyz="-0.18512 -0.036 0.0527014" rpy="0 0.453786 -3.14159" />
@@ -154,14 +88,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="line_sensor_3_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="-3.14159 -1.5708 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     </link>
   <joint name="line_sensor_3_optical_joint" type="fixed">
     <origin xyz="0.00286 0 0" rpy="-1.5708 0 -1.5708" />
@@ -175,21 +101,7 @@
       <mass value="0.00213836003346437" />
       <inertia ixx="2.88698160050488E-07" ixy="-7.07831726662343E-09" ixz="5.64135957062436E-10" iyy="6.64615782289851E-08" iyz="2.73972720710034E-10" izz="2.34959277592963E-07" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_2_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision name="line_sensor_2_collision_link">
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_2_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="line_sensor_2_joint" type="fixed">
     <origin xyz="-0.123737 -0.142319 0.0527014" rpy="0 0.453786 -2.0944" />
@@ -198,14 +110,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="line_sensor_2_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="-3.14159 -1.5708 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     </link>
   <joint name="line_sensor_2_optical_joint" type="fixed">
     <origin xyz="0.00286 0 0" rpy="-1.5708 0 -1.5708" />
@@ -219,21 +123,7 @@
       <mass value="0.00213836003346436" />
       <inertia ixx="2.88698160050487E-07" ixy="-7.07831726662329E-09" ixz="5.64135957059983E-10" iyy="6.64615782289849E-08" iyz="2.73972720708449E-10" izz="2.34959277592962E-07" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_1_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision name="line_sensor_1_collision_link">
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_1_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="line_sensor_1_joint" type="fixed">
     <origin xyz="0.123737 -0.142319 0.0527014" rpy="0 0.453786 -1.0472" />
@@ -242,14 +132,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="line_sensor_1_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="-3.14159 -1.5708 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     </link>
   <joint name="line_sensor_1_optical_joint" type="fixed">
     <origin xyz="0.00286 0 0" rpy="-1.5708 0 -1.5708" />
@@ -263,21 +145,7 @@
       <mass value="0.00213836003346444" />
       <inertia ixx="2.88698160050477E-07" ixy="-7.07831726660252E-09" ixz="5.64135957061258E-10" iyy="6.64615782290001E-08" iyz="2.73972720709191E-10" izz="2.34959277592965E-07" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_0_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision name="line_sensor_0_collision_link">
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_0_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="line_sensor_0_joint" type="fixed">
     <origin xyz="0.18512 -0.036 0.0527014" rpy="0 0.453786 0" />
@@ -286,14 +154,6 @@
     <axis xyz="0 0 0" />
   </joint>
   <link name="line_sensor_0_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="-3.14159 -1.5708 0" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     </link>
   <joint name="line_sensor_0_optical_joint" type="fixed">
     <origin xyz="0.00286 0 0" rpy="-1.5708 0 -1.5708" />
@@ -335,21 +195,7 @@
       <mass value="5.62562911534835" />
       <inertia ixx="0.0492829862682945" ixy="-0.00156447943074778" ixz="0.0149316960757035" iyy="0.0349356510816738" iyz="0.00380036130478219" izz="0.0486907192495753" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/lidar_right_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
-    <collision name="lidar_right_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/lidar_right_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="lidar_right_joint" type="fixed">
     <origin xyz="0.131744 -0.0264137 -0.058328" rpy="-3.05466 0.7816 2.39203" />
@@ -363,21 +209,7 @@
       <mass value="5.62562911534835" />
       <inertia ixx="0.0495631509325281" ixy="0.00150375861955282" ixz="-0.0147241234027668" iyy="0.0345419854283597" iyz="0.00388339874340473" izz="0.0488042202386559" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/lidar_left_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
-    <collision name="lidar_left_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/lidar_left_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="lidar_left_joint" type="fixed">
     <origin xyz="0.131744 0.222414 -0.058328" rpy="-3.05466 -0.7816 0.749563" />
@@ -387,132 +219,66 @@
   </joint>
   <link name="camera_right_link">
     <inertial>
-      <origin xyz="0.0693851 0.0755903 0.0909127" rpy="0 1.5708 0" />
+      <origin xyz="0.0755903 -0.0693851 0.0909127" rpy="1.5708 0 1.5708" />
       <mass value="5.62562911534835" />
       <inertia ixx="0.0504717539490822" ixy="-0.000186491896655228" ixz="0.0128492795010695" iyy="0.0306330356066479" iyz="9.71151606421086E-05" izz="0.0518045670438135" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 1.5708 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/camera_right_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
-    <collision name="camera_right_collision_link">
-      <origin xyz="0 0 0" rpy="0 1.5708 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/camera_right_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="camera_right_joint" type="fixed">
-    <origin xyz="0.171841 0.023 -0.0157567" rpy="0 0.820305 0" />
+    <origin xyz="0.171841 0.023 -0.0157567" rpy="-1.5708 0.820305 0" />
     <parent link="head_link" />
     <child link="camera_right_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_right_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 1.5708" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_right_optical_joint" type="fixed">
-    <origin xyz="0.0212 0 0" rpy="3.14159 -1.5708 0" />
+    <origin xyz="0.0212 0 0" rpy="-1.5708 0 -1.5708" />
     <parent link="camera_right_link" />
     <child link="camera_right_optical_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_left_link">
     <inertial>
-      <origin xyz="-0.0693851 -0.0744097 -0.0909127" rpy="3.14159 -1.5708 0" />
+      <origin xyz="0.0744097 -0.0693851 -0.0909127" rpy="1.5708 0 1.5708" />
       <mass value="5.62562911534835" />
       <inertia ixx="0.0504717539490822" ixy="-0.000186491896655198" ixz="-0.0128492795010695" iyy="0.0306330356066479" iyz="-9.711516064215E-05" izz="0.0518045670438135" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="3.14159 -1.5708 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/camera_left_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
-    <collision name="camera_left_collision_link">
-      <origin xyz="0 0 0" rpy="3.14159 -1.5708 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/camera_left_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="camera_left_joint" type="fixed">
-    <origin xyz="0.171841 0.173 -0.0157567" rpy="0 0.820305 0" />
+    <origin xyz="0.171841 0.173 -0.0157567" rpy="1.5708 0.820305 0" />
     <parent link="head_link" />
     <child link="camera_left_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_left_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 -1.5708" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_left_optical_joint" type="fixed">
-    <origin xyz="0.0212 0 0" rpy="0 1.5708 0" />
+    <origin xyz="0.0212 0 0" rpy="-1.5708 0 -1.5708" />
     <parent link="camera_left_link" />
     <child link="camera_left_optical_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_center_link">
     <inertial>
-      <origin xyz="-0.0958729 0.000590252 -0.070924" rpy="3.14159 -1.5708 0" />
+      <origin xyz="-0.000590252 -0.0958729 -0.070924" rpy="1.5708 0 1.5708" />
       <mass value="5.62562911534835" />
       <inertia ixx="0.0557556406323663" ixy="-0.000162225224016438" ixz="-0.0120094528841815" iyy="0.0306330356066479" iyz="-0.000133766806934365" izz="0.0465206803605294" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="3.14159 -1.5708 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/camera_center_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
-    <collision name="camera_center_collision_link">
-      <origin xyz="0 0 0" rpy="3.14159 -1.5708 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/camera_center_link.STL" />
-      </geometry>
-    </collision>
+
   </link>
   <joint name="camera_center_joint" type="fixed">
-    <origin xyz="0.177246 0.098 -0.0239069" rpy="0 0.610865 0" />
+    <origin xyz="0.177246 0.098 -0.0239069" rpy="1.5708 0.610865 0" />
     <parent link="head_link" />
     <child link="camera_center_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="camera_center_optical_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 -1.5708" />
-      <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
     </link>
   <joint name="camera_center_optical_joint" type="fixed">
-    <origin xyz="0.0017 0 0" rpy="0 1.5708 0" />
+    <origin xyz="0.0017 0 0" rpy="-1.5708 0 -1.5708" />
     <parent link="camera_center_link" />
     <child link="camera_center_optical_link" />
     <axis xyz="0 0 0" />
