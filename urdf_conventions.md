@@ -34,8 +34,10 @@ Optical and sensor frame orientations follow available sensor documentation and 
 
 - **Sensor Base Frame (`camera_*_link`, `line_sensor_*_link`, `gripper_camera_link`):** A sensor's mounting frame's x axis is pointed forward, with z pointing towards the top of the sensor and y pointing to the sensor's left.
 - **Optical Frame (`_optical`):** Z points out of the optical sensor. X points to the sensor's right along the horizontal axis of the image and y points down.
-  - **Right and Center Head Cameras:** Physically mounted with a counterclockwise (+90 degrees) rotation about the sensor's z axis. For the sensor base frame, the y axis points up (away from the base) and the z axis points horizontally outward (the robot's right). For the optical frame, the x axis points down towards the robot's base and y points to the robot's left.
-  - **Left Head Camera:** Physically mounted with a clockwise (-90 degrees) rotation. For the sensor base frame, the y axis points down (towards from the base) and the z axis points horizontally outward (the robot's left). For the optical frame, the x axis points upwards away from the base and y points to the robot's right.
+  - **Right and Center Head Cameras:** Physically mounted with a counterclockwise (+90 degrees) rotation about the sensor's optical z axis. For the sensor base frame, the y axis points up (away from the base) and the z axis points horizontally outward (the robot's right). For the optical frame, the x axis points down towards the robot's base and y points inwards to the robot's left.
+  - **Left Head Camera:** Physically mounted with a clockwise (-90 degrees) rotation about the sensor's optical z axis. For the sensor base frame, the y axis points down (towards from the base) and the z axis points horizontally outward (the robot's left). For the optical frame, the x axis points upwards away from the base and y points inwards to the robot's right.
+  
+  *(Note: This physical layout results in the optical y-axes of all three cameras pointing inwards towards each other).*
 - **Range Sensors (`lidar_*_link`)**: The z axis points out of the sensor, aligning with the field of view, and the y axis is oriented to point towards the socket connector. The Lidars on Stretch4 are mounted such that y axes are pointing towards the head center and the x axes are pointing up.
 
 ## Rule 5: Grasping Geometry Conventions
