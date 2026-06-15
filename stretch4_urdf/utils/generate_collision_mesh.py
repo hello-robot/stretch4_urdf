@@ -254,18 +254,6 @@ def process_model_links(root_dir: str):
                             if 'optical' not in link_name.lower():
                                 mesh_links_dict[link_name] = (link, filename, urdf_base)
 
-    # Check for missing links in config and add them
-    missing_links = [ln for ln in mesh_links_dict if ln not in collision_config]
-    if missing_links:
-        print(f"Adding missing links to config with default action 'bounding_box': {missing_links}")
-        for ln in missing_links:
-            collision_config[ln] = {'action': 'bounding_box'}
-        
-        # Write back to yaml
-        with open(config_path, 'w') as f:
-            yaml.dump({'links': collision_config}, f, default_flow_style=False, sort_keys=False)
-        print(f"Updated {config_path}")
-
     summary_data = []
     print(f"Processing links found in {root_dir}...")
     
@@ -281,7 +269,10 @@ def process_model_links(root_dir: str):
         action = None
         params = ""
         
-        cfg = collision_config[link_name]
+        cfg = collision_config.get(link_name)
+        if not cfg:
+            continue
+            
         if not isinstance(cfg, dict):
             print(f"Error: Configuration for link '{link_name}' must be a dictionary. Got: {cfg}")
             continue

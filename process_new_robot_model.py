@@ -1,75 +1,62 @@
 #!/usr/bin/env python3
-
-"""This script generates Factory tool to generate URDFs from Xacros"""
-
-import argparse
-import subprocess
-import shlex
-import sys
-import os
 import glob
-import yaml
-import shutil
-import re
-from stretch4_urdf.utils.update_urdf_with_collision_mesh_filepath import update_urdf_collision_meshes, remove_collision_from_optical_links
-import xacrodoc
 import importlib.resources as importlib_resources
-import math
+import os
+import re
+import shutil
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+import numpy as np
+import yaml
+
+from stretch4_urdf.utils.update_urdf_with_collision_mesh_filepath import (
+    remove_collision_from_optical_links, update_urdf_collision_meshes)
+
 
 def rpy_to_matrix(r, p, y):
-    cx, sx = math.cos(r), math.sin(r)
-    cy, sy = math.cos(p), math.sin(p)
-    cz, sz = math.cos(y), math.sin(y)
+    cx, sx = np.cos(r), np.sin(r)
+    cy, sy = np.cos(p), np.sin(p)
+    cz, sz = np.cos(y), np.sin(y)
 
     R = [
         [cy*cz, sx*sy*cz - cx*sz, cx*sy*cz + sx*sz],
         [cy*sz, sx*sy*sz + cx*cz, cx*sy*sz - sx*cz],
         [-sy,   sx*cy,            cx*cy]
     ]
-    return R
+    return np.array(R)
 
 def matrix_to_rpy(R):
-    sy = math.sqrt(R[0][0]**2 + R[1][0]**2)
+    sy = np.sqrt(R[0][0]**2 + R[1][0]**2)
     singular = sy < 1e-6
     if not singular:
-        x = math.atan2(R[2][1], R[2][2])
-        y = math.atan2(-R[2][0], sy)
-        z = math.atan2(R[1][0], R[0][0])
+        x = np.atan2(R[2][1], R[2][2])
+        y = np.atan2(-R[2][0], sy)
+        z = np.atan2(R[1][0], R[0][0])
     else:
-        x = math.atan2(-R[1][2], R[1][1])
-        y = math.atan2(-R[2][0], sy)
+        x = np.atan2(-R[1][2], R[1][1])
+        y = np.atan2(-R[2][0], sy)
         z = 0
     return x, y, z
 
-def mult_matrix(A, B):
-    return [[sum(A[i][k]*B[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
 
-def transpose(A):
-    return [[A[j][i] for j in range(3)] for i in range(3)]
-
-def matrix_to_rpy(R):
-    import math
-    sy = math.sqrt(R[0][0]**2 + R[1][0]**2)
-    singular = sy < 1e-6
-    if not singular:
-        x = math.atan2(R[2][1], R[2][2])
-        y = math.atan2(-R[2][0], sy)
-        z = math.atan2(R[1][0], R[0][0])
-    else:
-        x = math.atan2(-R[1][2], R[1][1])
-        y = math.atan2(-R[2][0], sy)
-        z = 0
-    return x, y, z
+def clean(vals): 
+    return " ".join(f"{0.0 if abs(v) < 1e-6 else v:.6g}" for v in vals)
 
 def get_abs_poses(root):
     tree_map = {}
     for joint in root.findall('joint'):
+        
         parent = joint.find('parent')
         child = joint.find('child')
         origin = joint.find('origin')
+        
         if parent is not None and child is not None:
-            p_name = parent.get('link')
-            c_name = child.get('link')
+        
+            parent_link = parent.get('link')
+            child_link = child.get('link')
+        
             rpy = [0.0, 0.0, 0.0]
             xyz = [0.0, 0.0, 0.0]
             if origin is not None:
@@ -77,62 +64,51 @@ def get_abs_poses(root):
                     rpy = [float(x) for x in origin.get('rpy').split()]
                 if origin.get('xyz'):
                     xyz = [float(x) for x in origin.get('xyz').split()]
-            R_rel = rpy_to_matrix(*rpy)
-            if p_name not in tree_map:
-                tree_map[p_name] = []
-            tree_map[p_name].append((c_name, R_rel, xyz, joint))
+        
+            R_parent_to_child = rpy_to_matrix(*rpy)
+            t_parent_to_child = np.array(xyz)
+
+            if parent_link not in tree_map:
+                tree_map[parent_link] = []
+            tree_map[parent_link].append((child_link, R_parent_to_child, t_parent_to_child, joint))
 
     all_children = set()
     for children in tree_map.values():
-        for ch, _, _, _ in children:
-            all_children.add(ch)
+        for child, _, _, _ in children:
+            all_children.add(child)
             
-    root_links = [p for p in tree_map.keys() if p not in all_children]
-    root_link = root_links[0] if root_links else 'base_link'
+    root_links = [parent for parent in tree_map.keys() if parent not in all_children]
+    if len(root_links) != 1:
+        raise ValueError(f"Found {len(root_links)} root links, expected 1: {root_links}")
+    root_link = root_links[0]
     
-    abs_rot = {root_link: [[1,0,0],[0,1,0],[0,0,1]]}
-    abs_pos = {root_link: [0.0, 0.0, 0.0]}
+    R_original_root_to_link_dict = {root_link: np.eye(3)}
+    t_original_root_to_link_dict = {root_link: [0.0, 0.0, 0.0]}
     queue = [root_link]
     
-    joint_abs_rot = {}
+    R_original_root_to_joint_dict = {}
     while queue:
-        curr = queue.pop(0)
-        curr_R = abs_rot[curr]
-        curr_pos = abs_pos[curr]
-        if curr in tree_map:
-            for child, R_rel, xyz, joint in tree_map[curr]:
-                child_R = mult_matrix(curr_R, R_rel)
-                abs_rot[child] = child_R
-                joint_abs_rot[joint.get('name')] = child_R
+        link_name = queue.pop(0)
+        R_root_to_parent = R_original_root_to_link_dict[link_name]
+        t_root_to_parent = t_original_root_to_link_dict[link_name]
+        if link_name in tree_map:
+            for child, R_parent_to_child, t_parent_to_child, joint in tree_map[link_name]:
+                R_root_to_child = R_root_to_parent @ R_parent_to_child
+                R_original_root_to_link_dict[child] = R_root_to_child
+                R_original_root_to_joint_dict[joint.get('name')] = R_root_to_child
                 
-                pos_B = [
-                    curr_pos[0] + curr_R[0][0]*xyz[0] + curr_R[0][1]*xyz[1] + curr_R[0][2]*xyz[2],
-                    curr_pos[1] + curr_R[1][0]*xyz[0] + curr_R[1][1]*xyz[1] + curr_R[1][2]*xyz[2],
-                    curr_pos[2] + curr_R[2][0]*xyz[0] + curr_R[2][1]*xyz[1] + curr_R[2][2]*xyz[2],
-                ]
-                abs_pos[child] = pos_B
+                t_root_to_child = (np.array(t_root_to_parent) + R_root_to_parent @ t_parent_to_child).tolist()
+                t_original_root_to_link_dict[child] = t_root_to_child
                 
                 queue.append(child)
                 
-    return joint_abs_rot, abs_rot, abs_pos
+    return R_original_root_to_joint_dict, R_original_root_to_link_dict, t_original_root_to_link_dict
 
 
-def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
-    # Find the base URDF file
-    urdf_files = glob.glob(os.path.join(root_dir, '*.urdf'))
-    
-    if len(urdf_files) != 1:
-        print(f"Error: Expected exactly one base URDF file in {root_dir}, found {len(urdf_files)}: {urdf_files}")
-        return
-
-    base_urdf = urdf_files[0]
-    print(f"Found base URDF: {base_urdf}")
-
-    # If the collision_mesh_config.yaml file does not exist, create one using the default values
+def create_collision_config_if_missing(base_urdf, root_dir):
     config_path = os.path.join(root_dir, 'collision_mesh_config.yaml')
     if not os.path.exists(config_path):
         print(f"Creating default collision_mesh_config.yaml in {root_dir}")
-        import xml.etree.ElementTree as ET
         tree = ET.parse(base_urdf)
         root = tree.getroot()
         
@@ -157,7 +133,7 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
         with open(config_path, 'w') as f:
             yaml.dump({'links': links_dict}, f, default_flow_style=False, sort_keys=False)
 
-    # Perform collision mesh generation by calling generate_collision_mesh.py CLI
+def generate_collision_meshes(model_name):
     print(f"Generating collision meshes for model: {model_name}...")
     gen_script = os.path.join(os.path.dirname(__file__), 'stretch4_urdf', 'utils', 'generate_collision_mesh.py')
     try:
@@ -165,28 +141,10 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     except subprocess.CalledProcessError as e:
         print(f"Error generating collision meshes for {model_name}: {e}")
 
-    # Create the xacro directory if it does not exist
-    os.makedirs(xacro_dir, exist_ok=True)
-
-    # Create the xacro filename
-    stretch_main_xacro = os.path.join(xacro_dir, 'stretch_main.xacro')
-
-    # Copy the base URDF to the new xacro location so we can process it
-    shutil.copy(base_urdf, stretch_main_xacro)
-
-    print('Updating the URDF with collision mesh filepaths. If there is a _collision.STL file, its file path will be used in the collision geometry - replacing the existing mesh in the final XACRO file.')
-    update_urdf_collision_meshes(base_urdf, stretch_main_xacro)
-    remove_collision_from_optical_links(stretch_main_xacro, stretch_main_xacro)
-    
-    print('Ensuring prismatic joints share base link orientation and validating rotation joint axes...')
-    import xml.etree.ElementTree as ET
-    import math
-    tree = ET.parse(stretch_main_xacro)
-    root = tree.getroot()
-    
+def apply_rule2_proximal_distal_arm_naming(root):
     rule5_arm_renamed = False
     for j in root.findall('joint'):
-        if j.get('name') == 'joint_arm_l4':
+        if j.get('name') in ['joint_arm_l4', 'arm_l4_joint']:
             pt = j.find('parent')
             if pt is not None and pt.get('link') == 'lift_link':
                 rule5_arm_renamed = True
@@ -210,10 +168,9 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
                         if f'arm_T{idx}' in val:
                             tag.set(attr, val.replace(f'arm_T{idx}', f'arm_l{4-idx}'))
                             break
-    
-    joint_abs_R, link_abs_R, link_abs_P = get_abs_poses(root)
-    
-    # Rule 6: Rename wheels counter-clockwise based on their absolute positions
+    return rule5_arm_renamed
+
+def apply_rule6_wheel_renaming(root, P_root_to_original_link):
     wheels = []
     for joint in root.findall('joint'):
         jname = joint.get('name')
@@ -222,18 +179,18 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             child = joint.find('child')
             if child is not None:
                 c_link = child.get('link')
-                pos = link_abs_P.get(c_link, [0, 0, 0])
+                pos = P_root_to_original_link.get(c_link, [0, 0, 0])
                 wheels.append({'name': jname, 'link': c_link, 'pos': pos})
 
     rule6_wheels_renamed = False
     if wheels:
         for w in wheels:
-            w['theta'] = math.atan2(w['pos'][1], w['pos'][0])
+            w['theta'] = np.atan2(w['pos'][1], w['pos'][0])
             
         def ang_diff(a1, a2):
             diff = a1 - a2
-            while diff > math.pi: diff -= 2*math.pi
-            while diff < -math.pi: diff += 2*math.pi
+            while diff > np.pi: diff -= 2*np.pi
+            while diff < -np.pi: diff += 2*np.pi
             return diff
             
         closest_wheel = min(wheels, key=lambda w: abs(ang_diff(w['theta'], 0)))
@@ -241,8 +198,8 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
         
         def counter_clockwise_dist(w):
             d = w['theta'] - start_theta
-            while d < 0: d += 2*math.pi
-            while d >= 2*math.pi: d -= 2*math.pi
+            while d < 0: d += 2*np.pi
+            while d >= 2*np.pi: d -= 2*np.pi
             return d
             
         wheels_sorted = sorted(wheels, key=counter_clockwise_dist)
@@ -260,7 +217,6 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             if m:
                 new_jname = w['name'].replace(f'wheel_{old_idx}', f'wheel_{i}')
             elif 'wheel' in w['name'].lower():
-                # Attempt basic replacement if no numeric index is present
                 new_jname = w['name'].replace('wheel', f'wheel_{i}')
                 
             m_link = re.search(r'wheel_(\d+)', w['link'])
@@ -287,24 +243,63 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
                         if tag.get(attr) == w_temp:
                             tag.set(attr, w_new)
                             
-            # Update absolute poses after rename
-            joint_abs_R, link_abs_R, link_abs_P = get_abs_poses(root)
-    sensor_opt_old = {}
-    for joint in root.findall('joint'):
-        if 'optical' in joint.get('name', '').lower():
-            pt = joint.find('parent')
-            ch = joint.find('child')
-            if pt is not None and ch is not None:
-                sensor_opt_old[pt.get('link')] = link_abs_R.get(ch.get('link'), [[1,0,0],[0,1,0],[0,0,1]])
-                
-    rule1_changed = []
-    rule3_rotation_warn = []
-    rule4_sensor_bases = []
-    rule4_optical_frames = []
-    rule5_grasp_changed = []
-    rule_polarity_flip_warn = []
+    return rule6_wheels_renamed, wheels
 
-    def clean(val): return 0.0 if abs(val) < 1e-6 else val
+def compute_updated_child_rotation(child_name, jname, jtype, R_root_to_nominal_child, P_root_to_original_link):
+    is_wheel = ('wheel' in jname.lower() and jtype in ['continuous', 'revolute'])
+    is_grasp = (jname and 'grasp' in jname.lower())
+    is_fingertip_right = ('fingertip' in child_name.lower() and 'right' in child_name.lower() and 'aruco' not in child_name.lower())
+    is_fingertip_left = ('fingertip' in child_name.lower() and 'left' in child_name.lower() and 'aruco' not in child_name.lower())
+    is_sensor_base = any(x in child_name.lower() for x in ['camera_', 'line_sensor_']) and 'optical' not in child_name.lower()
+    is_optical_frame = ('optical' in child_name.lower() or 'lidar' in child_name.lower())
+
+    if is_optical_frame or is_sensor_base:
+        child_lower = child_name.lower()
+        if 'camera_left' in child_lower or 'camera_center' in child_lower:
+            if is_optical_frame:
+                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=0, y=-np.pi/2)
+            else:
+                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=-np.pi/2, y=np.pi/2)
+        elif 'camera_right' in child_lower:
+            if is_optical_frame:
+                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=0, y=np.pi/2)
+            else:
+                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=-np.pi/2, y=np.pi/2)
+        elif 'line_sensor' in child_lower:
+            if is_optical_frame: 
+                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=-np.pi/2, y=np.pi)
+            else: 
+                return R_root_to_nominal_child @ rpy_to_matrix(r=-np.pi/2, p=0, y=0)
+        elif 'gripper' in child_lower:
+            if is_optical_frame:
+                return R_root_to_nominal_child @ rpy_to_matrix(r=-np.pi/2, p=0, y=-np.pi/2)
+            else:
+                return R_root_to_nominal_child @ rpy_to_matrix(r=np.pi, p=0, y=0)
+        else:
+            return R_root_to_nominal_child
+
+    elif is_grasp:
+        return rpy_to_matrix(r=0,p=0,y=np.pi/2)
+    elif is_fingertip_right:
+        return rpy_to_matrix(r=0, p=np.pi, y=0)
+    elif is_fingertip_left:
+        return rpy_to_matrix(r=np.pi, p=0, y=0)
+    elif is_wheel:
+        w_pos = P_root_to_original_link.get(child_name, [0, 0, 0])
+        theta = np.atan2(w_pos[1], w_pos[0])
+        return rpy_to_matrix(r=-np.pi/2, p=0, y=theta + np.pi/2)
+    else:
+        return R_root_to_nominal_child
+
+def apply_geometric_rules(root, R_root_to_original_link, P_root_to_original_link, R_root_to_original_joint):
+    validation_data = {
+        'rule1_changed': [],
+        'rule3_rotation_warn': [],
+        'rule4_sensor_bases': [],
+        'rule4_optical_frames': [],
+        'rule5_grasp_changed': [],
+        'rule_polarity_flip_warn': []
+    }
 
     tree_map = {}
     for joint in root.findall('joint'):
@@ -317,17 +312,16 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     root_links = [p for p in tree_map.keys() if p not in all_children]
     root_link = root_links[0] if root_links else 'base_link'
 
-    abs_R_new = {root_link: [[1,0,0],[0,1,0],[0,0,1]]}
+    R_root_to_updated_link = {root_link: np.eye(3)}
     queue = [root_link]
 
     while queue:
-        curr = queue.pop(0)
-        R_new_A = abs_R_new[curr]
-        R_new_A_inv = transpose(R_new_A)
-        R_old_A = link_abs_R.get(curr, [[1,0,0],[0,1,0],[0,0,1]])
-        delta_A = mult_matrix(R_new_A_inv, R_old_A)
-        
-        for child_name, joint in tree_map.get(curr, []):
+        parent_link = queue.pop(0)
+        R_root_to_updated_parent = R_root_to_updated_link.get(parent_link, np.eye(3))
+        R_root_to_original_parent = R_root_to_original_link.get(parent_link, np.eye(3))
+        R_updated_parent_to_original_parent = R_root_to_updated_parent.T @ R_root_to_original_parent
+
+        for child_name, joint in tree_map.get(parent_link, []):
             jname = joint.get('name')
             jtype = joint.get('type')
             
@@ -338,90 +332,31 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             is_wheel = ('wheel' in jname.lower() and jtype in ['continuous', 'revolute'])
             is_grasp = (jname and 'grasp' in jname.lower())
             is_tool_attachment_site = (child_name == 'tool_attachment_site_link')
+            is_quick_connect_interface = (child_name == 'quick_connect_interface_link')
             is_link_wrist = (child_name == 'wrist_link')
+            is_sensor_base = any(x in child_name.lower() for x in ['camera_', 'line_sensor_']) and 'optical' not in child_name.lower()
+            is_optical_frame = ('optical' in child_name.lower() or 'lidar' in child_name.lower())
             
-            is_fingertip_right = ('fingertip' in child_name.lower() and 'right' in child_name.lower() and 'aruco' not in child_name.lower())
-            is_fingertip_left = ('fingertip' in child_name.lower() and 'left' in child_name.lower() and 'aruco' not in child_name.lower())
-            is_sensor_base = child_name in sensor_opt_old
-            is_optical_frame = ('optical' in jname.lower() or 'lidar' in child_name.lower())
-            
-            R_old_B = link_abs_R.get(child_name, [[1,0,0],[0,1,0],[0,0,1]])
-            R_rel_old = mult_matrix(transpose(R_old_A) if 'R_old_A' in locals() else transpose(link_abs_R.get(curr, [[1,0,0],[0,1,0],[0,0,1]])), R_old_B)
-            R_inherited = mult_matrix(R_new_A, R_rel_old)
+            R_root_to_original_child = R_root_to_original_link.get(child_name, np.eye(3))
+            R_root_to_nominal_child = R_root_to_updated_parent @ R_updated_parent_to_original_parent @ R_root_to_original_parent.T @ R_root_to_original_child 
             changed_for_rule1 = False
             
-            if is_prismatic or is_wrist_rotation or is_arm_link or is_tool_attachment_site or is_link_wrist:
-                R_new_B = [[1,0,0],[0,1,0],[0,0,1]]
-            elif is_optical_frame:
-                diff = abs(R_rel_old[0][0] - 1.0) + abs(R_rel_old[1][1] - 1.0) + abs(R_rel_old[2][2] - 1.0)
-                if diff < 0.1:
-                    R_new_B = [
-                        [-R_inherited[0][1], -R_inherited[0][2], R_inherited[0][0]],
-                        [-R_inherited[1][1], -R_inherited[1][2], R_inherited[1][0]],
-                        [-R_inherited[2][1], -R_inherited[2][2], R_inherited[2][0]]
-                    ]
-                elif 'camera_' in child_name.lower() and '_link' in child_name.lower() and '_optical' in child_name.lower():
-                    # Rule 4 Edit:
-                    # Center matches Right Head Camera logically natively mapping outward.
-                    if 'center' in child_name.lower():
-                        R_new_B = [
-                            [-R_new_A[0][1], -R_new_A[0][2], R_new_A[0][0]],
-                            [-R_new_A[1][1], -R_new_A[1][2], R_new_A[1][0]],
-                            [-R_new_A[2][1], -R_new_A[2][2], R_new_A[2][0]]
-                        ]
-                    else:
-                        R_new_B = [
-                            [R_new_A[0][1], R_new_A[0][2], R_new_A[0][0]],
-                            [R_new_A[1][1], R_new_A[1][2], R_new_A[1][0]],
-                            [R_new_A[2][1], R_new_A[2][2], R_new_A[2][0]]
-                        ]
-                else:
-                    R_new_B = R_inherited
-                if child_name not in rule4_optical_frames: rule4_optical_frames.append(child_name)
-            elif is_sensor_base:
-                if 'camera_' in child_name.lower() and '_link' in child_name.lower() and 'optical' not in child_name.lower():
-                    # Base frames geometrically map native X definitively unequivocally explicitly parallel firmly dynamically into optical Z
-                    R_new_B = [
-                        [R_inherited[0][2], R_inherited[0][1], -R_inherited[0][0]],
-                        [R_inherited[1][2], R_inherited[1][1], -R_inherited[1][0]],
-                        [R_inherited[2][2], R_inherited[2][1], -R_inherited[2][0]]
-                    ]
-                else:
-                    R_new_B = R_inherited
-                if child_name not in rule4_sensor_bases: rule4_sensor_bases.append(child_name)
-            elif is_grasp:
-                R_new_B = [[0, 1, 0], [-1, 0, 0], [0, 0, 1]]
-            elif is_fingertip_right:
-                R_new_B = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-            elif is_fingertip_left:
-                R_new_B = [[-1, 0, 0], [0, -1, 0], [0, 0, 1]]
-            elif is_wheel:
-                w_pos = link_abs_P.get(child_name, [0, 0, 0])
-                theta = math.atan2(w_pos[1], w_pos[0])
-                R_new_B = [
-                    [-math.sin(theta), 0, -math.cos(theta)],
-                    [ math.cos(theta),  0, -math.sin(theta)],
-                    [               0, -1,                 0]
-                ]
+            if is_prismatic or is_wrist_rotation or is_arm_link or is_tool_attachment_site or is_link_wrist or is_quick_connect_interface:
+                R_root_to_updated_child = np.eye(3)
             else:
-                R_new_B = R_inherited
+                R_root_to_updated_child = compute_updated_child_rotation(child_name, jname, jtype, R_root_to_nominal_child, P_root_to_original_link)
                 
             if is_wrist_rotation or is_prismatic:
                 axis = joint.find('axis')
                 if axis is None: 
-                    axis = __import__('xml.etree.ElementTree', fromlist=['ElementTree']).SubElement(joint, 'axis')
+                    axis = ET.SubElement(joint, 'axis')
                     axis.set('xyz', "1 0 0")
                 ax, ay, az = 0.0, 0.0, 1.0
                 if axis.get('xyz'): ax, ay, az = [float(x) for x in axis.get('xyz').split()]
                 
-                bx = R_old_B[0][0]*ax + R_old_B[0][1]*ay + R_old_B[0][2]*az
-                by = R_old_B[1][0]*ax + R_old_B[1][1]*ay + R_old_B[1][2]*az
-                bz = R_old_B[2][0]*ax + R_old_B[2][1]*ay + R_old_B[2][2]*az
-                
-                R_new_B_inv = transpose(R_new_B)
-                cx = R_new_B_inv[0][0]*bx + R_new_B_inv[0][1]*by + R_new_B_inv[0][2]*bz
-                cy = R_new_B_inv[1][0]*bx + R_new_B_inv[1][1]*by + R_new_B_inv[1][2]*bz
-                cz = R_new_B_inv[2][0]*bx + R_new_B_inv[2][1]*by + R_new_B_inv[2][2]*bz
+                b = R_root_to_original_child @ np.array([ax, ay, az])
+                c = R_root_to_updated_child.T @ b
+                cx, cy, cz = c
                 
                 s_axis = "1 0 0" 
                 max_val = -1
@@ -432,13 +367,13 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
                         s_axis = s_
                         
                 if s_axis == "-1 0 0":
-                    rule_polarity_flip_warn.append(jname)
+                    validation_data['rule_polarity_flip_warn'].append(jname)
                     s_axis = "1 0 0"
                 elif s_axis == "0 -1 0":
-                    rule_polarity_flip_warn.append(jname)
+                    validation_data['rule_polarity_flip_warn'].append(jname)
                     s_axis = "0 1 0"
                 elif s_axis == "0 0 -1":
-                    rule_polarity_flip_warn.append(jname)
+                    validation_data['rule_polarity_flip_warn'].append(jname)
                     s_axis = "0 0 1"
                     
                 if axis.get('xyz') != s_axis: changed_for_rule1 = True
@@ -447,98 +382,99 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             if is_wheel:
                 axis = joint.find('axis')
                 if axis is None: 
-                    axis = __import__('xml.etree.ElementTree', fromlist=['ElementTree']).SubElement(joint, 'axis')
+                    axis = ET.SubElement(joint, 'axis')
                 
                 ax, ay, az = 0.0, 0.0, 1.0
                 if axis.get('xyz'): ax, ay, az = [float(x) for x in axis.get('xyz').split()]
                 
-                bx = R_old_B[0][0]*ax + R_old_B[0][1]*ay + R_old_B[0][2]*az
-                by = R_old_B[1][0]*ax + R_old_B[1][1]*ay + R_old_B[1][2]*az
-                bz = R_old_B[2][0]*ax + R_old_B[2][1]*ay + R_old_B[2][2]*az
-                
-                R_new_B_inv = transpose(R_new_B)
-                cx = R_new_B_inv[0][0]*bx + R_new_B_inv[0][1]*by + R_new_B_inv[0][2]*bz
-                cy = R_new_B_inv[1][0]*bx + R_new_B_inv[1][1]*by + R_new_B_inv[1][2]*bz
-                cz = R_new_B_inv[2][0]*bx + R_new_B_inv[2][1]*by + R_new_B_inv[2][2]*bz
+                b = R_root_to_original_child @ np.array([ax, ay, az])
+                c = R_root_to_updated_child.T @ b
+                cx, cy, cz = c
                 
                 if cz < -0.5:
-                    rule_polarity_flip_warn.append(jname)
+                    validation_data['rule_polarity_flip_warn'].append(jname)
                     
                 if axis.get('xyz') != "0 0 1": changed_for_rule1 = True
                 axis.set('xyz', "0 0 1")
 
-            abs_R_new[child_name] = R_new_B
-            if is_grasp: rule5_grasp_changed.append(jname)
+            R_root_to_updated_link[child_name] = R_root_to_updated_child
+            if is_grasp: validation_data['rule5_grasp_changed'].append(jname)
+            if is_optical_frame or is_sensor_base:
+                is_changed = not np.allclose(R_root_to_updated_child, R_root_to_nominal_child, atol=1e-5)
+                if is_changed:
+                    if is_optical_frame:
+                        validation_data['rule4_optical_frames'].append(child_name)
+                    elif is_sensor_base:
+                        validation_data['rule4_sensor_bases'].append(child_name)
             
             origin = joint.find('origin')
-            if origin is None: origin = __import__('xml.etree.ElementTree', fromlist=['ElementTree']).SubElement(joint, 'origin')
+            if origin is None: origin = ET.SubElement(joint, 'origin')
             xyz_old = [0.0]*3
             if origin.get('xyz'): xyz_old = [float(x) for x in origin.get('xyz').split()]
             
-            nx = delta_A[0][0]*xyz_old[0] + delta_A[0][1]*xyz_old[1] + delta_A[0][2]*xyz_old[2]
-            ny = delta_A[1][0]*xyz_old[0] + delta_A[1][1]*xyz_old[1] + delta_A[1][2]*xyz_old[2]
-            nz = delta_A[2][0]*xyz_old[0] + delta_A[2][1]*xyz_old[1] + delta_A[2][2]*xyz_old[2]
-            
-            new_xyz = f"{clean(nx):.6g} {clean(ny):.6g} {clean(nz):.6g}"
+            n_xyz = R_updated_parent_to_original_parent @ np.array(xyz_old)
+            new_xyz = clean(n_xyz)
             if origin.get('xyz') != new_xyz: changed_for_rule1 = True
             origin.set('xyz', new_xyz)
             
-            R_rel_new = mult_matrix(R_new_A_inv, R_new_B)
-            nrpy = matrix_to_rpy(R_rel_new)
-            new_rpy = f"{clean(nrpy[0]):.6g} {clean(nrpy[1]):.6g} {clean(nrpy[2]):.6g}"
+            R_updated_parent_to_updated_child = R_root_to_updated_parent.T @ R_root_to_updated_child
+            nrpy = matrix_to_rpy(R_updated_parent_to_updated_child)
+            new_rpy = clean(nrpy)
             if origin.get('rpy', '0 0 0') != new_rpy: changed_for_rule1 = True
             origin.set('rpy', new_rpy)
                 
             if changed_for_rule1 and (is_prismatic or is_wrist_rotation or is_arm_link or is_wheel):
-                rule1_changed.append(jname)
+                validation_data['rule1_changed'].append(jname)
                 
             if jtype in ['revolute', 'continuous']:
                 axis = joint.find('axis')
                 if axis is not None and axis.get('xyz'):
                     try:
                         if any(float(v) < 0 for v in axis.get('xyz').split()):
-                            rule3_rotation_warn.append(jname)
+                            validation_data['rule3_rotation_warn'].append(jname)
                     except ValueError: pass
 
             queue.append(child_name)
 
+    return R_root_to_updated_link, validation_data
+
+def update_link_origins(root, R_root_to_original_link, R_root_to_updated_link):
     for link in root.findall('link'):
         lname = link.get('name')
-        if lname in abs_R_new:
-            R_new_B = abs_R_new[lname]
-            R_old_B = link_abs_R.get(lname, [[1,0,0],[0,1,0],[0,0,1]])
-            delta_B = mult_matrix(transpose(R_new_B), R_old_B)
+        if lname in R_root_to_updated_link:
+            R_root_to_updated_child = R_root_to_updated_link[lname]
+            R_root_to_original_child = R_root_to_original_link.get(lname, np.eye(3))
+            R_original_child_to_updated_child = np.matmul(np.transpose(R_root_to_updated_child), R_root_to_original_child)
             
-            is_ident = all(abs(delta_B[i][j] - (1.0 if i==j else 0.0)) < 1e-6 for i in range(3) for j in range(3))
+            is_ident = all(abs(R_original_child_to_updated_child[i][j] - (1.0 if i==j else 0.0)) < 1e-6 for i in range(3) for j in range(3))
             if is_ident: continue
-                
+
             for tag in ['visual', 'collision', 'inertial']:
                 for el in link.findall(tag):
                     origin = el.find('origin')
                     if origin is None: origin = ET.SubElement(el, 'origin')
                     
-                    xyz_old = [0.0]*3
-                    rpy_old = [0.0]*3
-                    if origin.get('xyz'): xyz_old = [float(x) for x in origin.get('xyz').split()]
-                    if origin.get('rpy'): rpy_old = [float(x) for x in origin.get('rpy').split()]
+                    xyz_original = np.zeros(shape=(1,3))
+                    rpy_original = [0]*3
+                    if origin.get('xyz'): xyz_original = np.array([float(x) for x in origin.get('xyz').split()]).reshape(1,3)
+                    if origin.get('rpy'): rpy_original = [float(x) for x in origin.get('rpy').split()]
                     
-                    nx = delta_B[0][0]*xyz_old[0] + delta_B[0][1]*xyz_old[1] + delta_B[0][2]*xyz_old[2]
-                    ny = delta_B[1][0]*xyz_old[0] + delta_B[1][1]*xyz_old[1] + delta_B[1][2]*xyz_old[2]
-                    nz = delta_B[2][0]*xyz_old[0] + delta_B[2][1]*xyz_old[1] + delta_B[2][2]*xyz_old[2]
+                    xyz_updated = xyz_original @ R_original_child_to_updated_child
+                    rpy_updated = rpy_to_matrix(*rpy_original) @ R_original_child_to_updated_child 
                     
-                    R_vis_new = mult_matrix(delta_B, rpy_to_matrix(*rpy_old))
-                    nrpy = matrix_to_rpy(R_vis_new)
-                    
-                    origin.set('xyz', f"{clean(nx):.6g} {clean(ny):.6g} {clean(nz):.6g}")
-                    origin.set('rpy', f"{clean(nrpy[0]):.6g} {clean(nrpy[1]):.6g} {clean(nrpy[2]):.6g}")
+                    xyz = clean(xyz_updated.tolist()[0])
+                    rpy = clean(matrix_to_rpy(rpy_updated))
 
-    tree.write(stretch_main_xacro)
+                    origin.set('xyz', xyz)
+                    origin.set('rpy', rpy)
+                    print(f"{lname}: xyz_original: {xyz_original}, rpy_original: {rpy_original}, xyz_updated: {xyz}, rpy_updated: {rpy}")
 
+def print_validation_report(validation_data, rule5_arm_renamed, rule6_wheels_renamed, wheels):
     print("\n--- Validation Report ---")
 
     print("""Rule 1: Identity Alignment for Primary Structural Elements""")
-    if rule1_changed:
-        print(f"  -> Changed frames: {', '.join(rule1_changed)}")
+    if validation_data['rule1_changed']:
+        print(f"  -> Changed frames: {', '.join(validation_data['rule1_changed'])}")
     else:
         print("  -> 👍 No frames required changes.")
         
@@ -549,29 +485,29 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
         print("  -> 👍 Arm naming sequence is correctly ordered.")
         
     print("""\nRule 3: Positive Axis Consistency""")
-    if rule3_rotation_warn:
-        print(f"  -> WARNING! The following frames violate this rule inherently: {', '.join(rule3_rotation_warn)}")
-    elif rule_polarity_flip_warn:
-        print(f"  -> WARNING! The following joints had their rotation axis forced positive (requires firmware flip): {', '.join(rule_polarity_flip_warn)}")
+    if validation_data['rule3_rotation_warn']:
+        print(f"  -> WARNING! The following frames violate this rule inherently: {', '.join(validation_data['rule3_rotation_warn'])}")
+    elif validation_data['rule_polarity_flip_warn']:
+        print(f"  -> WARNING! The following joints had their rotation axis forced positive (requires firmware flip): {', '.join(validation_data['rule_polarity_flip_warn'])}")
     else:
         print("  -> 👍 No frames flagged.")
 
     print("""\nRule 4: Sensor & Optical Link Coordinate Conventions""")
-    if rule4_optical_frames:
-        print(f"  -> Forced Optical Frames (Z-forward): {', '.join(rule4_optical_frames)}")
-    if rule4_sensor_bases:
-        print(f"  -> Forced Sensor Base Frames (X-forward): {', '.join(rule4_sensor_bases)}")
-    if not rule4_optical_frames and not rule4_sensor_bases:
+    if validation_data['rule4_optical_frames']:
+        print(f"  -> Forced Optical Frames (Z-forward): {', '.join(validation_data['rule4_optical_frames'])}")
+    if validation_data['rule4_sensor_bases']:
+        print(f"  -> Forced Sensor Base Frames (X-forward): {', '.join(validation_data['rule4_sensor_bases'])}")
+    if not validation_data['rule4_optical_frames'] and not validation_data['rule4_sensor_bases']:
         print("  -> 👍 No frames flagged.")
         
     print("""\nRule 5: Grasping Geometry Conventions""")
-    if rule5_grasp_changed:
-        print(f"  -> Changed frames: {', '.join(rule5_grasp_changed)}")
+    if validation_data['rule5_grasp_changed']:
+        print(f"  -> Changed frames: {', '.join(validation_data['rule5_grasp_changed'])}")
     else:
         print("  -> 👍 No frames required changes.")
         
     print("""\nRule 6: Wheel Conventions""")
-    if 'wheels' in locals() and wheels:
+    if wheels:
         if rule6_wheels_renamed:
             print("  -> Renamed wheels to ordered counter-clockwise naming and enforced center-pointing rotation axles.")
         else:
@@ -580,12 +516,11 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
         print("  -> 👍 No wheels detected.")
         
     print("-------------------------\n")
-    
-    # Convert to actual Xacro by updating the robot tag and mesh paths
-    print(f'Converting mesh paths to use $(arg model_mesh_dir)...')
-    with open(stretch_main_xacro, 'r') as f:
-        content = f.read()
 
+def finalize_xacro_and_cleanup_meshes(stretch_main_xacro, model_name, root_dir, content):
+    import re
+    print(f'Converting mesh paths to use $(arg model_mesh_dir)...')
+    
     # Replace <robot name="..."> with <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="stretch">
     content = re.sub(r'<robot[^>]*name="[^"]+"[^>]*>', '<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="stretch">', content)
     
@@ -620,6 +555,66 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
             except (KeyboardInterrupt, EOFError):
                 pass
 
+def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
+    # Find the base URDF file
+    urdf_files = glob.glob(os.path.join(root_dir, '*.urdf'))
+    
+    if len(urdf_files) != 1:
+        print(f"Error: Expected exactly one base URDF file in {root_dir}, found {len(urdf_files)}: {urdf_files}")
+        return
+
+    base_urdf = urdf_files[0]
+    print(f"Found base URDF: {base_urdf}")
+
+    create_collision_config_if_missing(base_urdf, root_dir)
+    generate_collision_meshes(model_name)
+
+    os.makedirs(xacro_dir, exist_ok=True)
+    stretch_main_xacro = os.path.join(xacro_dir, 'stretch_main.xacro')
+    shutil.copy(base_urdf, stretch_main_xacro)
+
+    print('Translating link_ convention to _link convention...')
+    import re
+    with open(stretch_main_xacro, 'r') as f:
+        content = f.read()
+    content = re.sub(r'\blink_([a-zA-Z0-9_]+)', r'\1_link', content)
+    content = re.sub(r'\bjoint_([a-zA-Z0-9_]+)', r'\1_joint', content)
+    with open(stretch_main_xacro, 'w') as f:
+        f.write(content)
+
+    print('Updating the URDF with collision mesh filepaths. If there is a _collision.STL file, its file path will be used in the collision geometry - replacing the existing mesh in the final XACRO file.')
+    temp_urdf = os.path.join(os.path.dirname(base_urdf), 'temp.urdf')
+    shutil.copy(stretch_main_xacro, temp_urdf)
+    update_urdf_collision_meshes(temp_urdf, temp_urdf)
+    shutil.copy(temp_urdf, stretch_main_xacro)
+    os.remove(temp_urdf)
+    remove_collision_from_optical_links(stretch_main_xacro, stretch_main_xacro)
+    
+    print('Ensuring prismatic joints share base link orientation and validating rotation joint axes...')
+    tree = ET.parse(stretch_main_xacro)
+    root = tree.getroot()
+    
+    rule5_arm_renamed = apply_rule2_proximal_distal_arm_naming(root)
+    
+    R_original_root_to_joint_dict, R_original_root_to_link_dict, t_original_root_to_link_dict = get_abs_poses(root)
+    rule6_wheels_renamed, wheels = apply_rule6_wheel_renaming(root, t_original_root_to_link_dict)
+    
+    if rule6_wheels_renamed:
+        # Update absolute poses after rename
+        R_original_root_to_joint_dict, R_original_root_to_link_dict, t_original_root_to_link_dict = get_abs_poses(root)
+        
+    R_root_to_updated_link, validation_data = apply_geometric_rules(root, R_original_root_to_link_dict, t_original_root_to_link_dict, R_original_root_to_joint_dict)
+    
+    update_link_origins(root, R_original_root_to_link_dict, R_root_to_updated_link)
+    
+    tree.write(stretch_main_xacro)
+    
+    print_validation_report(validation_data, rule5_arm_renamed, rule6_wheels_renamed, wheels)
+    
+    with open(stretch_main_xacro, 'r') as f:
+        content = f.read()
+    finalize_xacro_and_cleanup_meshes(stretch_main_xacro, model_name, root_dir, content)
+
 
 def get_all_model_names():
     try:
@@ -633,13 +628,14 @@ def get_all_model_names():
     urdf_map = {}
     for entry in entries:
         full_path = os.path.join(urdf_pkg_path, entry)
-        if os.path.isdir(full_path) and not entry.startswith("__") and not entry.endswith("_tools") and entry != "tools":
+        if os.path.isdir(full_path) and not entry.startswith("__") and not entry.endswith("_tools") and entry not in ["tools", "utils"]:
             models.append(entry)
             urdfs = glob.glob(os.path.join(full_path, "*.urdf"))
             if len(urdfs) > 0:
                 urdf_map[entry] = urdfs
                 
     return sorted(models), urdf_map, urdf_pkg_path
+
 
 def main(model_names_to_generate:list[str]|None = None):
     """The model names match the folder names under the `stretch_urdf/` directory."""

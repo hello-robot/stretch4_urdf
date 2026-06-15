@@ -30,13 +30,15 @@ All axes of motion are positive unit vectors.
 
 ## Rule 4: Sensor & Optical Link Coordinate Conventions
 
-Optical and sensor frame orientations follow ROS standards
+Optical and sensor frame orientations follow available sensor documentation and ROS standards
 
-- **Sensor Base Frame (`link_camera_*`, `link_line_sensor_*`):** A sensor's mounting frame's x axis is pointed forward, parallel to the optical z axis.
-- **Optical Frame (`_optical`):** The z axis aligns to the sensor's field of view, normal to the image plane. X points along the vertical axis of the image, and y points along the horizontal axis of the image.
-  - **Head Cameras (Left/Right):** Physically mounted so the image is rotated 90 degrees outwards towards the robot's left/right, so the x axes point towards the robot's center and the y axes point in opposite directions.
-  - **Head Camera (Center):** Physically mounted so the image is rotated 90 degrees to the robot's right, so the image is oriented similarly to the right camera. The x axis points to the robot's left, and the y axis points up.
-- **Range Sensors (`link_lidar_`)**: The z axis points out of the sensor, aligning with the field of view. X is the horizontal axis, and y is the vertical axis.
+- **Sensor Base Frame (`camera_*_link`, `line_sensor_*_link`, `gripper_camera_link`):** A sensor's mounting frame's x axis is pointed forward, with z pointing towards the top of the sensor and y pointing to the sensor's left.
+- **Optical Frame (`_optical`):** Z points out of the optical sensor. X points to the sensor's right along the horizontal axis of the image and y points down.
+  - **Right and Center Head Cameras:** Physically mounted with a counterclockwise (+90 degrees) rotation about the sensor's optical z axis. For the sensor base frame, the y axis points up (away from the base) and the z axis points horizontally outward (the robot's right). For the optical frame, the x axis points down towards the robot's base and y points inwards to the robot's left.
+  - **Left Head Camera:** Physically mounted with a clockwise (-90 degrees) rotation about the sensor's optical z axis. For the sensor base frame, the y axis points down (towards from the base) and the z axis points horizontally outward (the robot's left). For the optical frame, the x axis points upwards away from the base and y points inwards to the robot's right.
+  
+  *(Note: This physical layout results in the optical y-axes of all three cameras pointing inwards towards each other).*
+- **Range Sensors (`lidar_*_link`)**: The z axis points out of the sensor, aligning with the field of view, and the y axis is oriented to point towards the socket connector. The Lidars on Stretch4 are mounted such that y axes are pointing towards the head center and the x axes are pointing up.
 
 ## Rule 5: Grasping Geometry Conventions
 
@@ -54,4 +56,4 @@ A virtual grasp center link is added following the orientation of primary links
 
 ## Rule 7: Joint and Link Naming Conventions
 
-Joints and links are named with the suffix _joint or _link, respectively. For a body with multiple frames or a body that is repeated, names are kept consistent, with suffixes added as needed before the final _link or _joint (e.g. line_sensor_1_optical_link)
+Joints and links are named with the suffix \_joint or \_link, respectively. For a body with multiple frames or a body that is repeated, names are kept consistent, with suffixes added as needed before the final \_link or \_joint (e.g. line_sensor_1_optical_link)
