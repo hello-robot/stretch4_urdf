@@ -257,14 +257,14 @@ def compute_updated_child_rotation(child_name, jname, jtype, R_root_to_nominal_c
         child_lower = child_name.lower()
         if 'camera_left' in child_lower or 'camera_center' in child_lower:
             if is_optical_frame:
-                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=0, y=np.pi/2)
-            else:
-                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=-np.pi/2, y=-np.pi/2)
-        elif 'camera_right' in child_lower:
-            if is_optical_frame:
                 return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=0, y=-np.pi/2)
             else:
-                return R_root_to_nominal_child @ rpy_to_matrix(r=-np.pi/2, p=-np.pi/2, y=0)
+                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=-np.pi/2, y=np.pi/2)
+        elif 'camera_right' in child_lower:
+            if is_optical_frame:
+                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=0, y=np.pi/2)
+            else:
+                return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=-np.pi/2, y=np.pi/2)
         elif 'line_sensor' in child_lower:
             if is_optical_frame: 
                 return R_root_to_nominal_child @ rpy_to_matrix(r=0, p=-np.pi/2, y=np.pi)

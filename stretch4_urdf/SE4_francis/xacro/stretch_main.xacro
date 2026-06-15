@@ -219,14 +219,14 @@
   </joint>
   <link name="camera_right_link">
     <inertial>
-      <origin xyz="0.0755903 -0.0693851 0.0909127" rpy="1.5708 0 1.5708" />
+      <origin xyz="-0.0755903 0.0693851 0.0909127" rpy="-1.5708 0 -1.5708" />
       <mass value="5.62562911534835" />
       <inertia ixx="0.0504717539490822" ixy="-0.000186491896655228" ixz="0.0128492795010695" iyy="0.0306330356066479" iyz="9.71151606421086E-05" izz="0.0518045670438135" />
     </inertial>
 
   </link>
   <joint name="camera_right_joint" type="fixed">
-    <origin xyz="0.171841 0.023 -0.0157567" rpy="-1.5708 0.820305 0" />
+    <origin xyz="0.171841 0.023 -0.0157567" rpy="1.5708 0.820305 0" />
     <parent link="head_link" />
     <child link="camera_right_link" />
     <axis xyz="0 0 0" />
@@ -241,14 +241,14 @@
   </joint>
   <link name="camera_left_link">
     <inertial>
-      <origin xyz="0.0744097 -0.0693851 -0.0909127" rpy="1.5708 0 1.5708" />
+      <origin xyz="-0.0744097 0.0693851 -0.0909127" rpy="-1.5708 0 -1.5708" />
       <mass value="5.62562911534835" />
       <inertia ixx="0.0504717539490822" ixy="-0.000186491896655198" ixz="-0.0128492795010695" iyy="0.0306330356066479" iyz="-9.711516064215E-05" izz="0.0518045670438135" />
     </inertial>
 
   </link>
   <joint name="camera_left_joint" type="fixed">
-    <origin xyz="0.171841 0.173 -0.0157567" rpy="1.5708 0.820305 0" />
+    <origin xyz="0.171841 0.173 -0.0157567" rpy="-1.5708 0.820305 0" />
     <parent link="head_link" />
     <child link="camera_left_link" />
     <axis xyz="0 0 0" />
@@ -263,14 +263,14 @@
   </joint>
   <link name="camera_center_link">
     <inertial>
-      <origin xyz="-0.000590252 -0.0958729 -0.070924" rpy="1.5708 0 1.5708" />
+      <origin xyz="0.000590252 0.0958729 -0.070924" rpy="-1.5708 0 -1.5708" />
       <mass value="5.62562911534835" />
       <inertia ixx="0.0557556406323663" ixy="-0.000162225224016438" ixz="-0.0120094528841815" iyy="0.0306330356066479" iyz="-0.000133766806934365" izz="0.0465206803605294" />
     </inertial>
 
   </link>
   <joint name="camera_center_joint" type="fixed">
-    <origin xyz="0.177246 0.098 -0.0239069" rpy="1.5708 0.610865 0" />
+    <origin xyz="0.177246 0.098 -0.0239069" rpy="-1.5708 0.610865 0" />
     <parent link="head_link" />
     <child link="camera_center_link" />
     <axis xyz="0 0 0" />
