@@ -5,11 +5,15 @@ import os
 import xml.etree.ElementTree as ET
 
 import yaml
-from stretch4_body.core.robot_params import RobotParams
+try:
+    from stretch4_body.core.robot_params import RobotParams
+    import stretch4_body.core.hello_utils as hello_utils
+except Exception:
+    RobotParams = None
+    hello_utils = None
 from xacrodoc import XacroDoc
 from yourdfpy import URDF
 import logging
-import stretch4_body.core.hello_utils as hello_utils
 
 
 logger = logging.getLogger("urdf_utils")
@@ -68,18 +72,21 @@ def get_robot_params():
     Get the model, batch, and tool name from stretch4_body.core.robot_params. This only works if you're running on a robot.
     
     Returns:
-        tuple[str, str, str]: model_name, batch_name, tool_name
+        tuple[str | None, str | None, str | None]: model_name, batch_name, tool_name
     """
+    if RobotParams is None:
+        logger.warning("stretch4_body not found. Cannot automatically fetch robot parameters.")
+        return None, None, None
+
     try:
         _, robot_params = RobotParams.get_params()
         model_name = robot_params["robot"]["model_name"]
         batch_name = robot_params["robot"]["batch_name"]
         tool_name = robot_params["robot"]["tool"]
         return model_name, batch_name, tool_name
-    except:
-        raise Exception(
-            "stretch4_body.core.robot_params not found. If you are not running this on a robot, use the --filepath argument or use get_urdf() with the model, batch and tool name parameters."
-        )
+    except Exception as e:
+        logger.warning(f"Failed to fetch robot parameters from stretch4_body: {e}")
+        return None, None, None
 
 def generate_urdf_file(urdf_contents: str, output_prefix: str, output_dir: str, description: str):
     """
@@ -123,6 +130,12 @@ def get_urdf_from_robot_params(apply_calibration: bool = True, do_add_file_prefi
         str: raw urdf contents
     """
     model_name, batch_name, tool_name = get_robot_params()
+    if model_name is None or batch_name is None or tool_name is None:
+        raise ValueError(
+            "Robot parameters (model, batch, tool) could not be detected automatically. "
+            "If you are not running on a robot, please use get_urdf() and provide these parameters explicitly."
+        )
+
     if apply_calibration: 
         return get_urdf_calibrated(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
     else:
@@ -279,20 +292,24 @@ def get_joint_limits(urdf_contents: str):
 
 
 def setup_logging():
-    try:
-        _, robot_params = RobotParams.get_params()
-        logging_params = robot_params['logging'].copy()
-        # Update filename to be specific to this tool
-        if 'file_handler' in logging_params['handlers']:
-            logging_params['handlers']['file_handler']['filename'] = hello_utils.get_stretch_directory('log/stretch_body_logger/') + 'stretch4_urdf.log'
-        logging.config.dictConfig(logging_params)
-    except:
-        # Fallback to basic configuration if robot_params cannot be loaded
-        logging.basicConfig(
-            level=logging.INFO,
-            format="[%(asctime)s] [%(name)s] [%(levelname)s]: %(message)s",
-            datefmt="%m/%d/%Y %H:%M:%S"
-        )
+    if RobotParams is not None and hello_utils is not None:
+        try:
+            _, robot_params = RobotParams.get_params()
+            logging_params = robot_params['logging'].copy()
+            # Update filename to be specific to this tool
+            if 'file_handler' in logging_params['handlers']:
+                logging_params['handlers']['file_handler']['filename'] = hello_utils.get_stretch_directory('log/stretch_body_logger/') + 'stretch4_urdf.log'
+            logging.config.dictConfig(logging_params)
+            return
+        except Exception as e:
+            pass
+
+    # Fallback to basic configuration if robot_params cannot be loaded or stretch4_body is missing
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s] [%(name)s] [%(levelname)s]: %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S"
+    )
 
 def main():
     setup_logging()
@@ -316,17 +333,17 @@ def main():
     model_name_param, batch_name_param, tool_name_param = get_robot_params()
 
     parser.add_argument(
-        "--model", type=str, default=model_name_param, help="robot model name"
+        "--model", type=str, default=model_name_param, required=model_name_param is None, help="robot model name"
     
     )
 
     parser.add_argument(
-        "--batch", type=str, default=batch_name_param, help="robot batch name"
+        "--batch", type=str, default=batch_name_param, required=batch_name_param is None, help="robot batch name"
     
     )
 
     parser.add_argument(
-        "--tool", type=str, default=tool_name_param, help="robot tool name"
+        "--tool", type=str, default=tool_name_param, required=tool_name_param is None, help="robot tool name"
     
     )
 

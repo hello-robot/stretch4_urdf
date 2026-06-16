@@ -8,22 +8,32 @@ import pyrender
 import warnings
 import glob
 
-import stretch4_body.robot.robot
-import stretch4_body.core.device
-import stretch4_body.core.hello_utils as hu
+try:
+    import stretch4_body.robot.robot
+    import stretch4_body.core.device
+    import stretch4_body.core.hello_utils as hu
+except Exception:
+    stretch4_body = None
+    hu = None
 import time
 import multiprocessing
 
 try:
     # works on ubuntu 22.04
     import importlib.resources as importlib_resources
-    str(importlib_resources.files("stretch4_body"))
-except AttributeError as e:
+    if stretch4_body is not None:
+        str(importlib_resources.files("stretch4_body"))
+except (AttributeError, ModuleNotFoundError) as e:
     # works on ubuntu 20.04
     import importlib_resources
-    str(importlib_resources.files("stretch4_body"))
+    if stretch4_body is not None:
+        try:
+            str(importlib_resources.files("stretch4_body"))
+        except ModuleNotFoundError:
+            pass
 
-hu.print_stretch_re_use()
+if hu is not None:
+    hu.print_stretch_re_use()
 warnings.filterwarnings("ignore")
 
 class URDFVisualizer:
@@ -177,7 +187,17 @@ if __name__ == "__main__":
     # use_dw = (tool_name=='tool_dex_wrist' or tool_name=='eoa_wrist_dw3_tool_sg3' or tool_name=='eoa_wrist_dw3_tool_nil' or tool_name=='eoa_wrist_dw3_tool_tablet_12in')
 
     urdf = urdf_loader.URDF.load(urdf_name)
-    tool = stretch4_body.core.device.Device(req_params=False).robot_params['robot']['tool']
+    tool = None
+    if stretch4_body is not None:
+        try:
+            tool = stretch4_body.core.device.Device(req_params=False).robot_params['robot']['tool']
+        except Exception:
+            pass
+    
+    if tool is None:
+        print("Warning: Could not fetch tool from stretch4_body. Using tool name from URDF path.")
+        tool = tool_name
+
     viz = URDFVisualizer(urdf)
 
 
