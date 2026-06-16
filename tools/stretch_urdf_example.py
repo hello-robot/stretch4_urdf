@@ -3,15 +3,23 @@
 
 import yourdfpy as urdf_loader
 import time
-import stretch4_body.robot.robot
+try:
+    import stretch4_body.robot.robot
+except Exception:
+    stretch4_body = None
 try:
     # works on ubuntu 22.04
     import importlib.resources as importlib_resources
-    str(importlib_resources.files("stretch4_body"))
-except AttributeError as e:
+    if stretch4_body is not None:
+        str(importlib_resources.files("stretch4_body"))
+except (AttributeError, ModuleNotFoundError) as e:
     # works on ubuntu 20.04
     import importlib_resources
-    str(importlib_resources.files("stretch4_body"))
+    if stretch4_body is not None:
+        try:
+            str(importlib_resources.files("stretch4_body"))
+        except ModuleNotFoundError:
+            pass
 
 
 def get_configuration(robot):
@@ -31,6 +39,9 @@ def get_configuration(robot):
     return configuration
 
 def main():
+    if stretch4_body is None:
+        print("Error: stretch4_body not found. This example requires a robot.")
+        return
     r = stretch4_body.robot.robot.Robot()
     r.startup()
 

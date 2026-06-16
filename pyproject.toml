@@ -32,6 +32,9 @@ dependencies = [
     "xacrodoc",
 ]
 
+[project.optional-dependencies]
+robot = ["hello-robot-stretch4-body"]
+
 [project.urls]
 Repository = "https://github.com/hello-robot/stretch4_urdf"
 
