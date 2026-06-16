@@ -72,7 +72,7 @@ def get_robot_params():
     Get the model, batch, and tool name from stretch4_body.core.robot_params. This only works if you're running on a robot.
     
     Returns:
-        tuple[str, str, str | None]: model_name, batch_name, tool_name
+        tuple[str | None, str | None, str | None]: model_name, batch_name, tool_name
     """
     if RobotParams is None:
         logger.warning("stretch4_body not found. Cannot automatically fetch robot parameters.")
@@ -130,6 +130,12 @@ def get_urdf_from_robot_params(apply_calibration: bool = True, do_add_file_prefi
         str: raw urdf contents
     """
     model_name, batch_name, tool_name = get_robot_params()
+    if model_name is None or batch_name is None or tool_name is None:
+        raise ValueError(
+            "Robot parameters (model, batch, tool) could not be detected automatically. "
+            "If you are not running on a robot, please use get_urdf() and provide these parameters explicitly."
+        )
+
     if apply_calibration: 
         return get_urdf_calibrated(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
     else:
