@@ -1,12 +1,12 @@
 <robot name="camera_calibration_board">
   <link name="quick_connect_interface_link">
     <inertial>
-      <origin xyz="4.17336904546413E-06 -0.144162802547526 0.0946859705442855" rpy="0 0 0" />
+      <origin xyz="4.17336904546413E-06 -0.144162802547526 0.0946859705442855" rpy="0 0 1.5708" />
       <mass value="0.920752431735921" />
       <inertia ixx="0.00647305832999402" ixy="-5.4720307258925E-07" ixz="3.31301886192255E-07" iyy="0.00859571233256698" iyz="0.00311628355836539" izz="0.00961372202117202" />
     </inertial>
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
         <mesh filename="$(arg tool_mesh_dir)/frame_quick_connect_interface.STL" />
       </geometry>
@@ -15,7 +15,7 @@
       </material>
     </visual>
     <collision name="frame_quick_connect_interface_collision">
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
         <mesh filename="$(arg tool_mesh_dir)/frame_quick_connect_interface_collision.STL" />
       </geometry>

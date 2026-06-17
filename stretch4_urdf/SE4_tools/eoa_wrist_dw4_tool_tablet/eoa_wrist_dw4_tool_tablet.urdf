@@ -1,12 +1,12 @@
 <robot name="URDF_DALI_ASSEM_Tablet_Mount_V3">
   <link name="quick_connect_interface_link">
     <inertial>
-      <origin xyz="1.82510056464356E-06 -0.0201036703575478 -0.0594750927557339" rpy="0 0 0" />
+      <origin xyz="1.82510056464356E-06 -0.0201036703575478 -0.0594750927557339" rpy="0 0 1.5708" />
       <mass value="0.774816112828515" />
       <inertia ixx="0.00222242456189349" ixy="-3.0154959236777E-09" ixz="-8.0571563158828E-09" iyy="0.00688980267338575" iyz="1.23985635589718E-07" izz="0.00468375142174106" />
     </inertial>
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
         <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_link.STL" />
       </geometry>
@@ -15,7 +15,7 @@
       </material>
     </visual>
     <collision name="quick_connect_interface_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
         <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_collision_link.STL" />
       </geometry>
