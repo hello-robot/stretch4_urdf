@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="URDF_FRANCIS_ASSEM_Docking_Station_V1">
+  <link
+    name="docking_station_link">
+    <inertial>
+      <origin
+        xyz="1.6617225123633E-07 -0.0791945611140398 0.0509513620904612"
+        rpy="0 0 0" />
+      <mass
+        value="3.50739982324297" />
+      <inertia
+        ixx="0.0154555398316763"
+        ixy="-5.75839451252041E-10"
+        ixz="-3.35170214214199E-08"
+        iyy="0.022704997137557"
+        iyz="-0.000142632839292569"
+        izz="0.033513884132033" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/docking_station_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/docking_station_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="contacts_link">
+    <inertial>
+      <origin
+        xyz="1.66172251238081E-07 0.0070054388859602 -0.0825486379095388"
+        rpy="0 0 0" />
+      <mass
+        value="3.50739982324297" />
+      <inertia
+        ixx="0.0154555398316763"
+        ixy="-5.75839451192677E-10"
+        ixz="-3.35170214214203E-08"
+        iyy="0.022704997137557"
+        iyz="-0.000142632839292569"
+        izz="0.033513884132033" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/contacts_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/contacts_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="contacts_joint"
+    type="fixed">
+    <origin
+      xyz="0 -0.0862 0.1335"
+      rpy="0 0 0" />
+    <parent
+      link="docking_station_link" />
+    <child
+      link="contacts_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="left_aruco_marker_link">
+    <inertial>
+      <origin
+        xyz="1.44482291657838E-05 -1.04083408558608E-16 -0.000199477439009985"
+        rpy="0 0 0" />
+      <mass
+        value="0.00101684792822397" />
+      <inertia
+        ixx="2.11745889065529E-07"
+        ixy="-1.11421228510893E-21"
+        ixz="-1.51756460111884E-08"
+        iyy="2.10646711071285E-07"
+        iyz="-2.64697796016969E-23"
+        izz="4.20167128203572E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/left_aruco_marker_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/left_aruco_marker_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_aruco_marker_joint"
+    type="fixed">
+    <origin
+      xyz="-0.105007224114583 -0.0325573575773015 0.129200277015667"
+      rpy="0.612699904159843 0 0" />
+    <parent
+      link="docking_station_link" />
+    <child
+      link="left_aruco_marker_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="right_aruco_marker_link">
+    <inertial>
+      <origin
+        xyz="-1.44482291657283E-05 7.63278329429795E-17 -0.000199477439009971"
+        rpy="0 0 0" />
+      <mass
+        value="0.00101684792822398" />
+      <inertia
+        ixx="2.11745889065533E-07"
+        ixy="-2.09276694975916E-22"
+        ixz="1.51756460111888E-08"
+        iyy="2.1064671107129E-07"
+        iyz="0"
+        izz="4.2016712820358E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/right_aruco_marker_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/right_aruco_marker_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_aruco_marker_joint"
+    type="fixed">
+    <origin
+      xyz="0.105007224114583 -0.0325573575773018 0.129200277015666"
+      rpy="0.612699904159843 0 0" />
+    <parent
+      link="docking_station_link" />
+    <child
+      link="right_aruco_marker_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="apex_aruco_marker_link">
+    <inertial>
+      <origin
+        xyz="-3.97430642180935E-18 5.55111512312578E-17 -0.000200000000000033"
+        rpy="0 0 0" />
+      <mass
+        value="0.00101684792822398" />
+      <inertia
+        ixx="2.10646711071288E-07"
+        ixy="6.14937290230978E-23"
+        ixz="7.4527346168557E-25"
+        iyy="2.10646711071288E-07"
+        iyz="-2.46640507287502E-23"
+        izz="4.21266306197823E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/apex_aruco_marker_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="$(arg accessory_mesh_dir)/apex_aruco_marker_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="apex_aruco_marker_joint"
+    type="fixed">
+    <origin
+      xyz="0 -0.289303330552929 0.0201"
+      rpy="0 0 0" />
+    <parent
+      link="docking_station_link" />
+    <child
+      link="apex_aruco_marker_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>
