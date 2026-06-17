@@ -1,12 +1,12 @@
 <robot name="URDF_DALI_ASSEM_Stretch_Gripper_V4">
   <link name="quick_connect_interface_link">
     <inertial>
-      <origin xyz="0.0452064 -1.05072e-05 -0.00459461" rpy="0 0 1.5708" />
+      <origin xyz="0.0452064 -1.05072e-05 -0.00459461" rpy="0 0 0" />
       <mass value="0.0917733059735497" />
       <inertia ixx="9.02973239206348E-05" ixy="4.55365506810343E-08" ixz="-2.04823536578236E-08" iyy="3.46670209595715E-05" iyz="2.98792001890469E-06" izz="0.00010426981698513" />
     </inertial>
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 1.5708" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_link.STL" />
       </geometry>
@@ -15,7 +15,7 @@
       </material>
     </visual>
     <collision name="quick_connect_interface_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 1.5708" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_collision_link.STL" />
       </geometry>
