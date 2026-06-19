@@ -29,6 +29,13 @@
     <child link="base_link" />
     <axis xyz="0 0 0" />
   </joint>
+  <link name="charge_port_link" />
+  <joint name="charge_port_joint" type="fixed">
+    <origin xyz="0 0.185 0.107" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="charge_port_link" />
+    <axis xyz="0 0 0" />
+  </joint>
   <link name="line_sensor_5_link">
     <inertial>
       <origin xyz="0.00114502 0.000126775 -0.0119762" rpy="1.5708 0 0" />

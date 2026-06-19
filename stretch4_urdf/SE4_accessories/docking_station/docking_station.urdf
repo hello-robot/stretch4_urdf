@@ -88,12 +88,12 @@
     name="contacts_joint"
     type="fixed">
     <origin
-      xyz="0 -0.0862 0.1335"
+      xyz="0 0.0862 -0.1335"
       rpy="0 0 0" />
     <parent
-      link="docking_station_link" />
-    <child
       link="contacts_link" />
+    <child
+      link="docking_station_link" />
     <axis
       xyz="0 0 0" />
   </joint>
