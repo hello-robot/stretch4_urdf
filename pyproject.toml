@@ -19,21 +19,16 @@ classifiers = [
 ]
 
 dependencies = [
-    "click>=8.3.1",
-    "coacd>=1.0.7",
-    "numpy-stl>=3.2.0",
-    "urdf-parser-py>=0.0.4",
     "yourdfpy>=0.0.58",
     "numpy",
     "pyyaml",
-    "open3d",
     "trimesh",
-    "scikit-learn",
     "xacrodoc",
 ]
 
 [project.optional-dependencies]
 robot = ["hello-robot-stretch4-body"]
+preprocessing = ['open3d']
 
 [project.urls]
 Repository = "https://github.com/hello-robot/stretch4_urdf"
