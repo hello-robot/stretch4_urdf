@@ -8,16 +8,16 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
-        <mesh filename="$(arg tool_mesh_dir)/frame_quick_connect_interface.STL" />
+        <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_link.STL" />
       </geometry>
       <material name="">
         <color rgba="1 0.752941176470588 1 1" />
       </material>
     </visual>
-    <collision name="frame_quick_connect_interface_collision">
+    <collision name="quick_connect_interface_collision_link">
       <origin xyz="0 0 0" rpy="0 0 1.5708" />
       <geometry>
-        <mesh filename="$(arg tool_mesh_dir)/frame_quick_connect_interface_collision.STL" />
+        <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_collision_link.STL" />
       </geometry>
     </collision>
   </link>
