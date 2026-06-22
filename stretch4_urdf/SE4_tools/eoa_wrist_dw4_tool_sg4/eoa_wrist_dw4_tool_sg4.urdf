@@ -1,9 +1,9 @@
-<robot name="URDF_FRANCIS_ASSEM_Stretch_Gripper_V3">
+<robot name="URDF_FRANCIS_ASSEM_Stretch_Gripper_V6">
   <link name="quick_connect_interface_link">
     <inertial>
-      <origin xyz="0.0460466665213508 5.63314970979222E-06 -0.00837500592567954" rpy="0 0 0" />
-      <mass value="0.268266992833353" />
-      <inertia ixx="0.000142502024953855" ixy="2.76289213959696E-09" ixz="-2.23509988750753E-05" iyy="0.000269733509230681" iyz="-8.22584378581302E-09" izz="0.000235102926495123" />
+      <origin xyz="0.0460466663166456 5.63314975289596E-06 -0.00837500587558776" rpy="0 0 0" />
+      <mass value="0.268266990446664" />
+      <inertia ixx="0.000142502024751523" ixy="2.76289217435463E-09" ixz="-2.2350999156347E-05" iyy="0.000269733508018117" iyz="-8.22584379236226E-09" izz="0.000235102925220868" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -23,9 +23,9 @@
   </link>
   <link name="gripper_finger_right_link">
     <inertial>
-      <origin xyz="-0.0197363517714559 -3.17208639429321E-06 -0.102874799750023" rpy="0 0 0" />
+      <origin xyz="0.102874799750023 -0.019736351771456 3.17208639429561E-06" rpy="0 0 0" />
       <mass value="0.0196451967584486" />
-      <inertia ixx="5.78135538944762E-05" ixy="-4.000097909227E-09" ixz="-6.95117285138912E-06" iyy="6.49200844455989E-05" iyz="-7.1110705642277E-10" izz="7.66306924012398E-06" />
+      <inertia ixx="7.66306924012396E-06" ixy="6.95117285138912E-06" ixz="-7.11107056420588E-10" iyy="5.78135538944762E-05" iyz="4.00009790922848E-09" izz="6.4920084445599E-05" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -44,17 +44,17 @@
     </collision>
   </link>
   <joint name="gripper_finger_right_joint" type="revolute">
-    <origin xyz="0.0377995041255281 -0.0221213818384166 0" rpy="1.5707963267949 0 -1.5707963267949" />
+    <origin xyz="0.0377995041255281 -0.0221213818384166 0" rpy="3.14159265358979 0 0" />
     <parent link="quick_connect_interface_link" />
     <child link="gripper_finger_right_link" />
-    <axis xyz="0 -1 0" />
+    <axis xyz="0 0 1" />
     <limit lower="0" upper="0.5" effort="0" velocity="0" />
   </joint>
   <link name="gripper_fingertip_right_link">
     <inertial>
       <origin xyz="0.000475558534248993 0.00831957442804077 -0.000277041398299914" rpy="0 0 0" />
       <mass value="0.0155505328279169" />
-      <inertia ixx="2.74950777582773E-06" ixy="5.84692954757013E-08" ixz="5.92351921428352E-09" iyy="1.01134769547384E-06" iyz="7.19151436215247E-08" izz="2.1590127143644E-06" />
+      <inertia ixx="2.74950777582773E-06" ixy="5.84692954757014E-08" ixz="5.92351921428346E-09" iyy="1.01134769547383E-06" iyz="7.19151436215247E-08" izz="2.1590127143644E-06" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -73,7 +73,7 @@
     </collision>
   </link>
   <joint name="gripper_fingertip_right_joint" type="fixed">
-    <origin xyz="-0.0221679999883885 0 -0.191008332164326" rpy="1.5707963267949 0.279252680319109 -3.14159265358979" />
+    <origin xyz="0.191008332164326 -0.0221679999883885 0" rpy="3.14159265358979 0 -1.29154364647579" />
     <parent link="gripper_finger_right_link" />
     <child link="gripper_fingertip_right_link" />
     <axis xyz="0 0 0" />
@@ -82,7 +82,7 @@
     <inertial>
       <origin xyz="-3.30439794460347E-06 -9.90743941896299E-06 -0.000211787813162015" rpy="0 0 0" />
       <mass value="0.000123521493853864" />
-      <inertia ixx="3.33209068564967E-09" ixy="3.38901370000913E-15" ixz="7.62400928008393E-14" iyy="3.32883778612983E-09" iyz="2.28587510761889E-13" izz="6.65796010218536E-09" />
+      <inertia ixx="3.33209068564967E-09" ixy="3.38901370003498E-15" ixz="7.62400928010461E-14" iyy="3.32883778612983E-09" iyz="2.28587510762354E-13" izz="6.65796010218536E-09" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -108,9 +108,9 @@
   </joint>
   <link name="gripper_finger_left_link">
     <inertial>
-      <origin xyz="0.0197363612660075 3.17208444257828E-06 -0.102874202935414" rpy="0 0 0" />
-      <mass value="0.0196452088457427" />
-      <inertia ixx="5.78117539744567E-05" ixy="-4.00009729344883E-09" ixz="6.95129198318869E-06" iyy="6.49181938548344E-05" iyz="7.11145811406666E-10" izz="7.66297866728631E-06" />
+      <origin xyz="0.102874202935414 -0.0197363612660075 3.17208444257557E-06" rpy="0 0 0" />
+      <mass value="0.0196452088457426" />
+      <inertia ixx="7.6629786672863E-06" ixy="6.95129198318871E-06" ixz="-7.11145811406909E-10" iyy="5.78117539744567E-05" iyz="4.0000972934487E-09" izz="6.49181938548344E-05" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -129,17 +129,17 @@
     </collision>
   </link>
   <joint name="gripper_finger_left_joint" type="revolute">
-    <origin xyz="0.0377995041255282 0.0221213818384166 0" rpy="1.5707963267949 0 -1.5707963267949" />
+    <origin xyz="0.0378 0.022121 0" rpy="0 0 0" />
     <parent link="quick_connect_interface_link" />
     <child link="gripper_finger_left_link" />
-    <axis xyz="0 -1 0" />
-    <limit lower="-0.5" upper="0" effort="0" velocity="0" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="0.5" effort="0" velocity="0" />
   </joint>
   <link name="gripper_fingertip_left_link">
     <inertial>
-      <origin xyz="0.00047557820491366 -0.00831953155927476 -0.000277172441870529" rpy="0 0 0" />
+      <origin xyz="0.000475578204913674 -0.00831953155927476 -0.000277172441870529" rpy="0 0 0" />
       <mass value="0.0155504911063414" />
-      <inertia ixx="2.74950563756043E-06" ixy="-5.84687401960287E-08" ixz="5.90317654774138E-09" iyy="1.01134446589953E-06" iyz="-7.19175556308359E-08" izz="2.15901353046032E-06" />
+      <inertia ixx="2.74950563756043E-06" ixy="-5.84687401960287E-08" ixz="5.90317654774139E-09" iyy="1.01134446589953E-06" iyz="-7.19175556308356E-08" izz="2.15901353046032E-06" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -158,7 +158,7 @@
     </collision>
   </link>
   <joint name="gripper_fingertip_left_joint" type="fixed">
-    <origin xyz="0.0221679999883927 0 -0.191008332164325" rpy="-1.5707963267949 0.279252680319088 0" />
+    <origin xyz="0.191008332164325 -0.0221679999883927 0" rpy="0 0 -1.29154364647581" />
     <parent link="gripper_finger_left_link" />
     <child link="gripper_fingertip_left_link" />
     <axis xyz="0 0 0" />
@@ -167,7 +167,7 @@
     <inertial>
       <origin xyz="-3.30439794460347E-06 -9.90743941898381E-06 -0.000211787813162015" rpy="0 0 0" />
       <mass value="0.000123521493853863" />
-      <inertia ixx="3.33209068564965E-09" ixy="3.38901368046699E-15" ixz="7.6240092801563E-14" iyy="3.32883778612979E-09" iyz="2.28587510763052E-13" izz="6.6579601021853E-09" />
+      <inertia ixx="3.33209068564965E-09" ixy="3.3890136800534E-15" ixz="7.62400928023902E-14" iyy="3.32883778612979E-09" iyz="2.28587510762548E-13" izz="6.6579601021853E-09" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
