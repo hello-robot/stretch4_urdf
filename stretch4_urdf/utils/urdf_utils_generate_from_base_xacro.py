@@ -177,10 +177,9 @@ def get_urdf_calibrated(
                 joints_calib = calib_data["robot_calibration"]["joints"]
                 for joint in root.findall('joint'):
                     name = joint.get('name')
-                    logger.info(f"Applying calibration to {name}")
                     if name in joints_calib:
+                        logger.debug(f"Applying calibration to {name}")
                         joint_data = joints_calib[name]
-                        
                         # Confirm that the joint in URDF has the same parent link as specified in the calibration
                         parent_elem = joint.find('parent')
                         if parent_elem is not None and 'parent' in joint_data:
