@@ -29,6 +29,16 @@
 
   </xacro:if>
 
+  <xacro:arg name="accessory_mesh_dir" default="file://$(arg pkg_path)/SE4_accessories/docking_station/meshes"/>
+  <xacro:include filename="$(arg pkg_path)/SE4_accessories/docking_station/docking_station.urdf" />
+
+  <joint name="charge_port_to_contacts" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="charge_port_link" />
+    <child link="contacts_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
   <!-- Dummy Base Lidar Link -->
   <link name="laser" />
   <joint name="laser_joint" type="fixed">
