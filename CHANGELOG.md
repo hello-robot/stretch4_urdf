@@ -2,6 +2,16 @@
 
 The changes between releases of Stretch 4 URDF are documented here.
 
+## [2026.06.25](https://pypi.org/project/hello-robot-stretch4-urdf/2026.6.25)
+
+ - Bugfix for outputting urdf to a nonexistant folder - calls os.mkdir
+ - Methods to generate planar_ik_urdf, make_rotary_ik_urdf, make_translation_ik_urdf
+ - Generate calibrated URDFs
+ - Cleanup URDF post processing and optical frames
+ - Bugfix for is stretch4_body isn't installed
+ - Simplify dependencies
+ - Improved docs in README
+
 ## [2026.05.27](https://pypi.org/project/hello-robot-stretch4-urdf/2026.5.27)
 
  - Bugfix for generating URDF with nil tool
