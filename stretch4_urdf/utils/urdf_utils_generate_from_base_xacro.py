@@ -11,7 +11,7 @@ try:
 except Exception:
     RobotParams = None
     hello_utils = None
-from xacrodoc import XacroDoc
+import xacro
 from yourdfpy import URDF
 import logging
 
@@ -28,7 +28,7 @@ def get_available_tools(model_name:str):
 
     return available_tools
 
-def generate_urdf_from_xacro(model_name:str, batch_name:str, tool_name:str, do_add_file_prefix_to_absolute_paths: bool = True) -> str:
+def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, do_add_file_prefix_to_absolute_paths: bool = True) -> str:
     """
     Generates Robot URDF contents from the SE4 xacro.
 
@@ -44,28 +44,31 @@ def generate_urdf_from_xacro(model_name:str, batch_name:str, tool_name:str, do_a
     urdf_pkg_path = str(importlib_resources.files("stretch4_urdf"))
     xacro_file = os.path.join(urdf_pkg_path, f"{model_name}.xacro")
     model_mesh_dir = os.path.join(urdf_pkg_path, f"{model_name}_{batch_name}/meshes")
+
     if not os.path.exists(model_mesh_dir):
-        raise FileNotFoundError(f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}\nIf paths are pointing to an old location, trying re-installing stretch4_urdf to update the paths and re-sourcing your workspace.")
+        raise FileNotFoundError(f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}")
 
     if 'nil' in tool_name:
         tool_mesh_dir = None
     else:
         tool_mesh_dir = os.path.join(urdf_pkg_path, f"{model_name}_tools/{tool_name}/meshes")
         if not os.path.exists(tool_mesh_dir):
-            raise FileNotFoundError(f"Failed to resolve tool mesh directory:\n\t{tool_mesh_dir}\nIf paths are pointing to an old location, trying re-installing stretch4_urdf to update the paths and re-sourcing your workspace.")
+            raise FileNotFoundError(f"Failed to resolve tool mesh directory:\n\t{tool_mesh_dir}")
 
-    xacro_doc = XacroDoc.from_file(
-        xacro_file, 
-        subargs={
-            "batch": batch_name, 
-            "tool": tool_name, 
-            "pkg_path": urdf_pkg_path,
-            "model_mesh_dir": model_mesh_dir,
-            "tool_mesh_dir": tool_mesh_dir
-        }
-    )
+    # Format paths conditionally based on the prefix flag
+    prefix = "file://" if do_add_file_prefix_to_absolute_paths else ""
+    mappings = {
+        "batch": batch_name,
+        "tool": tool_name,
+        "pkg_path": urdf_pkg_path,
+        "model_mesh_dir": f"{prefix}{model_mesh_dir}",
+        "tool_mesh_dir": f"{prefix}{tool_mesh_dir}" if tool_mesh_dir else "none"
+    }
 
-    return xacro_doc.to_urdf_string(use_protocols=do_add_file_prefix_to_absolute_paths)
+    with open(xacro_file, 'r') as f:
+        doc = xacro.parse(f)
+    xacro.process_doc(doc, mappings=mappings)
+    return doc.toprettyxml(indent="  ")
 
 def get_robot_params():
     """
@@ -177,10 +180,9 @@ def get_urdf_calibrated(
                 joints_calib = calib_data["robot_calibration"]["joints"]
                 for joint in root.findall('joint'):
                     name = joint.get('name')
-                    logger.info(f"Applying calibration to {name}")
                     if name in joints_calib:
+                        logger.debug(f"Applying calibration to {name}")
                         joint_data = joints_calib[name]
-                        
                         # Confirm that the joint in URDF has the same parent link as specified in the calibration
                         parent_elem = joint.find('parent')
                         if parent_elem is not None and 'parent' in joint_data:
