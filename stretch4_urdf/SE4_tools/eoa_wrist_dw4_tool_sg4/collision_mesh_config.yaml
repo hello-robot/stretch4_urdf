@@ -16,5 +16,3 @@ links:
     action: bounding_box
   aruco_fingertip_left_link:
     action: bounding_box
-  grasp_center_link:
-    action: bounding_box
