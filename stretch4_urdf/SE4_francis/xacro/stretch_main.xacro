@@ -172,7 +172,7 @@
     <child link="line_sensor_1_optical_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="sensor_0_link">
+  <link name="line_sensor_0_link">
     <inertial>
       <origin xyz="0.00114502070313158 -0.000126774756058566 0.0119761602719025" rpy="0 0 0" />
       <mass value="0.00213836003346444" />
@@ -181,30 +181,30 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/sensor_0_link.STL" />
+        <mesh filename="$(arg model_mesh_dir)/line_sensor_0_link.STL" />
       </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-    <collision name="sensor_0_collision_link">
+    <collision name="line_sensor_0_collision_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/sensor_0_link.STL" />
+        <mesh filename="$(arg model_mesh_dir)/line_sensor_0_link.STL" />
       </geometry>
     </collision>
   </link>
   <joint name="line_sensor_0_joint" type="fixed">
     <origin xyz="0.185120231404985 -0.0360000000000004 0.0527013981430276" rpy="0 0.453785605518531 0" />
     <parent link="base_link" />
-    <child link="sensor_0_link" />
+    <child link="line_sensor_0_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="line_sensor_0_optical_link">
     </link>
   <joint name="line_sensor_0_optical_joint" type="fixed">
     <origin xyz="0.00286000000000003 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
-    <parent link="sensor_0_link" />
+    <parent link="line_sensor_0_link" />
     <child link="line_sensor_0_optical_link" />
     <axis xyz="0 0 0" />
   </joint>
