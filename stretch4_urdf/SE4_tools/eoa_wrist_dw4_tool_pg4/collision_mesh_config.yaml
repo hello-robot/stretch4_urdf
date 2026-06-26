@@ -14,6 +14,3 @@ links:
   aruco_fingertip_left_link:
     action: qem
     simplification_ratio: 0.1
-  grasp_frame_link:
-    action: qem
-    simplification_ratio: 0.1
