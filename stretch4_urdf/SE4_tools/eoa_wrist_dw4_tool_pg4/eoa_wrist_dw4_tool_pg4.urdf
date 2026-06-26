@@ -135,32 +135,11 @@
     <child link="aruco_fingertip_left_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="grasp_frame_link">
-    <inertial>
-      <origin xyz="0 0 -5.74053187100322E-20" rpy="0 0 0" />
-      <mass value="6.54498469497874E-05" />
-      <inertia ixx="1.63624617374468E-10" ixy="0" ixz="0" iyy="1.63624617374468E-10" iyz="0" izz="1.63624617374468E-10" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg tool_mesh_dir)/grasp_frame_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision name="grasp_frame_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg tool_mesh_dir)/grasp_frame_collision_link.STL" />
-      </geometry>
-    </collision>
-  </link>
-  <joint name="grasp_frame_joint" type="fixed">
+  <link name="grasp_center_link" />
+  <joint name="grasp_center_joint" type="fixed">
     <origin xyz="0.166855269271506 0 0" rpy="0 0 0" />
     <parent link="pjg_body_link" />
-    <child link="grasp_frame_link" />
+    <child link="grasp_center_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="quick_connect_interface_link" />
