@@ -6,7 +6,7 @@ import os
 import numpy as np
 from yourdfpy import urdf as ud
 
-from stretch4_urdf import get_urdf_from_robot_params
+from .urdf_utils_generate_from_base_xacro import get_urdf_from_robot_params
 
 wrist_pitch_lower_limit = -0.8 * (np.pi / 2.0)
 
