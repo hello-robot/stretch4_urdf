@@ -71,3 +71,7 @@ links:
     action: bounding_box
   base_footprint:
     action: bounding_box
+  lidar_right_link:
+    action: bounding_box
+  lidar_left_link:
+    action: bounding_box
