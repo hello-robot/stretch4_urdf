@@ -90,7 +90,7 @@ def remove_visual_and_collision_from_sensors_in_base_and_head(urdf_path):
                 if visual is not None:
                     print(f"  -> Removing visual from sensor link: {link_name}")
                     link.remove(visual)
-                if 'lidar' not in link_name_lower and collision is not None:
+                if collision is not None:
                     print(f"  -> Removing collision from sensor link: {link_name}")
                     link.remove(collision)
                      

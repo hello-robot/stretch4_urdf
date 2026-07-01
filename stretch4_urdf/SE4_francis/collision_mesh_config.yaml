@@ -15,8 +15,7 @@ links:
     action: qem
     simplification_ratio: 0.1
   head_link:
-    action: qem
-    simplification_ratio: 0.1
+    action: bounding_box
   lift_link:
     action: qem
     simplification_ratio: 0.1
@@ -70,8 +69,4 @@ links:
   wrist_aruco_link:
     action: bounding_box
   base_footprint:
-    action: bounding_box
-  lidar_right_link:
-    action: bounding_box
-  lidar_left_link:
     action: bounding_box

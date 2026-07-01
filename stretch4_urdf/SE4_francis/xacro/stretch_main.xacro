@@ -197,13 +197,7 @@
       <mass value="5.62562935738041" />
       <inertia ixx="0.0492829863501233" ixy="-0.0015644794553125" ixz="0.0149316959819942" iyy="0.0349356509390749" iyz="0.00380036135309891" izz="0.0486907192779151" />
     </inertial>
-    <collision name="lidar_right_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/lidar_right_collision_link.STL" />
-      </geometry>
-    </collision>
-  </link>
+    </link>
   <joint name="lidar_right_joint" type="fixed">
     <origin xyz="0.131744211811827 -0.0264137425448753 -0.0583279884119643" rpy="-3.05465659239941 0.781600065124168 2.39203005564319" />
     <parent link="head_link" />
@@ -216,13 +210,7 @@
       <mass value="5.62562935738041" />
       <inertia ixx="0.0495631508318921" ixy="0.00150375867091917" ixz="-0.0147241234604212" iyy="0.034541985578385" iyz="0.00388339874636519" izz="0.0488042201568361" />
     </inertial>
-    <collision name="lidar_left_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/lidar_left_collision_link.STL" />
-      </geometry>
-    </collision>
-  </link>
+    </link>
   <joint name="lidar_left_joint" type="fixed">
     <origin xyz="0.131744211811846 0.222413742544858 -0.0583279884119634" rpy="-3.05465659239939 -0.781600065124167 0.749562597946573" />
     <parent link="head_link" />
