@@ -11,7 +11,7 @@ import sys
 import xml.etree.ElementTree as ET
 import yaml
 
-from stretch4_urdf.utils.update_urdf_with_collision_mesh_filepath import (
+from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath import (
     remove_collision_from_optical_links, update_urdf_collision_meshes)
 
 
@@ -36,7 +36,7 @@ def create_collision_config_if_missing(base_urdf, root_dir):
 
 def generate_collision_meshes(model_name):
     print(f"Generating collision meshes for tool: {model_name}...")
-    gen_script = os.path.join(os.path.dirname(__file__), 'stretch4_urdf', 'utils', 'generate_collision_mesh.py')
+    gen_script = os.path.join(os.path.dirname(__file__), 'generate_collision_mesh.py')
     try:
         subprocess.run(['python3', gen_script, '--model', model_name], check=True)
     except subprocess.CalledProcessError as e:

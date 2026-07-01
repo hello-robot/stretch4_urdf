@@ -45,7 +45,6 @@ supported_batch_names = ["francis"]
 supported_tool_names = ["eoa_wrist_dw4_tool_sg4"]
 ```
 
-
 A single composable xacro combines a robot's base model with its attached tool. Util functions will handle processing the xacro file and return the URDF for the robot's current configuration:
 
 ```python
@@ -74,16 +73,16 @@ The package follows a strict directory strucutre:
         {tool_name}.urdf
 ```
 
-The URDF and meshes from the CAD model are added to the {model}\_{batch} base directory and meshes folder. From there, `process_new_robot_model.py` creates the stretch_main.xacro file and necessary collision meshes for the batch. See the urdf_conventions.md for the specifics of this processing step.
+The URDF and meshes from the CAD model are added to the {model}\_{batch} base directory and meshes folder. From there, `utils/preprocessing/process_new_robot_model.py` creates the stretch_main.xacro file and necessary collision meshes for the batch. See the urdf_conventions.md for the specifics of this processing step.
 
-A directory is created for each new tool, with the urdf in the base directory and a folder for meshes. `process_new_tool.py` is then used to add the necessary edits to the urdf and generate collision meshes.
+A directory is created for each new tool, with the urdf in the base directory and a folder for meshes. `utils/preprocessing/process_new_tool.py` is then used to add the necessary edits to the urdf and generate collision meshes.
 
 ## Documentation
 
 The following files provide deeper documentation on various parts of the system:
 
-| Primer | Description |
-| :--- | :--- |
-| [Batches](stretch4_urdf/batches.md) | Explains URDF batch organization, compiling the URDF dynamically, and how to add new batch models. |
+| Primer                                                    | Description                                                                                               |
+| :-------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
+| [Batches](stretch4_urdf/batches.md)                       | Explains URDF batch organization, compiling the URDF dynamically, and how to add new batch models.        |
 | [End Effectors](stretch4_urdf/SE4_tools/end_effectors.md) | Outlines the available end effector tools and provides instructions on how to add new tools to the robot. |
-| [URDF Conventions](./urdf_conventions.md) | Outlines which conventions are used in the Stretch 4 URDF. |
+| [URDF Conventions](./urdf_conventions.md)                 | Outlines which conventions are used in the Stretch 4 URDF.                                                |

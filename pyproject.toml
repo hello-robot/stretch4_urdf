@@ -22,25 +22,22 @@ dependencies = [
     "yourdfpy>=0.0.58",
     "numpy",
     "pyyaml",
-    "trimesh",
     "xacro>=2.1,<3.0",
 ]
 
 [project.optional-dependencies]
 robot = ["hello-robot-stretch4-body"]
-preprocessing = ['open3d']
+preprocessing = ['open3d','trimesh']
 
 [project.urls]
 Repository = "https://github.com/hello-robot/stretch4_urdf"
 
 [project.scripts]
-stretch_urdf_example = "tools.stretch_urdf_example:main"
-stretch_urdf_viz_dex_teleop_ii = "tools.stretch_urdf_viz_dex_teleop_ii:main"
-stretch_urdf_viz = "tools.stretch_urdf_viz:main"
+# No scripts defined
 
 
 [tool.setuptools]
-packages = ["stretch4_urdf", "stretch4_urdf.utils", "tools"]
+packages = ["stretch4_urdf", "stretch4_urdf.utils"]
 
 [tool.setuptools.package-data]
 stretch4_urdf = [
@@ -48,5 +45,5 @@ stretch4_urdf = [
     "SE4_*/*/*",
     "SE4_*/*/*/*",
     "*.xacro",
-    "utils/*",
+    "utils/*.py",
 ]
