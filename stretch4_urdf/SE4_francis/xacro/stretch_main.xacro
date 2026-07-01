@@ -178,15 +178,6 @@
       <mass value="0.00213836003346444" />
       <inertia ixx="2.88698160050477E-07" ixy="-5.64135957061259E-10" ixz="-7.07831726660262E-09" iyy="2.34959277592965E-07" iyz="-2.73972720709195E-10" izz="6.6461578229E-08" />
     </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/line_sensor_0_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
     <collision name="line_sensor_0_collision_link">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
