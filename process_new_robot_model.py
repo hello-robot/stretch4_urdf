@@ -48,8 +48,8 @@ def generate_collision_meshes(model_name):
     except subprocess.CalledProcessError as e:
         print(f"Error generating collision meshes for {model_name}: {e}")
 
-def remove_visual_from_sensors_in_base_and_head(urdf_path):
-    print('Removing visual tags from sensor frames in base and head links...')
+def remove_visual_and_collision_from_sensors_in_base_and_head(urdf_path):
+    print('Removing visual and collision tags from sensor frames in base and head links...')
     tree = ET.parse(urdf_path)
     root = tree.getroot()
     
@@ -86,9 +86,13 @@ def remove_visual_from_sensors_in_base_and_head(urdf_path):
             # Check if it's in the target assemblies and NOT in the excluded ones
             if is_descendant_of(link_name, target_assemblies) and not is_descendant_of(link_name, exclude_assemblies):
                 visual = link.find('visual')
+                collision = link.find('collision')
                 if visual is not None:
                     print(f"  -> Removing visual from sensor link: {link_name}")
                     link.remove(visual)
+                if collision is not None:
+                    print(f"  -> Removing collision from sensor link: {link_name}")
+                    link.remove(collision)
                      
     tree.write(urdf_path)
 
@@ -148,15 +152,6 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     stretch_main_xacro = os.path.join(xacro_dir, 'stretch_main.xacro')
     shutil.copy(base_urdf, stretch_main_xacro)
 
-    print('Translating link_ convention to _link convention...')
-    import re
-    with open(stretch_main_xacro, 'r') as f:
-        content = f.read()
-    content = re.sub(r'\blink_([a-zA-Z0-9_]+)', r'\1_link', content)
-    content = re.sub(r'\bjoint_([a-zA-Z0-9_]+)', r'\1_joint', content)
-    with open(stretch_main_xacro, 'w') as f:
-        f.write(content)
-
     print('Updating the URDF with collision mesh filepaths...')
     temp_urdf = os.path.join(os.path.dirname(base_urdf), 'temp.urdf')
     shutil.copy(stretch_main_xacro, temp_urdf)
@@ -166,8 +161,8 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     remove_collision_from_optical_links(stretch_main_xacro, stretch_main_xacro)
     
     # Remove visual tags from sensors in base and head
-    remove_visual_from_sensors_in_base_and_head(stretch_main_xacro)
-    
+    remove_visual_and_collision_from_sensors_in_base_and_head(stretch_main_xacro)
+
     with open(stretch_main_xacro, 'r') as f:
         content = f.read()
     finalize_xacro_and_cleanup_meshes(stretch_main_xacro, model_name, root_dir, content)
