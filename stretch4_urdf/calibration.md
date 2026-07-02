@@ -28,12 +28,18 @@ The `get_urdf_calibrated` function performs the following steps:
 The `stretch_calibration_values.yaml` file follows this structure:
 
 ```yaml
-robot_calibration:
-  joints:
-    joint_name:
-      parent: parent_link_name # Optional: used to verify the joint matches the URDF
-      xyz: "0.001 0.0 0.0" # Space-separated string
-      rpy: "0.0 0.0 0.0" # Space-separated string
+version: '2.0'
+joint_calibration:
+  base_ref:
+    data:
+      xyz: 0.0 0.0 0.027117761948801805
+      rpy: -0.002335365281590182 0.008538679539879857 0.0
+      parent: base_footprint
+      child: base_link
+    robot_id: stretch-se4-4010
+    timestamp: '2026-07-02T13:55:41.393513'
+    fit_method: svd
+    rmse: 0.011093677602830953
 ```
 
 ## Adding Calibrations
