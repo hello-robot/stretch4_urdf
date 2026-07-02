@@ -14,7 +14,7 @@ except Exception:
 import xacro
 from yourdfpy import URDF
 import logging
-from stretch4_urdf.utils.calibration_utils import apply_calibration_to_urdf
+from .calibration_utils import apply_calibration_to_urdf
 
 
 logger = logging.getLogger("urdf_utils")

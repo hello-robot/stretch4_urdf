@@ -65,7 +65,7 @@ def convert_v1_to_v2(calib_data):
             
     return v2_data
 
-def add_calibration_joint(joint_name, xyz, rpy, parent, child, robot_id, timestamp=None, extra=None, filepath=None, fleet_id=None):
+def record_joint_calibration(joint_name, xyz, rpy, parent, child, robot_id, timestamp=None, extra=None, filepath=None, fleet_id=None):
     """
     Adds a joint entry to the calibration file. Creates the file and necessary structure if it doesn't exist.
     """
