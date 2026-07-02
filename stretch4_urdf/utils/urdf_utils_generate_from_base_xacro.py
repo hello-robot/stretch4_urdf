@@ -203,9 +203,9 @@ def get_urdf_calibrated(
                 
                 urdf_contents = ET.tostring(root, encoding='unicode')
         else:
-            logger.warning(f"Calibration file not found at {calib_file}")
+            logger.debug(f"Calibration file not found at {calib_file}. Using nominal URDF values.")
     else:
-        logger.warning("HELLO_FLEET_PATH or HELLO_FLEET_ID not set. Cannot load calibration.")
+        logger.debug("HELLO_FLEET_PATH or HELLO_FLEET_ID not set. Using nominal URDF values.")
 
     if output_dir is not None:
         if prefix is None:

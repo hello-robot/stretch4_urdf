@@ -85,4 +85,5 @@ The following files provide deeper documentation on various parts of the system:
 | :-------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
 | [Batches](stretch4_urdf/batches.md)                       | Explains URDF batch organization, compiling the URDF dynamically, and how to add new batch models.        |
 | [End Effectors](stretch4_urdf/SE4_tools/end_effectors.md) | Outlines the available end effector tools and provides instructions on how to add new tools to the robot. |
-| [URDF Conventions](./urdf_conventions.md)                 | Outlines which conventions are used in the Stretch 4 URDF.                                                |
+| [URDF Conventions](./urdf_conventions.md) | Outlines which conventions are used in the Stretch 4 URDF. |
+| [Calibration](stretch4_urdf/calibration.md) | Explains how static calibration values are applied to the URDF at load time. |
