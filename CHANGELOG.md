@@ -2,6 +2,12 @@
 
 The changes between releases of Stretch 4 URDF are documented here.
 
+## [2026.07.02](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.2)
+
+ - Fix to head collision mesh
+ - Fix to link name in gripper
+ - Fix to line sensor link name
+
 ## [2026.06.25](https://pypi.org/project/hello-robot-stretch4-urdf/2026.6.25)
 
  - Bugfix for outputting urdf to a nonexistant folder - calls os.mkdir

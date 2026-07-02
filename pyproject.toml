@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "hello-robot-stretch4-urdf"
 # Versioning follow CalVer (YYYY.MM.DD) for PEP 440 compliance
-version = "2026.06.25"
+version = "2026.07.02"
 description = "Stretch 4 URDF"
 readme = { file = "README.md", content-type = "text/markdown" }
 
