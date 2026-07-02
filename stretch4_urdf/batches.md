@@ -29,7 +29,7 @@ graph TD
     ToolURDFFile --> FinalCompiledURDF
 ```
 
-When `SE4.xacro` runs, it dynamically includes the `stretch_main.xacro` from the directory specified by the `batch` argument. It also optionally includes a tool URDF from the `SE4_tools` directory based on the `tool` argument. 
+When `SE4.xacro` runs, it dynamically includes the `stretch_main.xacro` from the directory specified by the `batch` argument. It also optionally includes a tool URDF from the `SE4_tools` directory based on the `tool` argument.
 
 The tool is chosen strictly through the `tool` parameter passed to the xacro compiler. Details regarding specific tools and their geometries will be covered in a separate primer.
 
@@ -45,7 +45,7 @@ The repository provides utility functions to streamline generating and loading U
 
 #### Why Package as a Python Package?
 
-Packaging these URDF assets and xacro files as a Python package is a deliberate design choice to encourage dynamic loading. 
+Packaging these URDF assets and xacro files as a Python package is a deliberate design choice to encourage dynamic loading.
 
 Codebases and 3rd party applications should load the URDF dynamically using the provided utility functions rather than bundling static URDF assets directly. This is a good idea because:
 
