@@ -11,8 +11,17 @@ def get_calibration_values_filepath(fleet_id=None):
     If no fleet_id is provided, checks the HELLO_FLEET_ID environment variable.
     """
     if fleet_id is None:
-        fleet_id = os.environ.get('HELLO_FLEET_ID', 'unknown_robot')
-    return os.path.join(os.path.expanduser('~/stretch_user'), fleet_id, 'stretch_calibration_values.yaml')
+        fleet_id = os.environ.get("HELLO_FLEET_ID")
+
+    fleet_path = os.environ.get("HELLO_FLEET_PATH")
+
+    if fleet_id is None or fleet_path is None:
+        raise ValueError("HELLO_FLEET_ID and HELLO_FLEET_PATH must be set.")
+
+    if not os.path.exists(os.path.join(fleet_path, fleet_id)):
+        raise FileNotFoundError("Fleet ID not found in HELLO_FLEET_PATH.")
+    
+    return os.path.join(fleet_path, fleet_id, 'stretch_calibration_values.yaml')
 
 def create_calibration_values_file(filepath=None, fleet_id=None):
     """

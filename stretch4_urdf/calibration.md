@@ -31,20 +31,34 @@ The `stretch_calibration_values.yaml` file follows this structure:
 version: '2.0'
 joint_calibration:
   base_ref:
-    data:
+    data: # Absolute joint origin data to swap into the URDF
       xyz: 0.0 0.0 0.027117761948801805
       rpy: -0.002335365281590182 0.008538679539879857 0.0
       parent: base_footprint
       child: base_link
-    robot_id: stretch-se4-4010
-    timestamp: '2026-07-02T13:55:41.393513'
+    robot_id: stretch-se4-4010 # ID of the robot that performed the calibration
+    timestamp: '2026-07-02T13:55:41.393513' # ISO timestamp of when the calibration was performed
+    # Extra information can be added for additional context relevant to specific calibration procedures
     fit_method: svd
     rmse: 0.011093677602830953
 ```
 
 ## Adding Calibrations
 
-Users can add their own calibration entries to `stretch_calibration_values.yaml`. If you have measured an offset for a joint, you can add it to the `joints` section of the calibration file, and it will be automatically applied to the URDF the next time it is loaded.
+Users can add their own calibration entries to `stretch_calibration_values.yaml`. If you have measured an offset for a joint, you can manually add it to the calibration file, or programmatically add calibrations using the exported `record_joint_calibration` utility function. The calibration will be automatically applied to the URDF when it is loaded through util functions (e.g. `get_urdf_from_robot_params`, `get_urdf_calibrated`).
+
+```python
+from stretch4_urdf import record_joint_calibration
+
+record_joint_calibration(
+    joint_name="base_ref",
+    xyz="0.0 0.0 0.027",
+    rpy="-0.002 0.008 0.0",
+    parent="base_footprint",
+    child="base_link",
+    robot_id="stretch-se4-4010"
+)
+```
 
 > **NOTE**
 > The values provided in the calibration YAML are **absolute origin values** for the joint, not deltas. The system replaces the nominal `<origin>` attributes in the URDF with these exact values.
