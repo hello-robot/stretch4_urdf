@@ -25,12 +25,45 @@ def create_calibration_values_file(filepath=None, fleet_id=None):
     
     data = {
         'version': CALIBRATION_FORMAT_VERSION,
-        'robot_calibration': {}
+        'joint_calibration': {}
     }
     with open(filepath, 'w') as f:
         yaml.dump(data, f, sort_keys=False)
         
     return filepath
+
+def convert_v1_to_v2(calib_data):
+    """
+    Converts a v1 calibration dictionary to the v2 format.
+    """
+    if not calib_data or "robot_calibration" not in calib_data:
+        return {'version': CALIBRATION_FORMAT_VERSION, 'joint_calibration': {}}
+        
+    v2_data = {
+        'version': CALIBRATION_FORMAT_VERSION,
+        'joint_calibration': {}
+    }
+    
+    rc = calib_data["robot_calibration"]
+    if "joints" in rc:
+        for joint_name, joint_info in rc["joints"].items():
+            joint_entry = {'data': {}}
+            
+            for key in ['xyz', 'rpy', 'parent', 'child']:
+                if key in joint_info:
+                    joint_entry['data'][key] = joint_info[key]
+                    
+            if 'metadata' in joint_info:
+                for k, v in joint_info['metadata'].items():
+                    joint_entry[k] = v
+                    
+            for key, val in joint_info.items():
+                if key not in ['xyz', 'rpy', 'parent', 'child', 'metadata']:
+                    joint_entry[key] = val
+                    
+            v2_data['joint_calibration'][joint_name] = joint_entry
+            
+    return v2_data
 
 def add_calibration_joint(joint_name, xyz, rpy, parent, child, robot_id, timestamp=None, extra=None, filepath=None, fleet_id=None):
     """
@@ -42,21 +75,31 @@ def add_calibration_joint(joint_name, xyz, rpy, parent, child, robot_id, timesta
     if timestamp is None:
         timestamp = datetime.now().isoformat()
         
-    urdf_data = {'version': CALIBRATION_FORMAT_VERSION, 'robot_calibration': {}}
-    
+    urdf_data = {'version': CALIBRATION_FORMAT_VERSION, 'joint_calibration': {}}
+
     if os.path.exists(filepath):
         try:
             with open(filepath, 'r') as f:
                 loaded_urdf = yaml.safe_load(f)
                 if loaded_urdf:
-                    if 'robot_calibration' in loaded_urdf:
-                        urdf_data['robot_calibration'] = loaded_urdf['robot_calibration']
-                    if 'version' in loaded_urdf:
-                        urdf_data['version'] = loaded_urdf['version']
+                    version = None
+                    if "version" in loaded_urdf:
+                        version = str(loaded_urdf["version"])
+                    elif "robot_calibration" in loaded_urdf and isinstance(loaded_urdf["robot_calibration"], dict) and "metadata" in loaded_urdf["robot_calibration"] and "version" in loaded_urdf["robot_calibration"]["metadata"]:
+                        version = str(loaded_urdf["robot_calibration"]["metadata"]["version"])
+                    if version and version.startswith("1"):
+                        urdf_data = convert_v1_to_v2(loaded_urdf)
+                    else:
+                        if 'joint_calibration' in loaded_urdf:
+                            urdf_data['joint_calibration'] = loaded_urdf['joint_calibration']
+                        elif 'robot_calibration' in loaded_urdf:
+                            urdf_data['joint_calibration'] = loaded_urdf['robot_calibration']
+                        if 'version' in loaded_urdf:
+                            urdf_data['version'] = loaded_urdf['version']
         except Exception as e:
             print(f"Warning: Failed to load existing URDF calibration values: {e}")
             
-    joints = urdf_data['robot_calibration']
+    joints = urdf_data['joint_calibration']
     
     joint_entry = {
         'data': {
@@ -119,8 +162,14 @@ def apply_calibration_to_urdf_v2(urdf_contents, calib_data, logger=None):
         
     root = ET.fromstring(urdf_contents)
     
-    if calib_data and "robot_calibration" in calib_data:
+    if calib_data and "joint_calibration" in calib_data:
+        joints_calib = calib_data["joint_calibration"]
+    elif calib_data and "robot_calibration" in calib_data:
         joints_calib = calib_data["robot_calibration"]
+    else:
+        joints_calib = None
+        
+    if joints_calib:
         for joint in root.findall('joint'):
             name = joint.get('name')
             if name in joints_calib:
