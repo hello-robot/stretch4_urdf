@@ -14,6 +14,7 @@ except Exception:
 import xacro
 from yourdfpy import URDF
 import logging
+from stretch4_urdf.utils.calibration_utils import apply_calibration_to_urdf
 
 
 logger = logging.getLogger("urdf_utils")
@@ -166,46 +167,7 @@ def get_urdf_calibrated(
         output_dir=None
     )
 
-    fleet_path = os.environ.get("HELLO_FLEET_PATH")
-    fleet_id = os.environ.get("HELLO_FLEET_ID")
-    
-    if fleet_path and fleet_id:
-        calib_file = os.path.join(fleet_path, fleet_id, "stretch_calibration_values.yaml")
-        if os.path.exists(calib_file):
-            with open(calib_file, 'r') as f:
-                calib_data = yaml.safe_load(f)
-            root = ET.fromstring(urdf_contents)
-            
-            if calib_data and "robot_calibration" in calib_data and "joints" in calib_data["robot_calibration"]:
-                joints_calib = calib_data["robot_calibration"]["joints"]
-                for joint in root.findall('joint'):
-                    name = joint.get('name')
-                    if name in joints_calib:
-                        logger.debug(f"Applying calibration to {name}")
-                        joint_data = joints_calib[name]
-                        # Confirm that the joint in URDF has the same parent link as specified in the calibration
-                        parent_elem = joint.find('parent')
-                        if parent_elem is not None and 'parent' in joint_data:
-                            if parent_elem.get('link') != joint_data['parent']:
-                                logger.warning(f"Parent link mismatch for joint '{name}'. Expected: {joint_data['parent']}, but found: {parent_elem.get('link')}. Skipping calibration.")
-                                continue
-                        
-                        #TODO: Threshold for calibration delta? 
-                        
-                        origin = joint.find('origin')
-                        if origin is None:
-                            origin = ET.SubElement(joint, 'origin')
-                        
-                        if 'xyz' in joint_data:
-                            origin.set('xyz', str(joint_data['xyz']))
-                        if 'rpy' in joint_data:
-                            origin.set('rpy', str(joint_data['rpy']))
-                
-                urdf_contents = ET.tostring(root, encoding='unicode')
-        else:
-            logger.debug(f"Calibration file not found at {calib_file}. Using nominal URDF values.")
-    else:
-        logger.debug("HELLO_FLEET_PATH or HELLO_FLEET_ID not set. Using nominal URDF values.")
+    urdf_contents = apply_calibration_to_urdf(urdf_contents, logger)
 
     if output_dir is not None:
         if prefix is None:
