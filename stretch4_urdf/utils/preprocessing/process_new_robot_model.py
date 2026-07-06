@@ -7,6 +7,7 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 import yaml
+from stretch4_body.core.robot_params import RobotParams
 
 from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath import (
     remove_collision_from_optical_links, update_urdf_collision_meshes)
@@ -15,7 +16,6 @@ from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath 
 def update_urdf_joint_limits(input_file, output_file):
     print("Updating URDF joint limits from robot parameters...")
     try:
-        from stretch4_body.core.robot_params import RobotParams
         _, robot_params = RobotParams.get_params()
     except Exception as e:
         print(f"Failed to fetch robot parameters for limits: {e}")
@@ -31,6 +31,7 @@ def update_urdf_joint_limits(input_file, output_file):
         limit = joint.find("limit")
         is_vel_zero = False
         is_eff_zero = False
+        new_limit = False
         
         if limit is not None:
             vel = limit.get("velocity")
@@ -46,7 +47,8 @@ def update_urdf_joint_limits(input_file, output_file):
             except (ValueError, TypeError):
                 is_eff_zero = False
         else:
-            limit = ET.SubElement(joint, "limit")
+            limit = ET.Element("limit")
+            new_limit = True
             is_vel_zero = True
             is_eff_zero = True
 
@@ -82,6 +84,16 @@ def update_urdf_joint_limits(input_file, output_file):
                 
                 if max_vel is not None or max_eff is not None:
                     print(f"Updated {joint_name} limits from params: vel={max_vel if is_vel_zero else 'unchanged'}, effort={max_eff if is_eff_zero else 'unchanged'}")
+
+        if new_limit:
+            if "velocity" in limit.attrib and "effort" in limit.attrib:
+                joint.append(limit)
+            elif "velocity" in limit.attrib or "effort" in limit.attrib:
+                if "velocity" not in limit.attrib:
+                    limit.set("velocity", "0")
+                if "effort" not in limit.attrib:
+                    limit.set("effort", "0")
+                joint.append(limit)
 
     if hasattr(ET, 'indent'):
         ET.indent(tree, space="  ")
