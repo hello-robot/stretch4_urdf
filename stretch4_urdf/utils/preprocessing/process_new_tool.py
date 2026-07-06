@@ -13,6 +13,7 @@ import yaml
 
 from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath import (
     remove_collision_from_optical_links, update_urdf_collision_meshes)
+from stretch4_urdf.utils.preprocessing.process_new_robot_model import update_urdf_joint_limits
 
 
 def create_collision_config_if_missing(base_urdf, root_dir):
@@ -106,6 +107,7 @@ def process_tool_urdf(model_name, root_dir):
     print('Updating the URDF with collision mesh filepaths...')
     update_urdf_collision_meshes(base_urdf, base_urdf)
     remove_collision_from_optical_links(base_urdf, base_urdf)
+    update_urdf_joint_limits(base_urdf, base_urdf)
 
     # Convert mesh paths to use $(arg tool_mesh_dir)
     print(f'Converting mesh paths to use $(arg tool_mesh_dir)...')
