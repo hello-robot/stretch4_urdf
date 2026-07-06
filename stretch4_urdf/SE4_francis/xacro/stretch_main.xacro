@@ -787,7 +787,6 @@
     <parent link="base_link" />
     <child link="wheel_2_link" />
     <axis xyz="0 0 1" />
-    <limit />
   </joint>
   <link name="wheel_1_link">
     <inertial>
@@ -816,7 +815,6 @@
     <parent link="base_link" />
     <child link="wheel_1_link" />
     <axis xyz="0 0 1" />
-    <limit />
   </joint>
   <link name="wheel_0_link">
     <inertial>
@@ -845,7 +843,6 @@
     <parent link="base_link" />
     <child link="wheel_0_link" />
     <axis xyz="0 0 1" />
-    <limit />
   </joint>
   <link name="docking_contact_link">
     <inertial>
