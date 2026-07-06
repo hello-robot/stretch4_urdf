@@ -255,6 +255,32 @@ def get_joint_limits(urdf_contents: str):
         return {}
 
 
+def get_joint_velocity_limits(urdf_contents: str):
+    """
+    Parses the URDF contents and extracts maximum velocity limits for all joints that have them.
+
+    Parameters
+    ----------
+    urdf_contents : str
+        raw urdf contents
+
+    Returns
+    -------
+    dict
+        A dictionary mapping joint names to their maximum velocity (float).
+    """
+    try:
+        urdf = URDF.load(io.StringIO(urdf_contents))
+        limits = {}
+        for joint in urdf.robot.joints:
+            if joint.limit and joint.limit.velocity is not None:
+                limits[joint.name] = float(joint.limit.velocity)
+        return limits
+    except Exception as e:
+        logger.warning(f"Failed to parse URDF for joint velocity limits: {e}")
+        return {}
+
+
 def setup_logging():
     if RobotParams is not None and hello_utils is not None:
         try:
