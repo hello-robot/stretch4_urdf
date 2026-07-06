@@ -12,6 +12,84 @@ from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath 
     remove_collision_from_optical_links, update_urdf_collision_meshes)
 
 
+def update_urdf_joint_limits(input_file, output_file):
+    print("Updating URDF joint limits from robot parameters...")
+    try:
+        from stretch4_body.core.robot_params import RobotParams
+        _, robot_params = RobotParams.get_params()
+    except Exception as e:
+        print(f"Failed to fetch robot parameters for limits: {e}")
+        return
+
+    tree = ET.parse(input_file)
+    root = tree.getroot()
+
+    for joint in root.findall("joint"):
+        if joint.get("type") == "fixed":
+            continue
+            
+        limit = joint.find("limit")
+        is_vel_zero = False
+        is_eff_zero = False
+        
+        if limit is not None:
+            vel = limit.get("velocity")
+            eff = limit.get("effort")
+            
+            try:
+                is_vel_zero = (float(vel) == 0.0)
+            except (ValueError, TypeError):
+                is_vel_zero = False
+                
+            try:
+                is_eff_zero = (float(eff) == 0.0)
+            except (ValueError, TypeError):
+                is_eff_zero = False
+        else:
+            limit = ET.SubElement(joint, "limit")
+            is_vel_zero = True
+            is_eff_zero = True
+
+        if is_vel_zero or is_eff_zero:
+            joint_name = joint.get("name")
+            if joint_name is None:
+                continue
+            param_key = joint_name.replace('_joint', '')
+            if 'finger' in param_key or 'gripper' in param_key:
+                param_key = 'parallel_gripper'
+            elif 'arm' in param_key:
+                param_key = 'arm'
+            elif 'lift' in param_key:
+                param_key = 'lift'
+            elif 'head' in param_key:
+                param_key = 'head'
+                
+            if param_key in robot_params:
+                p = robot_params[param_key]
+                max_vel = None
+                max_eff = None
+                
+                if is_vel_zero and 'motion' in p and 'max' in p['motion']:
+                    max_vel = p['motion']['max'].get('vel', p['motion']['max'].get('vel_m'))
+                
+                if is_eff_zero and 'stall_max_effort' in p:
+                    max_eff = p['stall_max_effort']
+                    
+                if max_vel is not None:
+                    limit.set('velocity', str(max_vel))
+                if max_eff is not None:
+                    limit.set('effort', str(max_eff))
+                
+                if max_vel is not None or max_eff is not None:
+                    print(f"Updated {joint_name} limits from params: vel={max_vel if is_vel_zero else 'unchanged'}, effort={max_eff if is_eff_zero else 'unchanged'}")
+
+    if hasattr(ET, 'indent'):
+        ET.indent(tree, space="  ")
+    tree.write(output_file, encoding='utf-8', xml_declaration=False)
+    print(f"Updated URDF limits saved to: {output_file}")
+
+
+
 def create_collision_config_if_missing(base_urdf, root_dir):
     config_path = os.path.join(root_dir, 'collision_mesh_config.yaml')
     if not os.path.exists(config_path):
@@ -159,6 +237,7 @@ def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     shutil.copy(temp_urdf, stretch_main_xacro)
     os.remove(temp_urdf)
     remove_collision_from_optical_links(stretch_main_xacro, stretch_main_xacro)
+    update_urdf_joint_limits(stretch_main_xacro, stretch_main_xacro)
     
     # Remove visual tags from sensors in base and head
     remove_visual_and_collision_from_sensors_in_base_and_head(stretch_main_xacro)
