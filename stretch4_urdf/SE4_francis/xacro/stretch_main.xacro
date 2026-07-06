@@ -3,12 +3,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
+        <box size="0.001 0.001 0.001" />
+      </geometry>
       <material name="">
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    </link>
+  </link>
   <link name="base_link">
     <inertial>
       <origin xyz="0.000438848617413435 -0.00177714671567261 0.0964683686997768" rpy="0 0 0" />
@@ -335,7 +336,7 @@
     <parent link="mast_link" />
     <child link="lift_link" />
     <axis xyz="0 0 1" />
-    <limit lower="0" upper="1.2" effort="0" velocity="0" />
+    <limit lower="0" upper="1.2" effort="0" velocity="0.5" />
   </joint>
   <link name="arm_l0_link">
     <inertial>
@@ -392,7 +393,7 @@
     <parent link="arm_l0_link" />
     <child link="arm_l1_link" />
     <axis xyz="1 0 0" />
-    <limit lower="0" upper="0.13" effort="0" velocity="0" />
+    <limit lower="0" upper="0.13" effort="0" velocity="0.7" />
   </joint>
   <link name="arm_l2_link">
     <inertial>
@@ -421,7 +422,7 @@
     <parent link="arm_l1_link" />
     <child link="arm_l2_link" />
     <axis xyz="1 0 0" />
-    <limit lower="0" upper="0.13" effort="0" velocity="0" />
+    <limit lower="0" upper="0.13" effort="0" velocity="0.7" />
   </joint>
   <link name="arm_l3_link">
     <inertial>
@@ -450,7 +451,7 @@
     <parent link="arm_l2_link" />
     <child link="arm_l3_link" />
     <axis xyz="1 0 0" />
-    <limit lower="0" upper="0.13" effort="0" velocity="0" />
+    <limit lower="0" upper="0.13" effort="0" velocity="0.7" />
   </joint>
   <link name="arm_l4_link">
     <inertial>
@@ -479,7 +480,7 @@
     <parent link="arm_l3_link" />
     <child link="arm_l4_link" />
     <axis xyz="1 0 0" />
-    <limit lower="0" upper="0.13" effort="0" velocity="0" />
+    <limit lower="0" upper="0.13" effort="0" velocity="0.7" />
   </joint>
   <link name="wrist_link">
     <inertial>
@@ -536,7 +537,7 @@
     <parent link="wrist_link" />
     <child link="wrist_yaw_link" />
     <axis xyz="0 0 1" />
-    <limit lower="-1.135" upper="4.276" effort="0" velocity="0" />
+    <limit lower="-1.135" upper="4.276" effort="20.0" velocity="12.0" />
   </joint>
   <link name="wrist_pitch_link">
     <inertial>
@@ -565,7 +566,7 @@
     <parent link="wrist_yaw_link" />
     <child link="wrist_pitch_link" />
     <axis xyz="0 1 0" />
-    <limit lower="-1.135" upper="4.276" effort="0" velocity="0" />
+    <limit lower="-1.135" upper="4.276" effort="20.0" velocity="12.0" />
   </joint>
   <link name="wrist_roll_link">
     <inertial>
@@ -594,7 +595,7 @@
     <parent link="wrist_pitch_link" />
     <child link="wrist_roll_link" />
     <axis xyz="1 0 0" />
-    <limit lower="-4.276" upper="1.135" effort="0" velocity="0" />
+    <limit lower="-4.276" upper="1.135" effort="20.0" velocity="12.0" />
   </joint>
   <link name="gripper_camera_link">
     <inertial>
@@ -628,12 +629,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
+        <box size="0.001 0.001 0.001" />
+      </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-    </link>
+  </link>
   <joint name="gripper_stereo_camera_color_optical_joint" type="fixed">
     <origin xyz="0 0 0" rpy="-1.51843644923507 0 -1.5707963267949" />
     <parent link="gripper_camera_link" />
@@ -644,12 +646,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
+        <box size="0.001 0.001 0.001" />
+      </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-    </link>
+  </link>
   <joint name="gripper_right_camera_color_optical_joint" type="fixed">
     <origin xyz="0 -0.01 0" rpy="-1.51843644923507 0 -1.5707963267949" />
     <parent link="gripper_camera_link" />
@@ -660,12 +663,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.001 0.001 0.001" /></geometry>
+        <box size="0.001 0.001 0.001" />
+      </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-    </link>
+  </link>
   <joint name="gripper_left_camera_color_optical_joint" type="fixed">
     <origin xyz="0 0.01 0" rpy="-1.51843644923507 0 -1.5707963267949" />
     <parent link="gripper_camera_link" />
@@ -783,6 +787,7 @@
     <parent link="base_link" />
     <child link="wheel_2_link" />
     <axis xyz="0 0 1" />
+    <limit />
   </joint>
   <link name="wheel_1_link">
     <inertial>
@@ -811,6 +816,7 @@
     <parent link="base_link" />
     <child link="wheel_1_link" />
     <axis xyz="0 0 1" />
+    <limit />
   </joint>
   <link name="wheel_0_link">
     <inertial>
@@ -839,6 +845,7 @@
     <parent link="base_link" />
     <child link="wheel_0_link" />
     <axis xyz="0 0 1" />
+    <limit />
   </joint>
   <link name="docking_contact_link">
     <inertial>
