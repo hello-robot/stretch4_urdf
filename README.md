@@ -45,6 +45,7 @@ urdf_string = get_urdf_from_robot_params() # store the urdf contents in a str va
 urdf_filepath = get_urdf_from_robot_params(out_dir="/tmp") # save the urdf to a file in the /tmp directory
 ```
 
+<<<<<<< HEAD
 You can also load accessory URDFs via:
 
 ```python
@@ -63,6 +64,28 @@ from stretch4_urdf import get_transform
 T_dock_to_leftaruco = get_transform(dock_urdf, frame_to="left_aruco_marker_link", frame_from="docking_station_link")
 print(T_dock_to_leftaruco)
 ```
+=======
+## Tools
+
+### URDF Visualization
+
+The `stretch_urdf_viz` tool allows you to visualize the robot's URDF in [Rerun](https://rerun.io/).
+
+```bash
+stretch_urdf_viz
+```
+
+By default, the tool will visualize the robot's nominal (uncalibrated) URDF. If the robot has been calibrated, the calibrated URDF will be automatically overlaid in green.
+
+Key features:
+- **Calibrated vs Uncalibrated**: Automatically shows both if calibration data is available.
+- **Toggles**: Meshes, coordinate frames (TFs), and labels are organized into separate trees in Rerun, allowing them to be toggled on/off easily to reduce clutter.
+
+Options:
+- `--model`: Specify the robot model (e.g., `SE4`).
+- `--batch`: Specify the robot batch (e.g., `francis`).
+- `--tool`: Specify the end-of-arm tool (e.g., `eoa_wrist_dw4_tool_sg4`).
+>>>>>>> 5f4d54c (Added the ability to visualize uncalibrated and calibrated urdfs)
 
 ## Bringing in URDF's from CAD
 
