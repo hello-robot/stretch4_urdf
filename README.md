@@ -53,6 +53,25 @@ urdf_string = get_urdf_from_robot_params() # store the urdf contents in a str va
 urdf_filepath = get_urdf_from_robot_params(out_dir="/tmp") # save the urdf to a file in the /tmp directory
 ```
 
+You can also load accessory URDFs via:
+
+```python
+from stretch4_urdf import get_accessory
+
+dock_urdf = get_accessory("docking_station")
+print(dock_urdf)
+```
+
+Utility methods are provided to extract 4x4 coordinate transforms:
+
+```python
+from stretch4_urdf import get_transform
+
+# Get the 4x4 transform between two frames
+T_dock_to_leftaruco = get_transform(dock_urdf, frame_to="left_aruco_marker_link", frame_from="docking_station_link")
+print(T_dock_to_leftaruco)
+```
+
 ## Bringing in URDF's from CAD
 
 The package follows a strict directory strucutre:
