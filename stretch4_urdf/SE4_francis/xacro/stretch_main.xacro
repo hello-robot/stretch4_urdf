@@ -225,7 +225,7 @@
     </inertial>
     </link>
   <joint name="camera_right_joint" type="fixed">
-    <origin xyz="0.171840602787894 0.0230000000000032 -0.0157566987072475" rpy="1.5707963267949 0.820304748437337 0" />
+    <origin xyz="0.171840602787894 0.0230000000000032 -0.0157566987072475" rpy="0 0.820304748437337 0" />
     <parent link="head_link" />
     <child link="camera_right_link" />
     <axis xyz="0 0 0" />
@@ -233,7 +233,7 @@
   <link name="camera_right_optical_link">
     </link>
   <joint name="camera_right_optical_joint" type="fixed">
-    <origin xyz="0.0212000000000001 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <origin xyz="0.0212000000000001 0 0" rpy="0 1.5707963267948966 0" />
     <parent link="camera_right_link" />
     <child link="camera_right_optical_link" />
     <axis xyz="0 0 0" />
@@ -246,7 +246,7 @@
     </inertial>
     </link>
   <joint name="camera_left_joint" type="fixed">
-    <origin xyz="0.171840602787895 0.173 -0.0157566987072475" rpy="-1.5707963267949 0.820304748437337 0" />
+    <origin xyz="0.171840602787895 0.173 -0.0157566987072475" rpy="0 0.820304748437337 0" />
     <parent link="head_link" />
     <child link="camera_left_link" />
     <axis xyz="0 0 0" />
@@ -254,7 +254,7 @@
   <link name="camera_left_optical_link">
     </link>
   <joint name="camera_left_optical_joint" type="fixed">
-    <origin xyz="0.0211999999999999 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <origin xyz="0.0211999999999999 0 0" rpy="3.141592653589793 -1.5707963267948966 0" />
     <parent link="camera_left_link" />
     <child link="camera_left_optical_link" />
     <axis xyz="0 0 0" />
@@ -267,7 +267,7 @@
     </inertial>
     </link>
   <joint name="camera_center_joint" type="fixed">
-    <origin xyz="0.177245603402412 0.0980000000000004 -0.0239069097938973" rpy="-1.5707963267949 0.610865238198018 0" />
+    <origin xyz="0.177245603402412 0.0980000000000004 -0.0239069097938973" rpy="0 0.610865238198018 0" />
     <parent link="head_link" />
     <child link="camera_center_link" />
     <axis xyz="0 0 0" />
@@ -275,7 +275,7 @@
   <link name="camera_center_optical_link">
     </link>
   <joint name="camera_center_optical_joint" type="fixed">
-    <origin xyz="0.00170000000000003 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <origin xyz="0.00170000000000003 0 0" rpy="0 1.5707963267948966 0" />
     <parent link="camera_center_link" />
     <child link="camera_center_optical_link" />
     <axis xyz="0 0 0" />
