@@ -1,22 +1,14 @@
 # Overview
 
-This package provides robot description and mesh files for Stretch 4, as well as code for manipulating the kinematic description (e.g. adding virtual joints) and exporting for use in other programs (e.g. ROS2, pinocchio). The repository for Stretch 3 and earlier hardware versions can be found in [stretch_urdf](https://github.com/hello-robot/stretch_urdf). This package can be installed by:
+This package provides robot description and mesh files for Stretch 4, as well as code for manipulating the kinematic description (e.g. adding virtual joints) and exporting for use in other programs (e.g. ROS2, pinocchio). The repository for Stretch 3 and earlier hardware versions can be found in [stretch\_urdf](https://github.com/hello-robot/stretch_urdf). This package can be installed by:
 
 ```
 python3 -m pip install -U hello-robot-stretch4-urdf
 ```
 
-<p align="center">
-    <img src="img/stretch4_robot_model.png" alt="Stretch 4 robot model" width="50%">
-</p>
+<div align="center"><img src=".gitbook/assets/stretch4_robot_model.png" alt="Stretch 4 robot model" width="50%"></div>
 
-<p align="center">
-  <img src="img/stretch4_head.png" alt="TF frames of Stretch 4's head" width="49%">
-  <img src="img/stretch4_base.png" alt="TF frames of Stretch 4's base" width="49%">
-  <br>
-  <img src="img/stretch4_arm.png" alt="TF frames of Stretch 4's arm" width="49%">
-  <img src="img/stretch4_gripper.png" alt="TF frames of Stretch 4's gripper" width="49%">
-</p>
+<p align="center"> <br> </p>
 
 ## Details
 
@@ -92,7 +84,7 @@ The package follows a strict directory strucutre:
         {tool_name}.urdf
 ```
 
-The URDF and meshes from the CAD model are added to the {model}\_{batch} base directory and meshes folder. From there, `utils/preprocessing/process_new_robot_model.py` creates the stretch_main.xacro file and necessary collision meshes for the batch. See the urdf_conventions.md for the specifics of this processing step.
+The URDF and meshes from the CAD model are added to the {model}\_{batch} base directory and meshes folder. From there, `utils/preprocessing/process_new_robot_model.py` creates the stretch\_main.xacro file and necessary collision meshes for the batch. See the urdf\_conventions.md for the specifics of this processing step.
 
 A directory is created for each new tool, with the urdf in the base directory and a folder for meshes. `utils/preprocessing/process_new_tool.py` is then used to add the necessary edits to the urdf and generate collision meshes.
 
@@ -101,8 +93,8 @@ A directory is created for each new tool, with the urdf in the base directory an
 The following files provide deeper documentation on various parts of the system:
 
 | Primer                                                    | Description                                                                                               |
-| :-------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | [Batches](stretch4_urdf/batches.md)                       | Explains URDF batch organization, compiling the URDF dynamically, and how to add new batch models.        |
 | [End Effectors](stretch4_urdf/SE4_tools/end_effectors.md) | Outlines the available end effector tools and provides instructions on how to add new tools to the robot. |
-| [URDF Conventions](./urdf_conventions.md) | Outlines which conventions are used in the Stretch 4 URDF. |
-| [Calibration](stretch4_urdf/calibration.md) | Explains how static calibration values are applied to the URDF at load time. |
+| [URDF Conventions](urdf_conventions.md)                   | Outlines which conventions are used in the Stretch 4 URDF.                                                |
+| [Calibration](stretch4_urdf/calibration.md)               | Explains how static calibration values are applied to the URDF at load time.                              |
