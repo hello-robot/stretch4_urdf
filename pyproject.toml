@@ -33,7 +33,7 @@ preprocessing = ['open3d','trimesh']
 Repository = "https://github.com/hello-robot/stretch4_urdf"
 
 [project.scripts]
-# No scripts defined
+stretch_urdf_viz = "stretch4_urdf.utils.stretch_urdf_viz:main"
 
 
 [tool.setuptools]
