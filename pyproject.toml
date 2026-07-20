@@ -20,6 +20,7 @@ classifiers = [
 
 dependencies = [
     "yourdfpy>=0.0.58",
+    "trimesh",
     "numpy",
     "pyyaml",
     "xacro>=2.1,<3.0",
@@ -27,7 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 robot = ["hello-robot-stretch4-body"]
-preprocessing = ['open3d','trimesh']
+preprocessing = ['open3d']
 
 [project.urls]
 Repository = "https://github.com/hello-robot/stretch4_urdf"
