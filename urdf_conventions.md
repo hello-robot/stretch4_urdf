@@ -34,9 +34,8 @@ Optical and sensor frame orientations follow available sensor documentation and 
 
 - **Sensor Base Frame (`camera_*_link`, `line_sensor_*_link`, `gripper_camera_link`):** A sensor's mounting frame's x axis is pointed forward, with z pointing towards the top of the sensor and y pointing to the sensor's left.
 - **Optical Frame (`_optical`):** Z points out of the optical sensor. X points to the sensor's right along the horizontal axis of the image and y points down.
-  - **Head Cameras (`camera_left`, `camera_right`, `camera_center`):** Historically, early head camera modules were mounted with custom roll rotations to accommodate swapped ribbon cables. In production Stretch 4 robots, the camera base links are mounted without any roll rotations (`rpy="0 pitch 0"`). Their optical frames are rotated to follow standard ROS optical conventions relative to the base frames:
-    - **Right and Center Head Cameras:** Pitch = 90° (`rpy="0 1.5707963267948966 0"`).
-    - **Left Head Camera:** Roll = 180°, Pitch = -90° (`rpy="3.141592653589793 -1.5707963267948966 0"`).
+  - **Right and Center Head Cameras:** Physically mounted with a counterclockwise (+90 degrees) rotation about the sensor's z axis. For the sensor base frame, the y axis points up (away from the base) and the z axis points horizontally outward (the robot's right). For the optical frame, the x axis points down towards the robot's base and y points to the robot's left.
+  - **Left Head Camera:** Physically mounted with a clockwise (-90 degrees) rotation. For the sensor base frame, the y axis points down (towards from the base) and the z axis points horizontally outward (the robot's left). For the optical frame, the x axis points upwards away from the base and y points to the robot's right.
 - **Range Sensors (`lidar_*_link`)**: The z axis points out of the sensor, aligning with the field of view, and the y axis is oriented to point towards the socket connector. The Lidars on Stretch4 are mounted such that y axes are pointing towards the head center and the x axes are pointing up.
 
 ## Rule 5: Grasping Geometry Conventions
