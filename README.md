@@ -96,5 +96,7 @@ The following files provide deeper documentation on various parts of the system:
 | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | [Batches](stretch4_urdf/batches.md)                       | Explains URDF batch organization, compiling the URDF dynamically, and how to add new batch models.        |
 | [End Effectors](stretch4_urdf/SE4_tools/end_effectors.md) | Outlines the available end effector tools and provides instructions on how to add new tools to the robot. |
-| [URDF Conventions](urdf_conventions.md)                   | Outlines which conventions are used in the Stretch 4 URDF.                                                |
-| [Calibration](stretch4_urdf/calibration.md)               | Explains how static calibration values are applied to the URDF at load time.                              |
+| [URDF Conventions](./urdf_conventions.md) | Outlines which conventions are used in the Stretch 4 URDF. |
+| [Calibration](stretch4_urdf/calibration.md) | Explains how static calibration values are applied to the URDF at load time. |
+| [Kinematic Changes](stretch4_urdf/kinematic_changes.md) | Tracks breaking kinematic and coordinate frame changes for Stretch 4. |
+| [Camera Orientations](stretch4_urdf/camera_orientations.md) | Deep dive into the camera coordinate systems, mounting angles, and optical frame conventions. |

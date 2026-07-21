@@ -2,13 +2,19 @@
 
 The changes between releases of Stretch 4 URDF are documented here.
 
+## [2026.07.20](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.20)
+
+ - Updated head camera sensor link frames to all share the same orientation with z pointing up
+ - Corrected the center head camera optical frame orientation to align with left/right cameras and remove unneeded roll offsets
+ - Updated optical frame names to match the luxonis driver, cameras_head_*_camera_optical_frame
+
 ## [2026.07.08](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.8)
 
  - Add docking station URDF
  - Add `get_tranform()` method to get TF between 2 links
  - Organize preprocessing scripts and deps
  - Improve fetching of calibrated URDF
-
+ 
 ## [2026.07.02](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.2)
 
  - Fix to head collision mesh
