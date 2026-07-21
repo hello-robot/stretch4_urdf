@@ -12,16 +12,16 @@ The Stretch 4 platform uses 3 distinct camera modules, each with their own optic
 | Center Camera (OAK-FFC-IMX378 W) | Left/Right Head Camera (OAK-FFC-AR0234-M12) | Wrist Camera (OAK-D-SR) |
 | :---: | :---: | :---: |
 | Ribbon cable points to the top of the sensor image (-V) | Ribbon cable points to the bottom of the sensor image (+V) | A multi-sensor camera with off the shelf housing. Sensor image aligns with the mounting orientation.|
-| ![OAK-FFC-IMX378 Wide-Angle](../img/oak_ffc_imx378_transparent.png) | ![OAK-FFC-AR0234-M12](../img/oak_ffc_ar0234_transparent.png) | ![OAK-D-SR](../img/oak_d_sr_transparent.png) |
+| ![OAK-FFC-IMX378 Wide-Angle](./img/oak_ffc_imx378_transparent.png) | ![OAK-FFC-AR0234-M12](./img/oak_ffc_ar0234_transparent.png) | ![OAK-D-SR](./img/oak_d_sr_transparent.png) |
 
 ## Stretch 4 Head Camera Mounting Orientation 
 
 The 3 head cameras are mounted in the following orientations:
 
-![Head Sensor Array](../img/head_sensor_array_transparent.png)
+![Head Sensor Array](./img/head_sensor_array_transparent.png)
 
 # Pixel Projection 
 
 Documentation on projecting a pixel coordinate from 2D to 3D space can be found [here](https://docs.opencv.org/4.13.0/d5/d1f/calib3d_solvePnP.html). The frames of stretch 4 are defined with standard graphical conventions such that the raw image may be used with standard libraries such as OpenCV to compute poses relative to the robot's body. 
 
-![Camera to Image Frames](../img/head_cameras_optical_frames_diagram.png)
+![Camera to Image Frames](./img/head_cameras_optical_frames_diagram.png)
