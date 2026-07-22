@@ -6,7 +6,6 @@ The changes between releases of Stretch 4 URDF are documented here.
 
  - Updated head camera sensor link frames to all share the same orientation with z pointing up
  - Corrected the center camera's optical frame to match the OAK-FFC-IMX378 W sensor orientation
- - Updated optical frame names to match the luxonis driver, cameras_head_*_camera_optical_frame
 
 ## [2026.07.08](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.8)
 
