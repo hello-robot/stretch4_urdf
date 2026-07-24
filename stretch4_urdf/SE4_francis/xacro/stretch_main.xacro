@@ -338,11 +338,6 @@
     <limit lower="0" upper="1.2" effort="0" velocity="0" />
   </joint>
   <link name="arm_l0_link">
-    <inertial>
-      <origin xyz="-0.0316222581318624 -0.0397927105745811 0.0182872881301621" rpy="0 0 0" />
-      <mass value="2.95349364666659" />
-      <inertia ixx="0.0117399464230091" ixy="0.000875437380496019" ixz="0.000164784888522662" iyy="0.0102748963241433" iyz="-0.00101918054718661" izz="0.0139841484528854" />
-    </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
@@ -352,12 +347,6 @@
         <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="arm_l0_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/arm_l0_collision_link.STL" />
-      </geometry>
-    </collision>
   </link>
   <joint name="arm_l0_joint" type="fixed">
     <origin xyz="0.01675 0.0994000000000002 -0.0128595489452177" rpy="0 0 0" />
