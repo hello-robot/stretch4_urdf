@@ -44,7 +44,7 @@ def generate_collision_meshes(model_name):
     print(f"Generating collision meshes for model: {model_name}...")
     gen_script = os.path.join(os.path.dirname(__file__), 'generate_collision_mesh.py')
     try:
-        subprocess.run(['python3', gen_script, '--model', model_name], check=True)
+        subprocess.run([sys.executable, gen_script, '--model', model_name], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error generating collision meshes for {model_name}: {e}")
 
@@ -137,7 +137,27 @@ def finalize_xacro_and_cleanup_meshes(stretch_main_xacro, model_name, root_dir, 
 def generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir):
     # Find the base URDF file
     urdf_files = glob.glob(os.path.join(root_dir, '*.urdf'))
+    xacro_files = glob.glob(os.path.join(xacro_dir, '*.xacro')) if os.path.exists(xacro_dir) else []
     
+    if len(urdf_files) == 0 and len(xacro_files) > 0:
+        # If there are multiple xacro files, try to prioritize stretch_main.xacro or model_name.xacro
+        if len(xacro_files) == 1:
+            target_xacro = xacro_files[0]
+        else:
+            matched = [f for f in xacro_files if os.path.basename(f) in ['stretch_main.xacro', f"{model_name}.xacro"]]
+            if matched:
+                target_xacro = matched[0]
+            else:
+                target_xacro = xacro_files[0]
+
+        print(f"No base URDF file found, but found existing xacro: {target_xacro}. Using it directly.")
+        create_collision_config_if_missing(target_xacro, root_dir)
+        generate_collision_meshes(model_name)
+        with open(target_xacro, 'r') as f:
+            content = f.read()
+        finalize_xacro_and_cleanup_meshes(target_xacro, model_name, root_dir, content)
+        return
+
     if len(urdf_files) != 1:
         print(f"Error: Expected exactly one base URDF file in {root_dir}, found {len(urdf_files)}: {urdf_files}")
         return
@@ -185,6 +205,10 @@ def get_all_model_names():
             urdfs = glob.glob(os.path.join(full_path, "*.urdf"))
             if len(urdfs) > 0:
                 urdf_map[entry] = urdfs
+            else:
+                xacros = glob.glob(os.path.join(full_path, "xacro", "*.xacro"))
+                if len(xacros) > 0:
+                    urdf_map[entry] = xacros
                 
     return sorted(models), urdf_map, urdf_pkg_path
 
@@ -207,9 +231,16 @@ if __name__ == '__main__':
     print("Existing robot model directories in stretch4_urdf:")
     
     for i, m in enumerate(all_models):
-        has_urdf = m in urdf_map
-        urdf_str = "(raw .urdf available for processing)" if has_urdf else ""
-        print(f"  {i+1}: {m} {urdf_str}")
+        has_model_source = m in urdf_map
+        if has_model_source:
+            is_xacro = any(f.endswith('.xacro') for f in urdf_map[m])
+            if is_xacro:
+                model_str = "(existing .xacro available for processing)"
+            else:
+                model_str = "(raw .urdf available for processing)"
+        else:
+            model_str = ""
+        print(f"  {i+1}: {m} {model_str}")
         
     print(f"\nSelect a robot model directory to process (comma-separated indices e.g., '1, 3', or 'all'):")
     try:
@@ -235,7 +266,7 @@ if __name__ == '__main__':
                         if selected not in model_names_to_generate:
                             model_names_to_generate.append(selected)
                     else:
-                        print(f"  -> Skipping '{selected}' as a .urdf file was not found.")
+                        print(f"  -> Skipping '{selected}' as a .urdf or .xacro file was not found.")
                 else:
                     print(f"  -> Invalid index: {idx+1}")
             except ValueError:

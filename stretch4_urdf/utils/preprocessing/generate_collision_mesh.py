@@ -222,17 +222,17 @@ def process_model_links(root_dir: str):
         print(f"Warning: No collision_mesh_config.yaml found in {root_dir}")
         return
 
-    # Find the first URDF in the directory to find meshes
+    # Find URDF or XACRO files in the directory to find meshes
     urdf_files = glob.glob(os.path.join(root_dir, '*.urdf'))
     if not urdf_files:
-        print(f"Error: No URDF files found in {root_dir}")
+        urdf_files = glob.glob(os.path.join(root_dir, '*.xacro')) + glob.glob(os.path.join(root_dir, 'xacro', '*.xacro'))
+        
+    if not urdf_files:
+        print(f"Error: No URDF or XACRO files found in {root_dir}")
         return
-    # Find all mesh links in all URDFs in the directory
+        
+    # Find all mesh links in all URDF/XACRO files in the directory
     mesh_links_dict = {} # link_name -> (link_el, filename, urdf_base)
-    urdf_files = glob.glob(os.path.join(root_dir, '*.urdf'))
-    if not urdf_files:
-        print(f"Error: No URDF files found in {root_dir}")
-        return
 
     mesh_dir = os.path.join(root_dir, 'meshes')
     
