@@ -30,6 +30,8 @@ class TestUrdfGeneration(unittest.TestCase):
                     # Skip the tools directory since it's not a batch
                     if basename == f"{model}_tools":
                         continue
+                    if not os.path.exists(os.path.join(d, "meshes")):
+                        continue
                     batch = basename.replace(f'{model}_', '')
                     batches.append(batch)
             
