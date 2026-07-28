@@ -1,0 +1,113 @@
+<robot name="eoa_wrist_dw4_tool_ng4">
+  
+  <link name="ng_body_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/ng_body_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.2 0.2 0.25 1" />
+      </material>
+    </visual>
+    <collision name="ng_body_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/ng_body_collision_link.STL" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="-0.1065 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.030 0.044 0.040" />
+      </geometry>
+      <material name="">
+        <color rgba="0.25 0.25 0.25 1" />
+      </material>
+    </visual>
+    <collision name="ng_mount_bracket_collision">
+      <origin xyz="-0.1065 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.030 0.044 0.040" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="ng_finger_left_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/ng_finger_left_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.3 0.3 0.35 1" />
+      </material>
+    </visual>
+    <collision name="ng_finger_left_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/ng_finger_left_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="ng_finger_right_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/ng_finger_right_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.3 0.3 0.35 1" />
+      </material>
+    </visual>
+    <collision name="ng_finger_right_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/ng_finger_right_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ng_finger_left_joint" type="revolute">
+    <origin xyz="0 0.02569 0" rpy="0 0 0" />
+    <parent link="ng_body_link" />
+    <child link="ng_finger_left_link" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="0.7122" effort="0" velocity="0" />
+  </joint>
+  <joint name="ng_finger_right_joint" type="revolute">
+    <origin xyz="0 -0.02569 0" rpy="0 0 0" />
+    <parent link="ng_body_link" />
+    <child link="ng_finger_right_link" />
+    <axis xyz="0 0 -1" />
+    <limit lower="0" upper="0.7122" effort="0" velocity="0" />
+  </joint>
+  <link name="grasp_center_link" />
+  <joint name="grasp_center_joint" type="fixed">
+    <origin xyz="0.1014 0 0" rpy="0 0 0" />
+    <parent link="ng_body_link" />
+    <child link="grasp_center_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="quick_connect_interface_link">
+    <visual>
+      <origin xyz="0.00325 0 0" rpy="0 1.5708 0" />
+      <geometry>
+        <cylinder radius="0.028" length="0.0065" />
+      </geometry>
+      <material name="">
+        <color rgba="0.75 0.75 0.75 1" />
+      </material>
+    </visual>
+    <collision name="quick_connect_interface_collision_link">
+      <origin xyz="0.00325 0 0" rpy="0 1.5708 0" />
+      <geometry>
+        <cylinder radius="0.028" length="0.0065" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="quick_connect_interface_joint" type="fixed">
+    <origin xyz="0.128 0 0" rpy="0 0 0" />
+    <parent link="quick_connect_interface_link" />
+    <child link="ng_body_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+</robot>
