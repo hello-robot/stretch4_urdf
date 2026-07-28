@@ -308,62 +308,116 @@
     <child link="mast_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="lift_link">
+  <link
+    name="lift_link">
     <inertial>
-      <origin xyz="-0.0148722581318624 0.0596072894254191 0.00542773918494432" rpy="0 0 0" />
-      <mass value="2.95349364666659" />
-      <inertia ixx="0.0117399464230091" ixy="0.000875437380496019" ixz="0.000164784888522662" iyy="0.0102748963241433" iyz="-0.00101918054718661" izz="0.0139841484528854" />
+      <origin
+        xyz="-0.0233092431932026 0.0564207351004435 0.00671885423980972"
+        rpy="0 0 0" />
+      <mass
+        value="2.73451670567963" />
+      <inertia
+        ixx="0.011466385458167"
+        ixy="0.000875437380496019"
+        ixz="0.000164784751492084"
+        iyy="0.00956613602133992"
+        iyz="-0.00101918054718662"
+        izz="0.0132435850196122" />
     </inertial>
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/lift_link.STL" />
+        <mesh
+          filename="$(arg model_mesh_dir)/lift_link.STL" />
       </geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="lift_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/lift_collision_link.STL" />
+        <mesh
+          filename="$(arg model_mesh_dir)/lift_collision_link.STL" />
       </geometry>
     </collision>
   </link>
-  <joint name="lift_joint" type="prismatic">
-    <origin xyz="0 -0.00140000000000005 0.241" rpy="0 0 0" />
-    <parent link="mast_link" />
-    <child link="lift_link" />
-    <axis xyz="0 0 1" />
-    <limit lower="0" upper="1.2" effort="0" velocity="0" />
+  <joint
+    name="lift_joint"
+    type="prismatic">
+    <origin
+      xyz="0 -0.00140000000000005 0.241"
+      rpy="0 0 0" />
+    <parent
+      link="mast_link" />
+    <child
+      link="lift_link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="0"
+      upper="1.2"
+      effort="0"
+      velocity="0" />
   </joint>
-  <link name="arm_l0_link">
+  <link
+    name="arm_l0_link">
     <inertial>
-      <origin xyz="-0.0316222581318624 -0.0397927105745811 0.0182872881301621" rpy="0 0 0" />
-      <mass value="2.95349364666659" />
-      <inertia ixx="0.0117399464230091" ixy="0.000875437380496019" ixz="0.000164784888522662" iyy="0.0102748963241433" iyz="-0.00101918054718661" izz="0.0139841484528854" />
+      <origin
+        xyz="0.0737362170199923 -1.74714644470479E-16 0.0021642403308329"
+        rpy="0 0 0" />
+      <mass
+        value="0.218976940986966" />
+      <inertia
+        ixx="0.000273560964842063"
+        ixy="-6.26647189332688E-19"
+        ixz="1.37030578374227E-10"
+        iyy="0.000708760302803403"
+        iyz="-8.66022937939828E-20"
+        izz="0.000740563433273204" />
     </inertial>
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/arm_l0_link.STL" />
+        <mesh
+          filename="$(arg model_mesh_dir)/arm_l0_link.STL" />
       </geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
-    <collision name="arm_l0_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
       <geometry>
-        <mesh filename="$(arg model_mesh_dir)/arm_l0_collision_link.STL" />
+        <mesh
+          filename="$(arg model_mesh_dir)/arm_l0_collision_link.STL" />
       </geometry>
     </collision>
   </link>
-  <joint name="arm_l0_joint" type="fixed">
-    <origin xyz="0.01675 0.0994000000000002 -0.0128595489452177" rpy="0 0 0" />
-    <parent link="lift_link" />
-    <child link="arm_l0_link" />
-    <axis xyz="0 0 0" />
+  <joint
+    name="arm_l0_joint"
+    type="fixed">
+    <origin
+      xyz="0.01675 0.0994000000000002 -0.0128595489452177"
+      rpy="0 0 0" />
+    <parent
+      link="lift_link" />
+    <child
+      link="arm_l0_link" />
+    <axis
+      xyz="0 0 0" />
   </joint>
   <link name="arm_l1_link">
     <inertial>
