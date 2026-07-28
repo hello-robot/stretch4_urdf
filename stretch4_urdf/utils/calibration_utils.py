@@ -147,8 +147,14 @@ def apply_calibration_to_urdf_v1(urdf_contents, calib_data, logger=None):
                 parent_elem = joint.find('parent')
                 if parent_elem is not None and 'parent' in joint_data:
                     if parent_elem.get('link') != joint_data['parent']:
-                        logger.warning(f"Parent link mismatch for joint '{name}'. Expected: {joint_data['parent']}, but found: {parent_elem.get('link')}. Skipping calibration.")
-                        continue
+                        logger.info(f"Reparenting joint '{name}' from '{parent_elem.get('link')}' to '{joint_data['parent']}'.")
+                        parent_elem.set('link', joint_data['parent'])
+
+                child_elem = joint.find('child')
+                if child_elem is not None and 'child' in joint_data:
+                    if child_elem.get('link') != joint_data['child']:
+                        logger.info(f"Changing child of joint '{name}' from '{child_elem.get('link')}' to '{joint_data['child']}'.")
+                        child_elem.set('link', joint_data['child'])
                 
                 #TODO: Threshold for calibration delta? 
                 
@@ -195,8 +201,14 @@ def apply_calibration_to_urdf_v2(urdf_contents, calib_data, logger=None):
                 parent_elem = joint.find('parent')
                 if parent_elem is not None and 'parent' in joint_data:
                     if parent_elem.get('link') != joint_data['parent']:
-                        logger.warning(f"Parent link mismatch for joint '{name}'. Expected: {joint_data['parent']}, but found: {parent_elem.get('link')}. Skipping calibration.")
-                        continue
+                        logger.info(f"Reparenting joint '{name}' from '{parent_elem.get('link')}' to '{joint_data['parent']}'.")
+                        parent_elem.set('link', joint_data['parent'])
+
+                child_elem = joint.find('child')
+                if child_elem is not None and 'child' in joint_data:
+                    if child_elem.get('link') != joint_data['child']:
+                        logger.info(f"Changing child of joint '{name}' from '{child_elem.get('link')}' to '{joint_data['child']}'.")
+                        child_elem.set('link', joint_data['child'])
                 
                 origin = joint.find('origin')
                 if origin is None:
