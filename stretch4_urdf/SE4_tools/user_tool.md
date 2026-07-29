@@ -74,3 +74,63 @@ Subclasses `EndOfArm`. Loaded dynamically by the robot's server process inside t
 
 ### 4. `<tool_name>_client.py` (Client-Side Driver)
 Subclasses `EndOfArmClient`. Loaded dynamically by the client-side `RobotClient`. It is the interface used by user-scripts (e.g., joggers, teleoperation, or move APIs) to enqueue commands and inspect the tool's status.
+
+---
+
+## Step-by-Step Guide: Implementing a New Custom Tool
+
+Follow these steps to fully design, register, and integrate your custom end-of-arm tool on Stretch:
+
+### Step 1: Initialize the Tool Directory
+Run the registration script with your custom tool name. This automatically initializes the directory structure and driver templates for you:
+```bash
+stretch_add_user_tool ./my_custom_tool
+```
+This command:
+*   Creates the `./my_custom_tool/` directory.
+*   Creates a `meshes/` subdirectory for CAD meshes.
+*   Generates boilerplate server-side (`my_custom_tool.py`) and client-side (`my_custom_tool_client.py`) driver files.
+*   Copies this `user_tool.md` file into your folder for reference.
+
+### Step 2: Prepare and Copy Meshes
+1.  Export your tool's links/meshes from your CAD software (e.g., Solidworks, OnShape) as `.stl`, `.dae`, or `.obj` files.
+2.  Copy these visual mesh files into the newly created `my_custom_tool/meshes/` directory.
+
+### Step 3: Define the Kinematics (URDF)
+Create a file named `my_custom_tool.urdf` in the root of your tool folder (`my_custom_tool/my_custom_tool.urdf`).
+*   **Critical Requirement**: The base/root link of your custom tool URDF must be named `quick_connect_interface_link`.
+*   Connect any articulating or static links of your tool relative to this root link using joints.
+
+### Step 4: Process and Register the URDF
+Re-run the registration tool to process your URDF and meshes:
+```bash
+stretch_add_user_tool ./my_custom_tool
+```
+This script will:
+1.  Verify the URDF structure (and offer to automatically insert a `quick_connect_interface_link` root link if it is missing).
+2.  Analyze your URDF links and generate a default `collision_mesh_config.yaml` listing links with visual meshes.
+3.  Automatically decimate/simplify high-polygon visual meshes into lightweight, performance-friendly collision meshes under `meshes/`.
+4.  Write a tailored, baseline configuration file called `tool_params.yaml`.
+
+### Step 5: Configure Tool Parameters (`tool_params.yaml`)
+Open `my_custom_tool/tool_params.yaml` and configure:
+*   `stow`: Set coordinates for stowing the arm and wrist securely.
+*   `devices`: Register specific joint actuators, motor IDs, physical limits, calibration procedures, and parameters.
+*   `collision_mgmt`: Configure collision self-exclusion/brake pairs to protect the robot and your tool.
+
+### Step 6: Customize Drivers (Optional)
+If your tool has active actuators (like a custom gripper motor or custom sensors), implement the driver logic:
+*   **Server-Side (`my_custom_tool.py`)**: Implement custom startup, homing, and stowing routines.
+*   **Client-Side (`my_custom_tool_client.py`)**: Implement high-level Python commands, state checking, or helper functions.
+
+### Step 7: Select and Activate Your Tool
+To activate your new tool on the physical robot:
+1.  Run the configure script:
+    ```bash
+    stretch_configure_tool
+    ```
+2.  Select your custom tool from the list (or enter its name manually if it was created in a custom path).
+3.  Turn off power to the wrist/EOA when prompted, connect your physical tool, turn on power, and press any key to auto-detect.
+4.  Confirm restarting the background services and homing the robot.
+
+Your custom tool is now active, registered, and ready for use!
