@@ -1,4 +1,7 @@
 links:
   quick_connect_interface_link:
-    action: qem
-    simplification_ratio: 0.1
+    action: bounding_box
+    padding:
+      - 0.002
+      - 0.002
+      - 0.002
