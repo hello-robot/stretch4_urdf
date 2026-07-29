@@ -84,9 +84,9 @@ def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name
                 'device_params': 'SE4_wrist_yaw_DW4'
             },
             f'{tool_name}': {
-                'py_class_name': py_class_name,
+                'py_class_name': f'{py_class_name}Gripper',
                 'py_module_name': py_module_name,
-                'device_params': f'{tool_name}',
+                'device_params': None,
                 'id': 24,
                 'eeprom_cfg': {
                     'temperature_limit': 72,
@@ -181,9 +181,7 @@ def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name
         },
         'self_collision_mujoco': {
             'k_brake_distance': {},
-            'exclusions': [
-                ['finger_left_link', 'finger_right_link']
-            ]
+            'exclusions': []
         }
     })
 
@@ -240,8 +238,12 @@ def main():
     
     if args.tool_name:
         selected_tool = args.tool_name
+        tool_name = os.path.basename(selected_tool.rstrip('/'))
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]+$', tool_name):
+            print(f"Error: Custom tool name '{tool_name}' must only contain alphanumeric characters and underscores (no hyphens or other special characters).")
+            sys.exit(1)
         if selected_tool not in subdir_paths:
-            tool_name = os.path.basename(selected_tool.rstrip('/'))
             target_abs_path = os.path.abspath(selected_tool)
             is_path_specified = (os.sep in selected_tool) or (selected_tool.startswith('.'))
             
@@ -363,6 +365,16 @@ class {class_name}(EndOfArm):
             robot.end_of_arm.move_to('wrist_pitch', robot.end_of_arm.params['stow']['wrist_pitch'])
         else:
             self.move_to('wrist_pitch', self.params['stow']['wrist_pitch'])
+
+
+from stretch4_body.core.feetech.feetech_SM_hello import FeetechSMHello
+
+class {class_name}Gripper(FeetechSMHello):
+    \"\"\"
+    A completely custom parallel gripper driver subclassing FeetechSMHello directly.
+    \"\"\"
+    def __init__(self, chain=None, usb=None, name='{tool_name}', is_direct=False):
+        FeetechSMHello.__init__(self, name, chain, usb, is_direct=is_direct)
 """
 
 CLIENT_TEMPLATE = """#!/usr/bin/env python3
@@ -422,12 +434,12 @@ class {class_name}GamepadTeleop:
         gamepad_state: dict containing buttons (0/1) and axes (float -1.0 to 1.0)
         \"\"\"
         # Example: Command incremental positive movement when Right Trigger is pressed
-        rt_val = gamepad_state.get('axes', {{}}).get('right_trigger', 0.0)
+        rt_val = gamepad_state.get('right_trigger', 0.0)
         if rt_val > 0.1:
             self.robot.end_of_arm.move_by('{sanitized_tool_name}', 0.01 * rt_val)
             
         # Example: Command incremental negative movement when Left Trigger is pressed
-        lt_val = gamepad_state.get('axes', {{}}).get('left_trigger', 0.0)
+        lt_val = gamepad_state.get('left_trigger', 0.0)
         if lt_val > 0.1:
             self.robot.end_of_arm.move_by('{sanitized_tool_name}', -0.01 * lt_val)
 """
@@ -443,13 +455,24 @@ class {class_name}Collision:
 
     def get_mujoco_joints(self, state):
         \"\"\"
-        Given the raw joint states dictionary from the robot status,
+        Given the raw robot status dictionary,
         return a dictionary mapping Mujoco joint names to their target positions.
         \"\"\"
-        # Map your custom joint values to the visualizer joints in your urdf
+        eoa = state.get('end_of_arm', {{}})
+        
+        # Look for parallel_gripper or the sanitized tool name within the end of arm status
+        parallel_gripper = eoa.get('parallel_gripper') or eoa.get('{sanitized_tool_name}') or {{}}
+        pos_mm = parallel_gripper.get('pos_mm', 0.0)
+        
+        from stretch4_body.subsystem.end_of_arm.gripper_conversion import parallel_gripper_pos_mm_to_urdf_m
+        from stretch4_body.core.robot_params import RobotParams
+        _, robot_params = RobotParams.get_params()
+        pg_params = robot_params.get('parallel_gripper', {{}})
+        joint_val = parallel_gripper_pos_mm_to_urdf_m(pos_mm, pg_params)
+        
         return {{
-            'finger_left_joint': state.get('finger_left_joint', 0.0),
-            'finger_right_joint': state.get('finger_right_joint', 0.0)
+            'finger_left_joint': joint_val,
+            'finger_right_joint': joint_val
         }}
 """
 
