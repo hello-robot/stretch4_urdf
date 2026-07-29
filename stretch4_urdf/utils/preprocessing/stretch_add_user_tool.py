@@ -460,15 +460,19 @@ class {class_name}Collision:
         \"\"\"
         eoa = state.get('end_of_arm', {{}})
         
-        # Look for parallel_gripper or the sanitized tool name within the end of arm status
-        parallel_gripper = eoa.get('parallel_gripper') or eoa.get('{sanitized_tool_name}') or {{}}
-        pos_mm = parallel_gripper.get('pos_mm', 0.0)
+        # Look for the custom tool within the end of arm status
+        tool_status = eoa.get('{sanitized_tool_name}') or {{}}
+        pos_mm = tool_status.get('pos_mm', 0.0)
         
-        from stretch4_body.subsystem.end_of_arm.gripper_conversion import parallel_gripper_pos_mm_to_urdf_m
+        from stretch4_body.subsystem.end_of_arm.gripper_conversion import get_finger_joint_limits
         from stretch4_body.core.robot_params import RobotParams
         _, robot_params = RobotParams.get_params()
-        pg_params = robot_params.get('parallel_gripper', {{}})
-        joint_val = parallel_gripper_pos_mm_to_urdf_m(pos_mm, pg_params)
+        tool_params = robot_params.get('{sanitized_tool_name}', {{}})
+        
+        lower, upper = get_finger_joint_limits()
+        range_mm = tool_params.get('range_mm', 80.0)
+        pct = pos_mm / range_mm
+        joint_val = upper + pct * (lower - upper)
         
         return {{
             'finger_left_joint': joint_val,
