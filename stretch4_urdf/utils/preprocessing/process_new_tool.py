@@ -17,8 +17,20 @@ from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath 
 
 def create_collision_config_if_missing(base_urdf, root_dir):
     config_path = os.path.join(root_dir, 'collision_mesh_config.yaml')
-    if not os.path.exists(config_path):
-        print(f"Creating default collision_mesh_config.yaml in {root_dir}")
+    is_empty_or_placeholder = True
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                data = yaml.safe_load(f)
+                if data and data.get('links'):
+                    keys = list(data['links'].keys())
+                    if keys and keys != ['quick_connect_interface_link']:
+                        is_empty_or_placeholder = False
+        except Exception:
+            pass
+
+    if not os.path.exists(config_path) or is_empty_or_placeholder:
+        print(f"Creating default/updated collision_mesh_config.yaml in {root_dir}")
         tree = ET.parse(base_urdf)
         root = tree.getroot()
                         
