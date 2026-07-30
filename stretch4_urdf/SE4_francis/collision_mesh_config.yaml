@@ -49,8 +49,7 @@ links:
   wheel_2_link:
     action: convex_hull
   mast_link:
-    action: qem
-    simplification_ratio: 0.1
+    action: convex_hull
   gripper_s4_body_link:
     action: qem
     simplification_ratio: 0.1
