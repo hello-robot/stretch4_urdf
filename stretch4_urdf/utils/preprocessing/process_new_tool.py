@@ -38,35 +38,39 @@ def generate_collision_meshes(model_name):
     print(f"Generating collision meshes for tool: {model_name}...")
     gen_script = os.path.join(os.path.dirname(__file__), 'generate_collision_mesh.py')
     try:
-        subprocess.run(['python3', gen_script, '--model', model_name], check=True)
+        subprocess.run([sys.executable, gen_script, '--model', model_name], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error generating collision meshes for {model_name}: {e}")
 
 
 def process_tool_urdf(model_name, root_dir):
-    # Find the base URDF file
+    # Find the base URDF file or Xacro files
     urdf_files = glob.glob(os.path.join(root_dir, '*.urdf'))
+    xacro_files = glob.glob(os.path.join(root_dir, '*.xacro')) + glob.glob(os.path.join(root_dir, 'xacro', '*.xacro'))
     
-    if len(urdf_files) != 1:
-        print(f"Error: Expected exactly one base URDF file in {root_dir}, found {len(urdf_files)}: {urdf_files}")
+    if len(urdf_files) == 1:
+        target_file = urdf_files[0]
+        print(f"Found tool URDF: {target_file}")
+    elif len(urdf_files) == 0 and len(xacro_files) > 0:
+        target_file = xacro_files[0]
+        print(f"No base URDF found, but found existing xacro: {target_file}. Using it directly.")
+    else:
+        print(f"Error: Expected exactly one base URDF or XACRO file in {root_dir}, found {len(urdf_files)} URDFs and {len(xacro_files)} XACROs")
         return
 
-    base_urdf = urdf_files[0]
-    print(f"Found tool URDF: {base_urdf}")
-
     # Check that the root link is named quick_connect_interface
-    tree = ET.parse(base_urdf)
+    tree = ET.parse(target_file)
     root = tree.getroot()
     links = [link.get('name') for link in root.findall('link')]
     child_links = {joint.find('child').get('link') for joint in root.findall('joint') if joint.find('child') is not None}
     root_links = [l for l in links if l not in child_links]
     
     if not root_links:
-        sys.exit(f"Error: No root link found in URDF: {base_urdf}")
+        sys.exit(f"Error: No root link found in: {target_file}")
     
     root_link = root_links[0]
     if root_link != "quick_connect_interface_link":
-        print(f"Issue: Root link in URDF '{base_urdf}' is '{root_link}', but it must be named 'quick_connect_interface_link'.")
+        print(f"Issue: Root link in '{target_file}' is '{root_link}', but it must be named 'quick_connect_interface_link'.")
         try:
             ans = input(f"Would you like to add 'quick_connect_interface_link' as the root link with a fixed identity joint to '{root_link}'? (y/N): ").strip().lower()
         except (KeyboardInterrupt, EOFError):
@@ -93,32 +97,32 @@ def process_tool_urdf(model_name, root_dir):
             
             root.append(new_joint)
             
-            # Format and write back to base_urdf
+            # Format and write back to target_file
             ET.indent(tree, space="  ")
-            tree.write(base_urdf, encoding='utf-8', xml_declaration=False)
-            print(f"Successfully added 'quick_connect_interface' as the root link to {base_urdf}.")
+            tree.write(target_file, encoding='utf-8', xml_declaration=False)
+            print(f"Successfully added 'quick_connect_interface' as the root link to {target_file}.")
         else:
-            sys.exit(f"Error: Root link must be named 'quick_connect_interface', found '{root_link}' in {base_urdf}")
+            sys.exit(f"Error: Root link must be named 'quick_connect_interface', found '{root_link}' in {target_file}")
 
-    create_collision_config_if_missing(base_urdf, root_dir)
+    create_collision_config_if_missing(target_file, root_dir)
     generate_collision_meshes(model_name)
  
-    print('Updating the URDF with collision mesh filepaths...')
-    update_urdf_collision_meshes(base_urdf, base_urdf)
-    remove_collision_from_optical_links(base_urdf, base_urdf)
+    print('Updating the URDF/XACRO with collision mesh filepaths...')
+    update_urdf_collision_meshes(target_file, target_file)
+    remove_collision_from_optical_links(target_file, target_file)
 
     # Convert mesh paths to use $(arg tool_mesh_dir)
     print(f'Converting mesh paths to use $(arg tool_mesh_dir)...')
-    with open(base_urdf, 'r') as f:
+    with open(target_file, 'r') as f:
         content = f.read()
 
     # Replace anything prepended to meshes/ in filename attributes with $(arg tool_mesh_dir)/
     content = re.sub(r'filename="[^"]*meshes/', 'filename="$(arg tool_mesh_dir)/', content)
     
-    with open(base_urdf, 'w') as f:
+    with open(target_file, 'w') as f:
         f.write(content)
         
-    print(f'Successfully processed {base_urdf}')
+    print(f'Successfully processed {target_file}')
 
     # Check for unreferenced meshes
     referenced_meshes = set()
@@ -166,6 +170,10 @@ def get_tools():
                     urdfs = glob.glob(os.path.join(tool_path, "*.urdf"))
                     if len(urdfs) > 0:
                         urdf_map[tool_id] = urdfs
+                    else:
+                        xacros = glob.glob(os.path.join(tool_path, "*.xacro")) + glob.glob(os.path.join(tool_path, "xacro", "*.xacro"))
+                        if len(xacros) > 0:
+                            urdf_map[tool_id] = xacros
                 
     return sorted(tools), urdf_map, urdf_pkg_path
 
@@ -191,9 +199,16 @@ if __name__ == '__main__':
     print("Existing robot model directories in stretch4_urdf:")
     
     for i, m in enumerate(all_models):
-        has_urdf = m in urdf_map
-        urdf_str = "(raw .urdf available for processing)" if has_urdf else ""
-        print(f"  {i+1}: {m} {urdf_str}")
+        has_model_source = m in urdf_map
+        if has_model_source:
+            is_xacro = any(f.endswith('.xacro') for f in urdf_map[m])
+            if is_xacro:
+                model_str = "(existing .xacro available for processing)"
+            else:
+                model_str = "(raw .urdf available for processing)"
+        else:
+            model_str = ""
+        print(f"  {i+1}: {m} {model_str}")
         
     print(f"\nSelect a robot model directory to process (comma-separated indices e.g., '1, 3', or 'all'):")
     try:
@@ -219,14 +234,14 @@ if __name__ == '__main__':
                         if selected not in model_names_to_generate:
                             model_names_to_generate.append(selected)
                     else:
-                        print(f"  -> Skipping '{selected}' as a .urdf file was not found in the model directory. A urdf file is required for processing.")
+                        print(f"  -> Skipping '{selected}' as a .urdf or .xacro file was not found in the model directory.")
                 else:
                     print(f"  -> Invalid index: {idx+1}")
             except ValueError:
                 print(f"  -> Invalid input: {part}")
                 
     if not model_names_to_generate:
-        print("No valid robot model directories selected. Please add a .urdf file to the model directory. Typically, this is exported from CAD software.")
+        print("No valid robot model directories selected. Please add a .urdf or .xacro file to the model directory.")
         sys.exit(0)
         
     main(model_names_to_generate)
