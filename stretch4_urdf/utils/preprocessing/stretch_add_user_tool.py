@@ -333,6 +333,64 @@ def check_user_tool(tool_name, tool_path):
     else:
         print("⚠️  WARNING: Custom collision.py mapper not found. Will use default visualizer joint mapping.")
         
+    # 7. Verify pose models
+    pose_yaml_path = os.path.join(tool_path, 'pose_models.yaml')
+    if os.path.exists(pose_yaml_path):
+        try:
+            from stretch4_body.utils.stretch_pose_models import RobotPose
+            poses = RobotPose.load_tool_pose_models(tool_name)
+            if poses:
+                print(f"✅ PASSED: pose_models.yaml successfully loaded and validated ({', '.join(poses.keys())}).")
+            else:
+                print("❌ FAILED: pose_models.yaml exists but loaded as empty or failed validation.")
+                passed = False
+        except Exception as e:
+            print(f"❌ FAILED: Error parsing or validating pose_models.yaml: {e}")
+            passed = False
+    else:
+        print("⚠️  WARNING: Custom pose_models.yaml not found.")
+        
+    # 8. Verify gripper conversion
+    gripper_conv_file = os.path.join(tool_path, 'gripper_conversion.py')
+    if os.path.exists(gripper_conv_file):
+        try:
+            mod = RobotParams.import_user_tool_module(tool_name, 'gripper_conversion', is_server=True)
+            import re
+            sanitized = re.sub(r'[^a-zA-Z0-9_]', '_', tool_name)
+            if sanitized and sanitized[0].isdigit():
+                sanitized = "_" + sanitized
+            func_name = f"{sanitized}_servo_rad_to_mm"
+            if hasattr(mod, func_name):
+                print(f"✅ PASSED: Gripper conversion function '{func_name}' successfully loaded from gripper_conversion.py.")
+            else:
+                print(f"⚠️  WARNING: gripper_conversion.py exists but function '{func_name}' was not found inside.")
+        except Exception as e:
+            print(f"❌ FAILED: Error importing custom gripper conversion logic gripper_conversion.py: {e}")
+            passed = False
+    else:
+        print("⚠️  WARNING: Custom gripper_conversion.py not found.")
+
+    # 9. Verify custom gamepad class
+    gamepad_file = os.path.join(tool_path, 'gamepad.py')
+    if os.path.exists(gamepad_file):
+        try:
+            mod = RobotParams.import_user_tool_module(tool_name, 'gamepad', is_server=True)
+            clean_class_base = re.sub(r'[^a-zA-Z0-9]', ' ', tool_name)
+            if clean_class_base and clean_class_base[0].isdigit():
+                clean_class_base = "Tool " + clean_class_base
+            server_class_name = clean_class_base.title().replace(' ', '')
+            custom_gripper_class_name = f"Command{server_class_name}Position"
+            
+            if hasattr(mod, custom_gripper_class_name):
+                print(f"✅ PASSED: Gamepad class '{custom_gripper_class_name}' successfully loaded from gamepad.py.")
+            else:
+                print(f"⚠️  WARNING: gamepad.py exists but class '{custom_gripper_class_name}' was not found inside.")
+        except Exception as e:
+            print(f"❌ FAILED: Error importing custom gamepad logic gamepad.py: {e}")
+            passed = False
+    else:
+        print("⚠️  WARNING: Custom gamepad.py not found.")
+        
     print(f"\n-----------------------------------------")
     if passed:
         print(f"🎉 SUCCESS: Tool '{tool_name}' configuration is completely valid and correctly hooked up!")
@@ -561,6 +619,8 @@ class {class_name}CommandGroup:
 """
 
 GAMEPAD_TELEOP_TEMPLATE = """#!/usr/bin/env python3
+from stretch4_body.core.robot_params import RobotParams
+
 class {class_name}GamepadTeleop:
     \"\"\"
     Gamepad teleoperation control mapping template for {tool_name}.
@@ -575,7 +635,7 @@ class {class_name}GamepadTeleop:
         gamepad_state: dict containing buttons (0/1) and axes (float -1.0 to 1.0)
         \"\"\"
         # Example: Command incremental positive movement when Right Trigger is pressed
-        rt_val = gamepad_state.get('bottom_button_pressed', 0.0)
+        rt_val = gamepad_state.get('right_button_pressed', 0.0)
         if rt_val > 0.1:
             if hasattr(self.robot, 'end_of_arm') and self.robot.end_of_arm is not None:
                 self.robot.end_of_arm.move_by('{sanitized_tool_name}', 0.01 * rt_val)
@@ -583,12 +643,46 @@ class {class_name}GamepadTeleop:
                 self.robot.move_by('{sanitized_tool_name}', 0.01 * rt_val)
             
         # Example: Command incremental negative movement when Left Trigger is pressed
-        lt_val = gamepad_state.get('right_button_pressed', 0.0)
+        lt_val = gamepad_state.get('bottom_button_pressed', 0.0)
         if lt_val > 0.1:
             if hasattr(self.robot, 'end_of_arm') and self.robot.end_of_arm is not None:
                 self.robot.end_of_arm.move_by('{sanitized_tool_name}', -0.01 * lt_val)
             else:
                 self.robot.move_by('{sanitized_tool_name}', -0.01 * lt_val)
+
+
+class Command{class_name}Position:
+    \"\"\"
+    Custom Tool motion command class for gamepad teleoperation.
+    For this class, simple open and close methods are provided
+    and expected only to be controlled on a button state.
+    \"\"\"
+    def __init__(self, motion_profile:str = 'max'):
+        from stretch4_body.utils.stretch_pose_models import RobotJoints
+        self.name = RobotJoints.gripper.value or '{sanitized_tool_name}'
+        self.params = RobotParams().get_params()[1][self.name]
+        self.gripper_step_m = 0.01
+        self.gripper_accel = self.params.get('motion', {{}}).get(motion_profile, {{}}).get('accel', 6.0)
+        self.gripper_vel = self.params.get('motion', {{}}).get(motion_profile, {{}}).get('vel', 6.0)
+        self.precision_mode = 0.0
+        self.stop_reqd = False
+
+    def _move(self, dx_m, robot):
+        scale = 1.0 - 0.75 * self.precision_mode
+        dx_m = dx_m * scale
+        robot.end_of_arm.move_by(self.name, dx_m, self.gripper_vel, self.gripper_accel)
+        self.stop_reqd = True
+    
+    def open_gripper(self, robot):
+        self._move(self.gripper_step_m, robot)
+        
+    def close_gripper(self, robot):
+        self._move(-self.gripper_step_m, robot)
+
+    def stop_gripper(self, robot):
+        if self.stop_reqd:
+            robot.end_of_arm.move_by(self.name, 0.0)
+            self.stop_reqd = False
 """
 
 COLLISION_TEMPLATE = """#!/usr/bin/env python3
@@ -627,6 +721,105 @@ class {class_name}Collision:
         }}
 """
 
+POSE_MODELS_TEMPLATE = """- name: stow
+  timestamp: 0.0
+  joints:
+    wrist_pitch: {{position: 0.0, velocity: 0.0, effort: 0.0}}
+    wrist_roll: {{position: 0.0, velocity: 0.0, effort: 0.0}}
+    wrist_yaw: {{position: 3.14, velocity: 0.0, effort: 0.0}}
+    {sanitized_tool_name}: {{position: 0.0, velocity: 0.0, effort: 0.0}}
+- name: zero
+  timestamp: 0.0
+  joints:
+    wrist_pitch: {{position: 0.0, velocity: 0.0, effort: 0.0}}
+    wrist_roll: {{position: 0.0, velocity: 0.0, effort: 0.0}}
+    wrist_yaw: {{position: 0.0, velocity: 0.0, effort: 0.0}}
+    {sanitized_tool_name}: {{position: 0.0, velocity: 0.0, effort: 0.0}}
+"""
+
+
+GRIPPER_CONVERSION_TEMPLATE = """#!/usr/bin/env python3
+import math
+
+# def {sanitized_tool_name}_servo_rad_to_mm(servo_rad, params):
+#     \"\"\"
+#     Convert custom gripper servo angle (in radians) to gap width (in mm).
+#     \"\"\"
+#     range_rad = math.radians(params.get('range_deg', [0.0, 100.0])[1] - params.get('range_deg', [0.0, 100.0])[0])
+#     range_mm = params.get('range_mm', 80.0)
+#     if range_rad == 0:
+#         return 0.0
+#     return (servo_rad / range_rad) * range_mm
+# 
+# 
+# def {sanitized_tool_name}_mm_to_servo_rad(x_mm, params):
+#     \"\"\"
+#     Convert custom gripper gap width (in mm) to servo angle (in radians).
+#     \"\"\"
+#     range_rad = math.radians(params.get('range_deg', [0.0, 100.0])[1] - params.get('range_deg', [0.0, 100.0])[0])
+#     range_mm = params.get('range_mm', 80.0)
+#     if range_mm == 0:
+#         return 0.0
+#     return (x_mm / range_mm) * range_rad
+# 
+# 
+# def {sanitized_tool_name}_pos_mm_to_urdf_m(pos_mm, params):
+#     \"\"\"
+#     Convert custom gripper finger aperture (in mm) to URDF finger joint value (in meters).
+#     \"\"\"
+#     range_mm = params.get('range_mm', 80.0)
+#     pct = pos_mm / range_mm if range_mm != 0 else 0.0
+#     lower = -0.04
+#     upper = 0.0
+#     return upper + pct * (lower - upper)
+# 
+# 
+# def {sanitized_tool_name}_urdf_to_subsystem(position, params):
+#     \"\"\"
+#     Convert URDF finger joint value (in meters/radians) to custom gripper subsystem units.
+#     \"\"\"
+#     # For custom parallel grippers, subsystem units are typically in meters.
+#     return position
+"""
+
+
+GAMEPAD_TEMPLATE = """#!/usr/bin/env python3
+from stretch4_body.core.robot_params import RobotParams
+
+class CommandCustomToolPosition:
+    \"\"\"
+    Custom Tool motion command class for gamepad teleoperation.
+    For this class, simple open and close methods are provided
+    and expected only to be controlled on a button state.
+    \"\"\"
+    def __init__(self, motion_profile:str = 'max'):
+        from stretch4_body.utils.stretch_pose_models import RobotJoints
+        self.name = RobotJoints.gripper.value or '{sanitized_tool_name}'
+        self.params = RobotParams().get_params()[1][self.name]
+        self.gripper_step_m = 0.01
+        self.gripper_accel = self.params.get('motion', {}).get(motion_profile, {}).get('accel', 6.0)
+        self.gripper_vel = self.params.get('motion', {}).get(motion_profile, {}).get('vel', 6.0)
+        self.precision_mode = 0.0
+        self.stop_reqd = False
+
+    def _move(self, dx_m, robot):
+        scale = 1.0 - 0.75 * self.precision_mode
+        dx_m = dx_m * scale
+        robot.end_of_arm.move_by(self.name, dx_m, self.gripper_vel, self.gripper_accel)
+        self.stop_reqd = True
+    
+    def open_gripper(self, robot):
+        self._move(self.gripper_step_m, robot)
+        
+    def close_gripper(self, robot):
+        self._move(-self.gripper_step_m, robot)
+
+    def stop_gripper(self, robot):
+        if self.stop_reqd:
+            robot.end_of_arm.move_by(self.name, 0.0)
+            self.stop_reqd = False
+"""
+
 
 def process_single_tool(tool_name, tool_path):
     print(f"\nProcessing user tool: {tool_name} (located in {tool_path})")
@@ -652,6 +845,7 @@ def process_single_tool(tool_name, tool_path):
     gamepad_py_file = os.path.join(tool_path, "gamepad.py")
     collision_py_file = os.path.join(tool_path, "collision.py")
     tool_urdf_file = os.path.join(tool_path, "tool.urdf")
+    pose_models_file = os.path.join(tool_path, "pose_models.yaml")
     
     if (not os.path.exists(tool_py_file) and
         not os.path.exists(end_of_arm_py_file) and
@@ -710,6 +904,23 @@ def process_single_tool(tool_name, tool_path):
                 f.write('<?xml version="1.0"?>\n<robot name="tool">\n  <link name="quick_connect_interface_link" />\n</robot>\n')
         except Exception as e:
             print(f"Warning: Failed to generate placeholder URDF: {e}")
+
+    gripper_conversion_file = os.path.join(tool_path, "gripper_conversion.py")
+    if not os.path.exists(gripper_conversion_file):
+        print(f"Generating gripper conversion logic template at: {gripper_conversion_file}")
+        try:
+            with open(gripper_conversion_file, 'w') as f:
+                f.write(GRIPPER_CONVERSION_TEMPLATE.format(sanitized_tool_name=sanitized_tool_name))
+        except Exception as e:
+            print(f"Warning: Failed to generate gripper conversion template: {e}")
+
+    if not os.path.exists(pose_models_file):
+        print(f"Generating Pose Models template at: {pose_models_file}")
+        try:
+            with open(pose_models_file, 'w') as f:
+                f.write(POSE_MODELS_TEMPLATE.format(sanitized_tool_name=sanitized_tool_name))
+        except Exception as e:
+            print(f"Warning: Failed to generate Pose Models template: {e}")
 
     # Check if a URDF file exists (ignore empty placeholder ones)
     urdf_files = [f for f in glob.glob(os.path.join(tool_path, '*.urdf')) if os.path.exists(f) and os.path.basename(f) != "tool.urdf" and os.path.getsize(f) > 0]
