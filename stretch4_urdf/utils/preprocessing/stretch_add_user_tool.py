@@ -308,7 +308,7 @@ from stretch4_body.core.feetech.feetech_SM_hello import FeetechSMHello
 
 class {class_name}Gripper(FeetechSMHello):
     \"\"\"
-    A completely custom parallel gripper driver subclassing FeetechSMHello directly.
+    A completely custom gripper driver subclassing FeetechSMHello directly.
     \"\"\"
     def __init__(self, chain=None, usb=None, name='{tool_name}', is_direct=False):
         FeetechSMHello.__init__(self, name, chain, usb, is_direct=is_direct)
