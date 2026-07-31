@@ -2,10 +2,12 @@
 
 The changes between releases of Stretch 4 URDF are documented here.
 
-## [2026.07.20](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.20)
+## [2026.07.31](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.31)
 
  - Updated head camera sensor link frames to all share the same orientation with z pointing up
  - Corrected the center camera's optical frame to match the OAK-FFC-IMX378 W sensor orientation
+ - Split mesh for arm link 0 from mesh for lift link
+ - Tune tablet collision mesh
 
 ## [2026.07.08](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.8)
 
