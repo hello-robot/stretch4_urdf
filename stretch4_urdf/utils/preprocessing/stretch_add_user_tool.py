@@ -207,9 +207,145 @@ def get_user_tools_dirs():
     return _dirs
 
 
+def check_user_tool(tool_name, tool_path):
+    print(f"\n=========================================")
+    print(f"🔍 CHECKING USER TOOL: {tool_name}")
+    print(f"Path: {tool_path}")
+    print(f"=========================================\n")
+    
+    passed = True
+    
+    # 1. Check tool_params.yaml exists
+    yaml_path = os.path.join(tool_path, 'tool_params.yaml')
+    if not os.path.exists(yaml_path):
+        print("❌ FAILED: tool_params.yaml not found.")
+        return False
+    print("✅ PASSED: tool_params.yaml exists.")
+    
+    # 2. Parse tool_params.yaml
+    try:
+        with open(yaml_path, 'r') as f:
+            params = yaml.safe_load(f)
+        print("✅ PASSED: tool_params.yaml parsed successfully as valid YAML.")
+    except Exception as e:
+        print(f"❌ FAILED: Failed to parse tool_params.yaml: {e}")
+        return False
+        
+    # Ensure sys.path is added
+    from stretch4_body.utils.user_tool_utils import add_user_tool_to_sys_path
+    add_user_tool_to_sys_path(tool_name)
+    from stretch4_body.core.robot_params import RobotParams
+    
+    # 3. Verify Server-side driver config
+    server_module = params.get('py_module_name')
+    server_class = params.get('py_class_name')
+    
+    if not server_module or not server_class:
+        print("❌ FAILED: 'py_module_name' or 'py_class_name' not defined in tool_params.yaml.")
+        passed = False
+    else:
+        try:
+            mod = RobotParams.import_user_tool_module(tool_name, server_module, is_server=True)
+            if not mod:
+                raise ImportError(f"Could not load module '{server_module}'")
+            if not hasattr(mod, server_class):
+                raise AttributeError(f"Module '{server_module}' has no class '{server_class}'")
+            print(f"✅ PASSED: Server class '{server_class}' successfully loaded from module '{server_module}'.")
+        except Exception as e:
+            print(f"❌ FAILED: Could not load server class '{server_class}' from module '{server_module}': {e}")
+            passed = False
+            
+    # 4. Verify Client-side driver config
+    client_module = params.get('client_module_name')
+    client_class = params.get('client_class_name')
+    
+    if client_module or client_class:
+        if not client_module or not client_class:
+            print("❌ FAILED: Both 'client_module_name' and 'client_class_name' must be defined together.")
+            passed = False
+        else:
+            try:
+                mod = RobotParams.import_user_tool_module(tool_name, client_module, is_server=False)
+                if not mod:
+                    raise ImportError(f"Could not load module '{client_module}'")
+                if not hasattr(mod, client_class):
+                    raise AttributeError(f"Module '{client_module}' has no class '{client_class}'")
+                print(f"✅ PASSED: Client class '{client_class}' successfully loaded from module '{client_module}'.")
+            except Exception as e:
+                print(f"❌ FAILED: Could not load client class '{client_class}' from module '{client_module}': {e}")
+                passed = False
+                
+    # 5. Verify devices configuration
+    devices = params.get('devices', {})
+    if not devices:
+        print("⚠️  WARNING: No devices configuration found under 'devices' key.")
+    else:
+        print("\nChecking devices:")
+        for dev_name, dev_cfg in devices.items():
+            if not isinstance(dev_cfg, dict):
+                continue
+            d_class = dev_cfg.get('py_class_name')
+            d_module = dev_cfg.get('py_module_name')
+            
+            if not d_class or not d_module:
+                print(f"  ❌ Device '{dev_name}': missing py_class_name or py_module_name.")
+                passed = False
+                continue
+                
+            try:
+                if "stretch4_body" in d_module:
+                    import importlib
+                    mod = importlib.import_module(d_module)
+                else:
+                    mod = RobotParams.import_user_tool_module(tool_name, d_module, is_server=True)
+                
+                if not mod:
+                    raise ImportError(f"Could not load module '{d_module}'")
+                if not hasattr(mod, d_class):
+                    raise AttributeError(f"Module '{d_module}' has no class '{d_class}'")
+                print(f"  ✅ Device '{dev_name}': class '{d_class}' successfully loaded from module '{d_module}'.")
+            except Exception as e:
+                print(f"  ❌ Device '{dev_name}': Failed to load class '{d_class}' from module '{d_module}': {e}")
+                passed = False
+                
+    # 6. Verify collision mapper
+    collision_file = os.path.exists(os.path.join(tool_path, 'collision.py'))
+    if collision_file:
+        try:
+            import re
+            sanitized = re.sub(r'[^a-zA-Z0-9_]', '_', tool_name)
+            if sanitized and sanitized[0].isdigit():
+                sanitized = "_" + sanitized
+            clean_class_base = re.sub(r'[^a-zA-Z0-9]', ' ', tool_name)
+            if clean_class_base and clean_class_base[0].isdigit():
+                clean_class_base = "Tool " + clean_class_base
+            server_class_name = clean_class_base.title().replace(' ', '')
+            
+            mod = RobotParams.import_user_tool_module(tool_name, 'collision', is_server=True)
+            collision_class = f"{server_class_name}Collision"
+            if hasattr(mod, collision_class):
+                print(f"✅ PASSED: Collision mapper class '{collision_class}' successfully loaded from collision.py.")
+            else:
+                print(f"⚠️  WARNING: collision.py exists but class '{collision_class}' was not found inside it.")
+        except Exception as e:
+            print(f"❌ FAILED: Error importing custom collision mapper collision.py: {e}")
+            passed = False
+    else:
+        print("⚠️  WARNING: Custom collision.py mapper not found. Will use default visualizer joint mapping.")
+        
+    print(f"\n-----------------------------------------")
+    if passed:
+        print(f"🎉 SUCCESS: Tool '{tool_name}' configuration is completely valid and correctly hooked up!")
+    else:
+        print(f"🚨 FAILURE: Tool '{tool_name}' configuration contains errors that will prevent it from loading.")
+    print(f"-----------------------------------------\n")
+    return passed
+
+
 def main():
     parser = argparse.ArgumentParser(description="Process a user-defined custom tool using environment variables or fallbacks.")
     parser.add_argument('tool_name', nargs='?', help="Name of the custom tool subfolder.")
+    parser.add_argument('--check', action='store_true', help="Verify that the tool configuration, parameters, classes, and modules resolve correctly.")
     
     args = parser.parse_args()
     
@@ -284,9 +420,15 @@ def main():
             sys.exit(0)
 
         if choice == 'all':
-            for d in subdirs:
-                process_single_tool(d, subdir_paths[d])
-            return
+            if args.check:
+                all_passed = True
+                for d in subdirs:
+                    all_passed = check_user_tool(d, subdir_paths[d]) and all_passed
+                sys.exit(0 if all_passed else 1)
+            else:
+                for d in subdirs:
+                    process_single_tool(d, subdir_paths[d])
+                return
         else:
             try:
                 idx = int(choice) - 1
@@ -299,6 +441,10 @@ def main():
             except ValueError:
                 print(f"Invalid input: {choice}")
                 sys.exit(1)
+
+    if args.check:
+        passed = check_user_tool(selected_tool, tool_path)
+        sys.exit(0 if passed else 1)
 
     process_single_tool(selected_tool, tool_path)
 
