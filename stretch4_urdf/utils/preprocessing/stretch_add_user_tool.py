@@ -29,7 +29,7 @@ def get_fleet_directory():
     return '/tmp/'
 
 
-def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name=None, client_module_name=None, tool_path=None):
+def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name=None, client_module_name=None, tool_path=None, gripper_module_name=None):
     """Automatically writes baseline configuration and collision management to tool_params.yaml in the custom tool folder."""
     if not tool_path:
         print("Warning: Tool path not specified. Skipping tool_params.yaml generation.")
@@ -85,7 +85,7 @@ def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name
             },
             f'{tool_name}': {
                 'py_class_name': f'{py_class_name}Gripper',
-                'py_module_name': py_module_name,
+                'py_module_name': gripper_module_name or py_module_name,
                 'device_params': None,
                 'id': 24,
                 'eeprom_cfg': {
@@ -174,8 +174,8 @@ def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name
         'ros': {
             'joints': [
                 {
-                    'py_module_name': py_class_name,
-                    'py_class_name': f'{tool_name}CommandGroup'
+                    'py_module_name': 'command_group',
+                    'py_class_name': f'{py_class_name}CommandGroup'
                 }
             ]
         },
@@ -196,12 +196,7 @@ def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name
 def get_user_tools_dirs():
     _dirs = []
     _fleet_path = os.environ.get('HELLO_FLEET_PATH')
-    _fleet_id = os.environ.get('HELLO_FLEET_ID')
     if _fleet_path:
-        if _fleet_id:
-            _specific_dir = os.path.join(_fleet_path, _fleet_id, 'user_tools')
-            if os.path.exists(_specific_dir):
-                _dirs.append(_specific_dir)
         _shared_dir = os.path.join(_fleet_path, 'user_tools')
         if os.path.exists(_shared_dir):
             _dirs.append(_shared_dir)
@@ -257,8 +252,7 @@ def main():
             
             if not in_scanned:
                 if is_path_specified:
-                    print(f"Error: Custom tool subdirectory '{selected_tool}' does not exist inside scanned directories: {user_tools_dirs}.")
-                    sys.exit(1)
+                    tool_path = target_abs_path
                 else:
                     tool_path = os.path.join(user_tools_dirs[0], tool_name)
             
@@ -309,7 +303,18 @@ def main():
     process_single_tool(selected_tool, tool_path)
 
 
-SERVER_TEMPLATE = """#!/usr/bin/env python3
+CUSTOM_TOOL_TEMPLATE = """#!/usr/bin/env python3
+from stretch4_body.core.feetech.feetech_SM_hello import FeetechSMHello
+
+class {class_name}Gripper(FeetechSMHello):
+    \"\"\"
+    A completely custom parallel gripper driver subclassing FeetechSMHello directly.
+    \"\"\"
+    def __init__(self, chain=None, usb=None, name='{tool_name}', is_direct=False):
+        FeetechSMHello.__init__(self, name, chain, usb, is_direct=is_direct)
+"""
+
+CUSTOM_TOOL_END_OF_ARM_TEMPLATE = """#!/usr/bin/env python3
 import time
 import threading
 from stretch4_body.subsystem.end_of_arm.end_of_arm import EndOfArm
@@ -365,16 +370,6 @@ class {class_name}(EndOfArm):
             robot.end_of_arm.move_to('wrist_pitch', robot.end_of_arm.params['stow']['wrist_pitch'])
         else:
             self.move_to('wrist_pitch', self.params['stow']['wrist_pitch'])
-
-
-from stretch4_body.core.feetech.feetech_SM_hello import FeetechSMHello
-
-class {class_name}Gripper(FeetechSMHello):
-    \"\"\"
-    A completely custom parallel gripper driver subclassing FeetechSMHello directly.
-    \"\"\"
-    def __init__(self, chain=None, usb=None, name='{tool_name}', is_direct=False):
-        FeetechSMHello.__init__(self, name, chain, usb, is_direct=is_direct)
 """
 
 CLIENT_TEMPLATE = """#!/usr/bin/env python3
@@ -434,14 +429,20 @@ class {class_name}GamepadTeleop:
         gamepad_state: dict containing buttons (0/1) and axes (float -1.0 to 1.0)
         \"\"\"
         # Example: Command incremental positive movement when Right Trigger is pressed
-        rt_val = gamepad_state.get('right_trigger', 0.0)
+        rt_val = gamepad_state.get('bottom_button_pressed', 0.0)
         if rt_val > 0.1:
-            self.robot.end_of_arm.move_by('{sanitized_tool_name}', 0.01 * rt_val)
+            if hasattr(self.robot, 'end_of_arm') and self.robot.end_of_arm is not None:
+                self.robot.end_of_arm.move_by('{sanitized_tool_name}', 0.01 * rt_val)
+            else:
+                self.robot.move_by('{sanitized_tool_name}', 0.01 * rt_val)
             
         # Example: Command incremental negative movement when Left Trigger is pressed
-        lt_val = gamepad_state.get('left_trigger', 0.0)
+        lt_val = gamepad_state.get('right_button_pressed', 0.0)
         if lt_val > 0.1:
-            self.robot.end_of_arm.move_by('{sanitized_tool_name}', -0.01 * lt_val)
+            if hasattr(self.robot, 'end_of_arm') and self.robot.end_of_arm is not None:
+                self.robot.end_of_arm.move_by('{sanitized_tool_name}', -0.01 * lt_val)
+            else:
+                self.robot.move_by('{sanitized_tool_name}', -0.01 * lt_val)
 """
 
 COLLISION_TEMPLATE = """#!/usr/bin/env python3
@@ -467,7 +468,7 @@ class {class_name}Collision:
         from stretch4_body.subsystem.end_of_arm.gripper_conversion import get_finger_joint_limits
         from stretch4_body.core.robot_params import RobotParams
         _, robot_params = RobotParams.get_params()
-        tool_params = robot_params.get('{sanitized_tool_name}', {{}})
+        tool_params = robot_params.get('devices', {{}}).get('{sanitized_tool_name}', {{}})
         
         lower, upper = get_finger_joint_limits()
         range_mm = tool_params.get('range_mm', 80.0)
@@ -498,21 +499,33 @@ def process_single_tool(tool_name, tool_path):
     client_class_name = server_class_name + "_Client"
     
     # 1. Generate templates if they do not exist
-    server_py_file = os.path.join(tool_path, f"{sanitized_tool_name}.py")
-    client_py_file = os.path.join(tool_path, f"{sanitized_tool_name}_client.py")
-    command_group_py_file = os.path.join(tool_path, f"{sanitized_tool_name}_command_group.py")
-    gamepad_py_file = os.path.join(tool_path, f"{sanitized_tool_name}_gamepad.py")
-    collision_py_file = os.path.join(tool_path, f"{sanitized_tool_name}_collision.py")
+    tool_py_file = os.path.join(tool_path, "tool.py")
+    end_of_arm_py_file = os.path.join(tool_path, "end_of_arm.py")
+    client_py_file = os.path.join(tool_path, "client.py")
+    command_group_py_file = os.path.join(tool_path, "command_group.py")
+    gamepad_py_file = os.path.join(tool_path, "gamepad.py")
+    collision_py_file = os.path.join(tool_path, "collision.py")
+    tool_urdf_file = os.path.join(tool_path, "tool.urdf")
     
-    if not os.path.exists(server_py_file) and not os.path.exists(os.path.join(tool_path, "tool.py")):
-        print(f"Generating server-side python driver template at: {server_py_file}")
+    if (not os.path.exists(tool_py_file) and
+        not os.path.exists(end_of_arm_py_file) and
+        not os.path.exists(os.path.join(tool_path, f"{sanitized_tool_name}.py")) and
+        not os.path.exists(os.path.join(tool_path, f"{tool_name}.py"))):
+        print(f"Generating custom FeetechSMHello driver template at: {tool_py_file}")
         try:
-            with open(server_py_file, 'w') as f:
-                f.write(SERVER_TEMPLATE.format(class_name=server_class_name, tool_name=tool_name, sanitized_tool_name=sanitized_tool_name))
+            with open(tool_py_file, 'w') as f:
+                f.write(CUSTOM_TOOL_TEMPLATE.format(class_name=server_class_name, tool_name=tool_name, sanitized_tool_name=sanitized_tool_name))
         except Exception as e:
-            print(f"Warning: Failed to generate server-side python template: {e}")
+            print(f"Warning: Failed to generate custom FeetechSMHello template: {e}")
             
-    if not os.path.exists(client_py_file) and not os.path.exists(os.path.join(tool_path, "tool_client.py")):
+        print(f"Generating custom EndOfArm driver template at: {end_of_arm_py_file}")
+        try:
+            with open(end_of_arm_py_file, 'w') as f:
+                f.write(CUSTOM_TOOL_END_OF_ARM_TEMPLATE.format(class_name=server_class_name, tool_name=tool_name, sanitized_tool_name=sanitized_tool_name))
+        except Exception as e:
+            print(f"Warning: Failed to generate custom EndOfArm template: {e}")
+            
+    if not os.path.exists(client_py_file) and not os.path.exists(os.path.join(tool_path, "tool_client.py")) and not os.path.exists(os.path.join(tool_path, f"{sanitized_tool_name}_client.py")):
         print(f"Generating client-side python driver template at: {client_py_file}")
         try:
             with open(client_py_file, 'w') as f:
@@ -520,7 +533,7 @@ def process_single_tool(tool_name, tool_path):
         except Exception as e:
             print(f"Warning: Failed to generate client-side python template: {e}")
 
-    if not os.path.exists(command_group_py_file):
+    if not os.path.exists(command_group_py_file) and not os.path.exists(os.path.join(tool_path, f"{sanitized_tool_name}_command_group.py")):
         print(f"Generating ROS CommandGroup template at: {command_group_py_file}")
         try:
             with open(command_group_py_file, 'w') as f:
@@ -528,7 +541,7 @@ def process_single_tool(tool_name, tool_path):
         except Exception as e:
             print(f"Warning: Failed to generate CommandGroup template: {e}")
 
-    if not os.path.exists(gamepad_py_file):
+    if not os.path.exists(gamepad_py_file) and not os.path.exists(os.path.join(tool_path, f"{sanitized_tool_name}_gamepad.py")):
         print(f"Generating GamepadTeleop template at: {gamepad_py_file}")
         try:
             with open(gamepad_py_file, 'w') as f:
@@ -536,7 +549,7 @@ def process_single_tool(tool_name, tool_path):
         except Exception as e:
             print(f"Warning: Failed to generate GamepadTeleop template: {e}")
 
-    if not os.path.exists(collision_py_file):
+    if not os.path.exists(collision_py_file) and not os.path.exists(os.path.join(tool_path, f"{sanitized_tool_name}_collision.py")):
         print(f"Generating Collision mapping template at: {collision_py_file}")
         try:
             with open(collision_py_file, 'w') as f:
@@ -544,8 +557,16 @@ def process_single_tool(tool_name, tool_path):
         except Exception as e:
             print(f"Warning: Failed to generate Collision template: {e}")
 
-    # Check if a URDF file exists
-    urdf_files = glob.glob(os.path.join(tool_path, '*.urdf'))
+    if not os.path.exists(tool_urdf_file):
+        print(f"Generating placeholder tool URDF at: {tool_urdf_file}")
+        try:
+            with open(tool_urdf_file, 'w') as f:
+                f.write('<?xml version="1.0"?>\n<robot name="tool">\n  <link name="quick_connect_interface_link" />\n</robot>\n')
+        except Exception as e:
+            print(f"Warning: Failed to generate placeholder URDF: {e}")
+
+    # Check if a URDF file exists (ignore empty placeholder ones)
+    urdf_files = [f for f in glob.glob(os.path.join(tool_path, '*.urdf')) if os.path.exists(f) and os.path.basename(f) != "tool.urdf" and os.path.getsize(f) > 0]
     if not urdf_files:
         copied_readme = False
         try:
@@ -579,7 +600,7 @@ def process_single_tool(tool_name, tool_path):
 
         # Generate baseline tool_params.yaml
         try:
-            save_tool_params(tool_name, server_class_name, sanitized_tool_name, client_class_name, f"{sanitized_tool_name}_client", tool_path)
+            save_tool_params(tool_name, server_class_name, "end_of_arm", client_class_name, "client", tool_path, gripper_module_name="tool")
         except Exception as e:
             print(f"Warning: Failed to generate baseline tool_params.yaml: {e}")
 
@@ -602,7 +623,13 @@ def process_single_tool(tool_name, tool_path):
     module_name = 'stretch4_body.subsystem.end_of_arm.end_of_arm_tools'
     class_name = 'EOA_Wrist_DW4_Tool_NIL'
     
-    if os.path.exists(os.path.join(tool_path, f"{tool_name}.py")):
+    if os.path.exists(os.path.join(tool_path, "end_of_arm.py")):
+        py_file = os.path.join(tool_path, "end_of_arm.py")
+        module_name = "end_of_arm"
+    elif os.path.exists(os.path.join(tool_path, "custom_tool_end_of_arm.py")):
+        py_file = os.path.join(tool_path, "custom_tool_end_of_arm.py")
+        module_name = "custom_tool_end_of_arm"
+    elif os.path.exists(os.path.join(tool_path, f"{tool_name}.py")):
         py_file = os.path.join(tool_path, f"{tool_name}.py")
         module_name = tool_name
     elif os.path.exists(os.path.join(tool_path, f"{sanitized_tool_name}.py")):
@@ -630,7 +657,10 @@ def process_single_tool(tool_name, tool_path):
     client_module = None
     client_class = None
     
-    if os.path.exists(os.path.join(tool_path, f"{tool_name}_client.py")):
+    if os.path.exists(os.path.join(tool_path, "client.py")):
+        client_py = os.path.join(tool_path, "client.py")
+        client_module = "client"
+    elif os.path.exists(os.path.join(tool_path, f"{tool_name}_client.py")):
         client_py = os.path.join(tool_path, f"{tool_name}_client.py")
         client_module = f"{tool_name}_client"
     elif os.path.exists(os.path.join(tool_path, f"{sanitized_tool_name}_client.py")):
@@ -661,7 +691,8 @@ def process_single_tool(tool_name, tool_path):
         sys.exit(1)
 
     # 3. Write baseline parameters and collision management to tool_params.yaml inside custom tool folder
-    save_tool_params(tool_name, class_name, module_name, client_class, client_module, tool_path)
+    gripper_module = "tool" if module_name == "end_of_arm" else ("custom_tool" if module_name == "custom_tool_end_of_arm" else None)
+    save_tool_params(tool_name, class_name, module_name, client_class, client_module, tool_path, gripper_module_name=gripper_module)
     
     # 4. Copy user_tool.md template to user tool directory
     try:
