@@ -12,9 +12,13 @@ When a custom tool is registered, the following files are organized in the tool'
         # Simplified collision STLs and raw visual STLs
     collision_mesh_config.yaml  # Configures collision mesh generation
     tool_params.yaml            # Self-contained runtime parameters
-    <tool_name>.urdf            # Parameterized kinematics configuration
-    <tool_name>.py              # (Optional) Server-side hardware driver
-    <tool_name>_client.py       # (Optional) Client-side software interface
+    tool.urdf                   # Parameterized kinematics configuration
+    tool.py                     # (Optional) Server-side parallel gripper driver (FeetechSMHello subclass)
+    end_of_arm.py               # (Optional) Server-side hardware driver (EndOfArm subclass)
+    client.py                   # (Optional) Client-side software interface (EndOfArmClient subclass)
+    command_group.py            # (Optional) ROS command group interface mapping
+    gamepad.py                  # (Optional) Gamepad teleoperation control mapping
+    collision.py                # (Optional) Collision checking configuration
     user_tool.md                # This reference guide
 ```
 
@@ -26,10 +30,10 @@ When a custom tool is registered, the following files are organized in the tool'
 This file isolates all nominal parameters specific to your custom tool. During robot startup, this file is loaded and deep-merged recursively into the system-wide nominal parameter tree.
 
 Key sections of `tool_params.yaml`:
-*   `py_class_name` & `py_module_name`: The Python class and module name of your server-side driver.
-*   `client_class_name` & `client_module_name`: The Python class and module name of your client-side driver.
+*   `py_class_name` & `py_module_name`: The Python class and module name of your server-side driver (loads from `end_of_arm.py` and maps to `EndOfArm` subclass).
+*   `client_class_name` & `client_module_name`: The Python class and module name of your client-side driver (loads from `client.py` and maps to `EndOfArmClient` subclass).
 *   `stow`: Defines the joints coordinates where the robot stows the arm and the wrist.
-*   `devices`: Maps your joint actuators to physical or virtual drivers (e.g. `WristPitch`, `WristRoll`, `WristYaw`, or custom `ParallelGripper` devices).
+*   `devices`: Maps your joint actuators to physical or virtual drivers (e.g. `WristPitch`, `WristRoll`, `WristYaw`, or custom `ParallelGripper` devices inside `tool.py`).
 *   `collision_mgmt`: Identifies bounding collision pairs to prevent self-collision of the tool against other robot parts (like the base).
 
 ---
@@ -67,12 +71,17 @@ links:
 
 ---
 
-### 3. `<tool_name>.py` (Server-Side Driver)
+### 3. `end_of_arm.py` (Server-Side Driver)
 Subclasses `EndOfArm`. Loaded dynamically by the robot's server process inside the `EndOfArmLoop` background worker. It consumes commands from the queue (`q_cmd`) and controls physical hardware.
 
 ---
 
-### 4. `<tool_name>_client.py` (Client-Side Driver)
+### 4. `tool.py` (Gripper / FeetechSMHello Driver)
+Subclasses `FeetechSMHello`. Implements low-level control, registers physical parameters, feedback loops, and calibration for custom smart servos of active attachments.
+
+---
+
+### 5. `client.py` (Client-Side Interface)
 Subclasses `EndOfArmClient`. Loaded dynamically by the client-side `RobotClient`. It is the interface used by user-scripts (e.g., joggers, teleoperation, or move APIs) to enqueue commands and inspect the tool's status.
 
 ---
@@ -89,7 +98,9 @@ stretch_add_user_tool ./my_custom_tool
 This command:
 *   Creates the `./my_custom_tool/` directory.
 *   Creates a `meshes/` subdirectory for CAD meshes.
-*   Generates boilerplate server-side (`my_custom_tool.py`) and client-side (`my_custom_tool_client.py`) driver files.
+*   Generates modular, boilerplate python driver files: `tool.py` (gripper), `end_of_arm.py` (overall EndOfArm driver), and `client.py` (client interface).
+*   Generates helper configs and placeholder ROS templates: `command_group.py`, `gamepad.py`, `collision.py`, and `tool_params.yaml`.
+*   Generates an empty, placeholder kinematics entry point: `tool.urdf`.
 *   Copies this `user_tool.md` file into your folder for reference.
 
 ### Step 2: Prepare and Copy Meshes
@@ -97,7 +108,7 @@ This command:
 2.  Copy these visual mesh files into the newly created `my_custom_tool/meshes/` directory.
 
 ### Step 3: Define the Kinematics (URDF)
-Create a file named `my_custom_tool.urdf` in the root of your tool folder (`my_custom_tool/my_custom_tool.urdf`).
+Populate the `tool.urdf` file in the root of your tool folder (`my_custom_tool/tool.urdf`).
 *   **Critical Requirement**: The base/root link of your custom tool URDF must be named `quick_connect_interface_link`.
 *   Connect any articulating or static links of your tool relative to this root link using joints.
 
@@ -120,17 +131,17 @@ Open `my_custom_tool/tool_params.yaml` and configure:
 
 ### Step 6: Customize Drivers (Optional)
 If your tool has active actuators (like a custom gripper motor or custom sensors), implement the driver logic:
-*   **Server-Side (`my_custom_tool.py`)**: Implement custom startup, homing, and stowing routines.
-*   **Client-Side (`my_custom_tool_client.py`)**: Implement high-level Python commands, state checking, or helper functions.
+*   **Server-Side (`end_of_arm.py` and `tool.py`)**: Implement custom startup, homing, and stowing routines.
+*   **Client-Side (`client.py`)**: Implement high-level Python commands, state checking, or helper functions.
 
 ### Step 7: Select and Activate Your Tool
 To activate your new tool on the physical robot:
 1.  Run the configure script:
-    ```bash
+2.  ```bash
     stretch_configure_tool
     ```
-2.  Select your custom tool from the list (or enter its name manually if it was created in a custom path).
-3.  Turn off power to the wrist/EOA when prompted, connect your physical tool, turn on power, and press any key to auto-detect.
-4.  Confirm restarting the background services and homing the robot.
+3.  Select your custom tool from the list (or enter its name manually if it was created in a custom path).
+4.  Turn off power to the wrist/EOA when prompted, connect your physical tool, turn on power, and press any key to auto-detect.
+5.  Confirm restarting the background services and homing the robot.
 
 Your custom tool is now active, registered, and ready for use!

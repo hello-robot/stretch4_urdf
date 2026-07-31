@@ -75,6 +75,7 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
     if not os.path.exists(model_mesh_dir):
         raise FileNotFoundError(f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}")
 
+    is_user_tool = False
     if 'nil' in tool_name:
         tool_dir = None
         tool_mesh_dir = None
@@ -85,6 +86,7 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
             candidate_path = os.path.join(u_dir, tool_name)
             if os.path.exists(candidate_path):
                 tool_dir = candidate_path
+                is_user_tool = True
                 break
         
         if tool_dir:
@@ -101,6 +103,7 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
     mappings = {
         "batch": batch_name,
         "tool": tool_name,
+        "tool_urdf": "tool" if is_user_tool else tool_name,
         "pkg_path": urdf_pkg_path,
         "model_mesh_dir": f"{prefix}{model_mesh_dir}",
         "tool_mesh_dir": f"{prefix}{tool_mesh_dir}" if tool_mesh_dir else "none"
