@@ -798,6 +798,44 @@ import math
 #     return position
 """
 
+GAMEPAD_TEMPLATE = """#!/usr/bin/env python3
+from stretch4_body.core.robot_params import RobotParams
+
+class CommandCustomToolPosition:
+    \"\"\"
+    Custom Tool motion command class for gamepad teleoperation.
+    For this class, simple open and close methods are provided
+    and expected only to be controlled on a button state.
+    \"\"\"
+    def __init__(self, motion_profile:str = 'max'):
+        from stretch4_body.utils.stretch_pose_models import RobotJoints
+        self.name = RobotJoints.gripper.value or '{sanitized_tool_name}'
+        self.params = RobotParams().get_params()[1][self.name]
+        self.gripper_step_m = 0.01
+        self.gripper_accel = self.params.get('motion', {}).get(motion_profile, {}).get('accel', 6.0)
+        self.gripper_vel = self.params.get('motion', {}).get(motion_profile, {}).get('vel', 6.0)
+        self.precision_mode = 0.0
+        self.stop_reqd = False
+
+    def _move(self, dx_m, robot):
+        scale = 1.0 - 0.75 * self.precision_mode
+        dx_m = dx_m * scale
+        robot.end_of_arm.move_by(self.name, dx_m, self.gripper_vel, self.gripper_accel)
+        self.stop_reqd = True
+    
+    def open_gripper(self, robot):
+        self._move(self.gripper_step_m, robot)
+        
+    def close_gripper(self, robot):
+        self._move(-self.gripper_step_m, robot)
+
+    def stop_gripper(self, robot):
+        if self.stop_reqd:
+            robot.end_of_arm.move_by(self.name, 0.0)
+            self.stop_reqd = False
+"""
+
+
 PLACEHOLDER_URDF = '<?xml version="1.0"?>\n<robot name="tool">\n  <link name="quick_connect_interface_link" />\n</robot>\n'
 
 
