@@ -25,7 +25,7 @@ This command:
 2.  Copy these visual mesh files into the newly created `my_custom_tool/meshes/` directory.
 
 ### Step 3: Define the Kinematics (URDF)
-Populate the generated `tool.urdf` in the root of your tool folder (`my_custom_tool/tool.urdf`). This is the file the robot loads, and Step 4 rewrites it in place. If you add your URDF under a different name instead, Step 4 renames it to `tool.urdf` for you; either way the folder must hold exactly one populated URDF.
+Populate the generated `tool.urdf` in the root of your tool folder (`my_custom_tool/tool.urdf`). This is the file the robot loads, and Step 4 rewrites it in place.
 *   **Critical Requirement**: The base/root link of your custom tool URDF must be named `quick_connect_interface_link`.
 *   Connect any articulating or static links of your tool relative to this root link using joints.
 
