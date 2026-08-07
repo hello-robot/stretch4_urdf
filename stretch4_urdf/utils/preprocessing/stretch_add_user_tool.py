@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import sys
 import argparse
 import ast
+import shutil
 import yaml
 import glob
 
-# Ensure we can import from stretch4_urdf
-try:
-    from stretch4_urdf.utils.preprocessing.process_new_tool import process_tool_urdf
-except ImportError:
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-    from stretch4_urdf.utils.preprocessing.process_new_tool import process_tool_urdf
+
 
 
 def get_fleet_directory():
@@ -27,6 +24,15 @@ def get_fleet_directory():
         if subdirs:
             return subdirs[0] + '/'
     return '/tmp/'
+
+
+def derive_gripper_class_name(py_class_name):
+    """Name of the actuator driver class in tool.py, kept distinct from the
+    EndOfArm class in end_of_arm.py. A tool name already ending in 'gripper'
+    keeps its derived name instead of stuttering into e.g. NyuGripperGripper."""
+    if py_class_name.lower().endswith('gripper'):
+        return py_class_name
+    return py_class_name + 'Gripper'
 
 
 def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name=None, client_module_name=None, tool_path=None, gripper_module_name=None):
@@ -84,7 +90,7 @@ def save_tool_params(tool_name, py_class_name, py_module_name, client_class_name
                 'device_params': 'SE4_wrist_yaw_DW4'
             },
             f'{tool_name}': {
-                'py_class_name': f'{py_class_name}Gripper',
+                'py_class_name': derive_gripper_class_name(py_class_name),
                 'py_module_name': gripper_module_name or py_module_name,
                 'device_params': None,
                 'id': 24,
@@ -312,7 +318,6 @@ def check_user_tool(tool_name, tool_path):
     collision_file = os.path.exists(os.path.join(tool_path, 'collision.py'))
     if collision_file:
         try:
-            import re
             sanitized = re.sub(r'[^a-zA-Z0-9_]', '_', tool_name)
             if sanitized and sanitized[0].isdigit():
                 sanitized = "_" + sanitized
@@ -355,7 +360,6 @@ def check_user_tool(tool_name, tool_path):
     if os.path.exists(gripper_conv_file):
         try:
             mod = RobotParams.import_user_tool_module(tool_name, 'gripper_conversion', is_server=True)
-            import re
             sanitized = re.sub(r'[^a-zA-Z0-9_]', '_', tool_name)
             if sanitized and sanitized[0].isdigit():
                 sanitized = "_" + sanitized
@@ -428,7 +432,6 @@ def main():
     if args.tool_name:
         selected_tool = args.tool_name
         tool_name = os.path.basename(selected_tool.rstrip('/'))
-        import re
         if not re.match(r'^[a-zA-Z0-9_]+$', tool_name):
             print(f"Error: Custom tool name '{tool_name}' must only contain alphanumeric characters and underscores (no hyphens or other special characters).")
             sys.exit(1)
@@ -510,7 +513,7 @@ def main():
 CUSTOM_TOOL_TEMPLATE = """#!/usr/bin/env python3
 from stretch4_body.core.feetech.feetech_SM_hello import FeetechSMHello
 
-class {class_name}Gripper(FeetechSMHello):
+class {gripper_class_name}(FeetechSMHello):
     \"\"\"
     A completely custom gripper driver subclassing FeetechSMHello directly.
     \"\"\"
@@ -686,6 +689,9 @@ class Command{class_name}Position:
 """
 
 COLLISION_TEMPLATE = """#!/usr/bin/env python3
+from stretch4_body.core.robot_params import RobotParams
+from stretch4_body.subsystem.end_of_arm.gripper_conversion import get_finger_joint_limits
+
 class {class_name}Collision:
     \"\"\"
     Collision joint state mapping template for {tool_name}.
@@ -693,6 +699,7 @@ class {class_name}Collision:
     \"\"\"
     def __init__(self, robot=None):
         self.robot = robot
+        self._finger_limits = None
 
     def get_mujoco_joints(self, state):
         \"\"\"
@@ -700,21 +707,30 @@ class {class_name}Collision:
         return a dictionary mapping Mujoco joint names to their target positions.
         \"\"\"
         eoa = state.get('end_of_arm', {{}})
-        
+
         # Look for the custom tool within the end of arm status
         tool_status = eoa.get('{sanitized_tool_name}') or {{}}
-        pos_mm = tool_status.get('pos_mm', 0.0)
-        
-        from stretch4_body.subsystem.end_of_arm.gripper_conversion import get_finger_joint_limits
-        from stretch4_body.core.robot_params import RobotParams
+
+        # Device params for the gripper device named after the tool are merged
+        # into the tool's top-level params block
         _, robot_params = RobotParams.get_params()
-        tool_params = robot_params.get('devices', {{}}).get('{sanitized_tool_name}', {{}})
-        
-        lower, upper = get_finger_joint_limits()
-        range_mm = tool_params.get('range_mm', 80.0)
-        pct = pos_mm / range_mm
-        joint_val = upper + pct * (lower - upper)
-        
+        tool_params = robot_params.get('{sanitized_tool_name}', {{}})
+
+        # Drivers that publish a gripper_conversion status report the finger
+        # angle directly; parallel-jaw drivers report an aperture in mm
+        conversion = tool_status.get('gripper_conversion') or {{}}
+        if 'finger_rad' in conversion:
+            joint_val = conversion['finger_rad']
+        else:
+            if self._finger_limits is None:
+                # Cached: this regenerates the robot URDF, too slow to call per cycle
+                self._finger_limits = get_finger_joint_limits()
+            lower, upper = self._finger_limits
+            range_mm = tool_params.get('range_mm', 80.0)
+            pct = tool_status.get('pos_mm', 0.0) / range_mm if range_mm else 0.0
+            joint_val = upper + pct * (lower - upper)
+
+        # Replace these with the finger joint names from your tool's URDF
         return {{
             'finger_left_joint': joint_val,
             'finger_right_joint': joint_val
@@ -782,50 +798,24 @@ import math
 #     return position
 """
 
+PLACEHOLDER_URDF = '<?xml version="1.0"?>\n<robot name="tool">\n  <link name="quick_connect_interface_link" />\n</robot>\n'
 
-GAMEPAD_TEMPLATE = """#!/usr/bin/env python3
-from stretch4_body.core.robot_params import RobotParams
 
-class CommandCustomToolPosition:
-    \"\"\"
-    Custom Tool motion command class for gamepad teleoperation.
-    For this class, simple open and close methods are provided
-    and expected only to be controlled on a button state.
-    \"\"\"
-    def __init__(self, motion_profile:str = 'max'):
-        from stretch4_body.utils.stretch_pose_models import RobotJoints
-        self.name = RobotJoints.gripper.value or '{sanitized_tool_name}'
-        self.params = RobotParams().get_params()[1][self.name]
-        self.gripper_step_m = 0.01
-        self.gripper_accel = self.params.get('motion', {}).get(motion_profile, {}).get('accel', 6.0)
-        self.gripper_vel = self.params.get('motion', {}).get(motion_profile, {}).get('vel', 6.0)
-        self.precision_mode = 0.0
-        self.stop_reqd = False
-
-    def _move(self, dx_m, robot):
-        scale = 1.0 - 0.75 * self.precision_mode
-        dx_m = dx_m * scale
-        robot.end_of_arm.move_by(self.name, dx_m, self.gripper_vel, self.gripper_accel)
-        self.stop_reqd = True
-    
-    def open_gripper(self, robot):
-        self._move(self.gripper_step_m, robot)
-        
-    def close_gripper(self, robot):
-        self._move(-self.gripper_step_m, robot)
-
-    def stop_gripper(self, robot):
-        if self.stop_reqd:
-            robot.end_of_arm.move_by(self.name, 0.0)
-            self.stop_reqd = False
-"""
+def is_placeholder_urdf(urdf_file):
+    """True if urdf_file still holds the untouched generated placeholder (ignoring whitespace)."""
+    try:
+        with open(urdf_file, 'r') as f:
+            content = f.read()
+    except Exception:
+        return False
+    return ''.join(content.split()) == ''.join(PLACEHOLDER_URDF.split())
 
 
 def process_single_tool(tool_name, tool_path):
     print(f"\nProcessing user tool: {tool_name} (located in {tool_path})")
-    
+    os.makedirs(os.path.join(tool_path, 'meshes'), exist_ok=True)
+
     # Sanitized tool name for Python module and file names
-    import re
     sanitized_tool_name = re.sub(r'[^a-zA-Z0-9_]', '_', tool_name)
     if sanitized_tool_name and sanitized_tool_name[0].isdigit():
         sanitized_tool_name = "_" + sanitized_tool_name
@@ -854,7 +844,7 @@ def process_single_tool(tool_name, tool_path):
         print(f"Generating custom FeetechSMHello driver template at: {tool_py_file}")
         try:
             with open(tool_py_file, 'w') as f:
-                f.write(CUSTOM_TOOL_TEMPLATE.format(class_name=server_class_name, tool_name=tool_name, sanitized_tool_name=sanitized_tool_name))
+                f.write(CUSTOM_TOOL_TEMPLATE.format(gripper_class_name=derive_gripper_class_name(server_class_name), tool_name=tool_name, sanitized_tool_name=sanitized_tool_name))
         except Exception as e:
             print(f"Warning: Failed to generate custom FeetechSMHello template: {e}")
             
@@ -897,11 +887,11 @@ def process_single_tool(tool_name, tool_path):
         except Exception as e:
             print(f"Warning: Failed to generate Collision template: {e}")
 
-    if not os.path.exists(tool_urdf_file):
+    if not glob.glob(os.path.join(tool_path, '*.urdf')):
         print(f"Generating placeholder tool URDF at: {tool_urdf_file}")
         try:
             with open(tool_urdf_file, 'w') as f:
-                f.write('<?xml version="1.0"?>\n<robot name="tool">\n  <link name="quick_connect_interface_link" />\n</robot>\n')
+                f.write(PLACEHOLDER_URDF)
         except Exception as e:
             print(f"Warning: Failed to generate placeholder URDF: {e}")
 
@@ -922,12 +912,13 @@ def process_single_tool(tool_name, tool_path):
         except Exception as e:
             print(f"Warning: Failed to generate Pose Models template: {e}")
 
-    # Check if a URDF file exists (ignore empty placeholder ones)
-    urdf_files = [f for f in glob.glob(os.path.join(tool_path, '*.urdf')) if os.path.exists(f) and os.path.basename(f) != "tool.urdf" and os.path.getsize(f) > 0]
+    # 2. Check for populated URDF files
+    urdf_files = [f for f in glob.glob(os.path.join(tool_path, '*.urdf'))
+                  if os.path.getsize(f) > 0
+                  and not is_placeholder_urdf(f)]
     if not urdf_files:
         copied_readme = False
         try:
-            import shutil
             script_dir = os.path.dirname(os.path.abspath(__file__))
             src_readme = os.path.abspath(os.path.join(script_dir, '../../SE4_tools/user_tool.md'))
             if os.path.exists(src_readme):
@@ -962,7 +953,7 @@ def process_single_tool(tool_name, tool_path):
             print(f"Warning: Failed to generate baseline tool_params.yaml: {e}")
 
         print(f"\nCreated custom tool subdirectory at: {tool_path}")
-        print("No URDF file was found in your tool directory.")
+        print("No populated URDF file was found in your tool directory.")
         print("\n================================================================================")
         print("NEXT STEPS:")
         if copied_readme:
@@ -970,7 +961,7 @@ def process_single_tool(tool_name, tool_path):
         else:
             print("1. Read the guide 'user_tool.md' to know how to set up your tool structure.")
         print(f"2. Place your custom tool's visual/CAD meshes inside '{os.path.join(tool_path, 'meshes/')}'")
-        print(f"3. Place your CAD/visual URDF file (ending in .urdf) directly in '{tool_path}/'")
+        print(f"3. Populate '{tool_urdf_file}' with your tool's kinematics")
         print(f"4. Re-run 'stretch_add_user_tool {tool_name}' to complete processing & registration.")
         print("================================================================================\n")
         return
@@ -1042,7 +1033,58 @@ def process_single_tool(tool_name, tool_path):
 
     # 2. Invoke URDF / Mesh preprocessing
     try:
-        process_tool_urdf(tool_path, tool_path)
+        try:
+            from stretch4_urdf.utils.preprocessing.process_new_tool import process_tool_urdf
+        except ImportError:
+            sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            from stretch4_urdf.utils.preprocessing.process_new_tool import process_tool_urdf
+        # process_tool_urdf and the collision mesh generator scan the folder and expect
+        # exactly one URDF, so clear out the ones that hold nothing: empty files and the
+        # untouched generated placeholder
+        populated = [os.path.abspath(f) for f in urdf_files]
+        for unpopulated in glob.glob(os.path.join(tool_path, '*.urdf')):
+            if os.path.abspath(unpopulated) not in populated:
+                os.remove(unpopulated)
+                print(f"Removed unpopulated URDF: {unpopulated}")
+
+        if len(urdf_files) == 1:
+            source_urdf = urdf_files[0]
+        else:
+            # tool.urdf already holds a previous run's result, so a second populated URDF
+            # is the user replacing it
+            replacements = [f for f in urdf_files
+                            if os.path.abspath(f) != os.path.abspath(tool_urdf_file)]
+            if len(replacements) != 1:
+                print(f"Error: Expected one URDF in '{tool_path}', found {len(urdf_files)}: "
+                      f"{', '.join(sorted(os.path.basename(f) for f in urdf_files))}")
+                print("Leave only the URDF you want processed and re-run.")
+                sys.exit(1)
+            source_urdf = replacements[0]
+
+        # The runtime loads a user tool's kinematics from tool.urdf, and processing
+        # rewrites its input in place, so tool.urdf is what gets processed
+        previous_urdf = None
+        renamed_from = None
+        if os.path.abspath(source_urdf) != os.path.abspath(tool_urdf_file):
+            if os.path.exists(tool_urdf_file):
+                previous_urdf = tool_urdf_file + '.prev'
+                shutil.move(tool_urdf_file, previous_urdf)
+            shutil.move(source_urdf, tool_urdf_file)
+            renamed_from = source_urdf
+            print(f"Installed '{os.path.basename(source_urdf)}' as: {tool_urdf_file}")
+        try:
+            if not process_tool_urdf(tool_path, tool_path):
+                sys.exit(1)
+            print(f"Processed URDF in place: {tool_urdf_file}")
+        except BaseException:
+            if renamed_from:
+                shutil.move(tool_urdf_file, renamed_from)
+            if previous_urdf and os.path.exists(previous_urdf):
+                shutil.move(previous_urdf, tool_urdf_file)
+                print(f"Processing failed; restored the previous {tool_urdf_file}")
+            raise
+        if previous_urdf and os.path.exists(previous_urdf):
+            os.remove(previous_urdf)
     except Exception as e:
         print(f"Error during URDF and mesh preprocessing: {e}")
         sys.exit(1)
@@ -1053,7 +1095,6 @@ def process_single_tool(tool_name, tool_path):
     
     # 4. Copy user_tool.md template to user tool directory
     try:
-        import shutil
         script_dir = os.path.dirname(os.path.abspath(__file__))
         src_readme = os.path.abspath(os.path.join(script_dir, '../../SE4_tools/user_tool.md'))
         if os.path.exists(src_readme):
