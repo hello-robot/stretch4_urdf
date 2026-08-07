@@ -159,7 +159,6 @@ def process_tool_urdf(model_name, root_dir):
             except (KeyboardInterrupt, EOFError):
                 pass
 
-    return True
 
 def get_tools():
     try:

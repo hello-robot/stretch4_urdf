@@ -7,7 +7,6 @@ import argparse
 import ast
 import shutil
 import yaml
-import glob
 
 
 
@@ -634,24 +633,11 @@ class {class_name}GamepadTeleop:
 
     def update_teleop(self, gamepad_state):
         \"\"\"
-        Processes raw joystick states and queues commands.
-        gamepad_state: dict containing buttons (0/1) and axes (float -1.0 to 1.0)
+        This function gets called on very iteration of the gamepad teleop control  loop. 
+        You can read the current state of the gamepad.
+        Useful to update the controller state.
         \"\"\"
-        # Example: Command incremental positive movement when Right Trigger is pressed
-        rt_val = gamepad_state.get('right_button_pressed', 0.0)
-        if rt_val > 0.1:
-            if hasattr(self.robot, 'end_of_arm') and self.robot.end_of_arm is not None:
-                self.robot.end_of_arm.move_by('{sanitized_tool_name}', 0.01 * rt_val)
-            else:
-                self.robot.move_by('{sanitized_tool_name}', 0.01 * rt_val)
-            
-        # Example: Command incremental negative movement when Left Trigger is pressed
-        lt_val = gamepad_state.get('bottom_button_pressed', 0.0)
-        if lt_val > 0.1:
-            if hasattr(self.robot, 'end_of_arm') and self.robot.end_of_arm is not None:
-                self.robot.end_of_arm.move_by('{sanitized_tool_name}', -0.01 * lt_val)
-            else:
-                self.robot.move_by('{sanitized_tool_name}', -0.01 * lt_val)
+        pass
 
 
 class Command{class_name}Position:
@@ -798,42 +784,6 @@ import math
 #     return position
 """
 
-GAMEPAD_TEMPLATE = """#!/usr/bin/env python3
-from stretch4_body.core.robot_params import RobotParams
-
-class CommandCustomToolPosition:
-    \"\"\"
-    Custom Tool motion command class for gamepad teleoperation.
-    For this class, simple open and close methods are provided
-    and expected only to be controlled on a button state.
-    \"\"\"
-    def __init__(self, motion_profile:str = 'max'):
-        from stretch4_body.utils.stretch_pose_models import RobotJoints
-        self.name = RobotJoints.gripper.value or '{sanitized_tool_name}'
-        self.params = RobotParams().get_params()[1][self.name]
-        self.gripper_step_m = 0.01
-        self.gripper_accel = self.params.get('motion', {}).get(motion_profile, {}).get('accel', 6.0)
-        self.gripper_vel = self.params.get('motion', {}).get(motion_profile, {}).get('vel', 6.0)
-        self.precision_mode = 0.0
-        self.stop_reqd = False
-
-    def _move(self, dx_m, robot):
-        scale = 1.0 - 0.75 * self.precision_mode
-        dx_m = dx_m * scale
-        robot.end_of_arm.move_by(self.name, dx_m, self.gripper_vel, self.gripper_accel)
-        self.stop_reqd = True
-    
-    def open_gripper(self, robot):
-        self._move(self.gripper_step_m, robot)
-        
-    def close_gripper(self, robot):
-        self._move(-self.gripper_step_m, robot)
-
-    def stop_gripper(self, robot):
-        if self.stop_reqd:
-            robot.end_of_arm.move_by(self.name, 0.0)
-            self.stop_reqd = False
-"""
 
 
 PLACEHOLDER_URDF = '<?xml version="1.0"?>\n<robot name="tool">\n  <link name="quick_connect_interface_link" />\n</robot>\n'
@@ -925,7 +875,7 @@ def process_single_tool(tool_name, tool_path):
         except Exception as e:
             print(f"Warning: Failed to generate Collision template: {e}")
 
-    if not glob.glob(os.path.join(tool_path, '*.urdf')):
+    if not os.path.exists(tool_urdf_file):
         print(f"Generating placeholder tool URDF at: {tool_urdf_file}")
         try:
             with open(tool_urdf_file, 'w') as f:
@@ -950,11 +900,9 @@ def process_single_tool(tool_name, tool_path):
         except Exception as e:
             print(f"Warning: Failed to generate Pose Models template: {e}")
 
-    # 2. Check for populated URDF files
-    urdf_files = [f for f in glob.glob(os.path.join(tool_path, '*.urdf'))
-                  if os.path.getsize(f) > 0
-                  and not is_placeholder_urdf(f)]
-    if not urdf_files:
+    # 2. tool.urdf is the file the robot loads, so it is the only URDF this script
+    # looks at. Until the user has populated it, there is nothing to process.
+    if not os.path.exists(tool_urdf_file) or is_placeholder_urdf(tool_urdf_file):
         copied_readme = False
         try:
             script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -991,7 +939,7 @@ def process_single_tool(tool_name, tool_path):
             print(f"Warning: Failed to generate baseline tool_params.yaml: {e}")
 
         print(f"\nCreated custom tool subdirectory at: {tool_path}")
-        print("No populated URDF file was found in your tool directory.")
+        print(f"'{tool_urdf_file}' has not been populated yet.")
         print("\n================================================================================")
         print("NEXT STEPS:")
         if copied_readme:
@@ -1076,53 +1024,7 @@ def process_single_tool(tool_name, tool_path):
         except ImportError:
             sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
             from stretch4_urdf.utils.preprocessing.process_new_tool import process_tool_urdf
-        # process_tool_urdf and the collision mesh generator scan the folder and expect
-        # exactly one URDF, so clear out the ones that hold nothing: empty files and the
-        # untouched generated placeholder
-        populated = [os.path.abspath(f) for f in urdf_files]
-        for unpopulated in glob.glob(os.path.join(tool_path, '*.urdf')):
-            if os.path.abspath(unpopulated) not in populated:
-                os.remove(unpopulated)
-                print(f"Removed unpopulated URDF: {unpopulated}")
-
-        if len(urdf_files) == 1:
-            source_urdf = urdf_files[0]
-        else:
-            # tool.urdf already holds a previous run's result, so a second populated URDF
-            # is the user replacing it
-            replacements = [f for f in urdf_files
-                            if os.path.abspath(f) != os.path.abspath(tool_urdf_file)]
-            if len(replacements) != 1:
-                print(f"Error: Expected one URDF in '{tool_path}', found {len(urdf_files)}: "
-                      f"{', '.join(sorted(os.path.basename(f) for f in urdf_files))}")
-                print("Leave only the URDF you want processed and re-run.")
-                sys.exit(1)
-            source_urdf = replacements[0]
-
-        # The runtime loads a user tool's kinematics from tool.urdf, and processing
-        # rewrites its input in place, so tool.urdf is what gets processed
-        previous_urdf = None
-        renamed_from = None
-        if os.path.abspath(source_urdf) != os.path.abspath(tool_urdf_file):
-            if os.path.exists(tool_urdf_file):
-                previous_urdf = tool_urdf_file + '.prev'
-                shutil.move(tool_urdf_file, previous_urdf)
-            shutil.move(source_urdf, tool_urdf_file)
-            renamed_from = source_urdf
-            print(f"Installed '{os.path.basename(source_urdf)}' as: {tool_urdf_file}")
-        try:
-            if not process_tool_urdf(tool_path, tool_path):
-                sys.exit(1)
-            print(f"Processed URDF in place: {tool_urdf_file}")
-        except BaseException:
-            if renamed_from:
-                shutil.move(tool_urdf_file, renamed_from)
-            if previous_urdf and os.path.exists(previous_urdf):
-                shutil.move(previous_urdf, tool_urdf_file)
-                print(f"Processing failed; restored the previous {tool_urdf_file}")
-            raise
-        if previous_urdf and os.path.exists(previous_urdf):
-            os.remove(previous_urdf)
+        process_tool_urdf(tool_path, tool_path)
     except Exception as e:
         print(f"Error during URDF and mesh preprocessing: {e}")
         sys.exit(1)
