@@ -25,7 +25,7 @@ This command:
 2.  Copy these visual mesh files into the newly created `my_custom_tool/meshes/` directory.
 
 ### Step 3: Define the Kinematics (URDF)
-Populate the `tool.urdf` file in the root of your tool folder (`my_custom_tool/tool.urdf`).
+Populate the generated `tool.urdf` in the root of your tool folder (`my_custom_tool/tool.urdf`). This is the file the robot loads, and Step 4 rewrites it in place.
 *   **Critical Requirement**: The base/root link of your custom tool URDF must be named `quick_connect_interface_link`.
 *   Connect any articulating or static links of your tool relative to this root link using joints.
 
@@ -38,18 +38,36 @@ This script will:
 1.  Verify the URDF structure (and offer to automatically insert a `quick_connect_interface_link` root link if it is missing).
 2.  Analyze your URDF links and generate a default `collision_mesh_config.yaml` listing links with visual meshes.
 3.  Automatically decimate/simplify high-polygon visual meshes into lightweight, performance-friendly collision meshes under `meshes/`.
-4.  Write a tailored, baseline configuration file called `tool_params.yaml`.
+4.  Rewrite `tool.urdf` in place with the collision meshes and mesh paths resolved. Re-running the script reprocesses `tool.urdf`, so it is safe to edit the URDF and run again whenever the kinematics change.
+5.  Write a tailored, baseline configuration file called `tool_params.yaml`.
 
 ### Step 5: Configure Tool Parameters (`tool_params.yaml`)
-Open `my_custom_tool/tool_params.yaml` and configure:
-*   `stow`: Set coordinates for stowing the arm and wrist securely.
-*   `devices`: Register specific joint actuators, motor IDs, physical limits, calibration procedures, and parameters.
-*   `collision_mgmt`: Configure collision self-exclusion/brake pairs to protect the robot and your tool.
+The generated values describe a generic parallel gripper. Edit them to match your hardware **before** you activate the tool or restart the server. In the device block named after your tool, under `devices`:
+*   `id`: the Feetech servo ID on the wrist bus. **Set this first.** A wrong ID stops the whole robot server from starting: the ping fails, the driver falls into a multi-second baud scan, the end-of-arm process misses its startup handshake, and the server restarts in a loop.
+*   `eeprom_cfg`: written to the servo at startup, so wrong values reconfigure your hardware. `phase: 61` with `max_pos_limit: 0` and `min_pos_limit: 0` selects multi-turn; `phase: 45` with `max_pos_limit: 4095` selects single-turn. Keep the load and protection limits low during bring-up.
+*   `range_deg`, `range_pad_deg`: joint travel measured on your hardware, and the margin held back at each end. Soft motion limits derive from these.
+*   `homing_pwm`, `flip_encoder_polarity`: homing direction and drive strength, and the sign convention for positive motion. Start with a low PWM magnitude.
+*   `req_calibration`: `1` requires homing before motion. `0` treats the joint as homed at startup, which only makes sense for single-turn or absolute setups.
+*   `py_class_name` and `py_module_name`: the class and module of your actuator driver. These must match the class you actually define in Step 6.
 
-### Step 6: Customize Drivers (Optional)
-If your tool has active actuators (like a custom gripper motor or custom sensors), implement the driver logic:
-*   **Server-Side (`end_of_arm.py` and `tool.py`)**: Implement custom startup, homing, and stowing routines.
-*   **Client-Side (`client.py`)**: Implement high-level Python commands, state checking, or helper functions.
+Also review `stow` (per-joint stow targets, including your tool's joint), `collision_mgmt` (brake pairs against the base), and `self_collision_mujoco.exclusions` (link pairs that touch by design, such as two fingers when closed).
+
+These edits stay dormant until the tool is activated in Step 7.
+
+### Step 6: Customize Drivers
+The generated drivers run as-is, but for a tool with an actuator they are a stub: no homing that suits your mechanism, no unit conversion, and no status for the visualizer. Implement the driver logic before running the tool on hardware.
+*   **Naming**: every class's default `name=` argument, and the names in `tool_params.yaml`, must match your tool's folder name. A mismatch stops the server with `Parameters for device <NAME> not found`.
+*   **`tool.py`** (actuator driver): `move_to`/`move_by` inherit world radians of the servo; add unit conversions if your users expect percent or millimeters. Publish a `gripper_conversion` dict in your status containing `finger_rad` so the visualizer and pose tools can read the finger angle.
+*   **Homing**: the base `home()` detects the hardstop by a velocity stall, which suits rigid joints. Compliant, tendon-driven, or high-friction mechanisms may never trip that stall, and homing then presses the mechanism against its limit until it times out. For those, override `home()` to detect the stop by position settling (sample the position at intervals, declare contact when it stops changing) and keep the calibration bookkeeping identical to the base class.
+*   **`end_of_arm.py`**: stow and homing order across the wrist joints and your tool.
+*   **`client.py`**: high-level commands and helpers that mirror your driver's API. `stretch_gripper_home` and `stretch_gripper_jog` use this class.
+*   **`collision.py`**: replace the placeholder joint names with the finger joint names from **your** URDF, and read the position from your driver's status. Unknown joint names are skipped silently, so a typo shows up as a visualizer that never moves. The server caches this mapper, so restart it after editing.
+
+Validate everything resolves before touching the robot:
+```bash
+stretch_add_user_tool my_custom_tool --check
+```
+This imports every class named in `tool_params.yaml` and reports each result. A pass confirms the package is well-formed; it says nothing about the hardware values from Step 5.
 
 ### Step 7: Select and Activate Your Tool
 To activate your new tool on the physical robot:
@@ -59,14 +77,18 @@ To activate your new tool on the physical robot:
     ```
 3.  Select your custom tool from the list (or enter its name manually if it was created in a custom path).
 4.  Turn off power to the wrist/EOA when prompted, connect your physical tool, turn on power, and press any key to auto-detect.
-5.  Confirm restarting the background services and homing the robot.
+5.  Confirm restarting the background services and homing the robot. Decline the homing prompt if you have yet to adapt `home()` in Step 6, since the default homing drives the mechanism into its hardstop until it times out.
+
+Activating the tool is what makes your Step 5 parameters take effect, so this is the first point at which a wrong servo ID or eeprom value reaches the hardware.
 
 ### Step 8: Verification
 
-1. Restart the server and home the robotusing `stretch_body_server --restart` and `stretch_robot_home`, if you did not do it during `stretch_configure_tool`.
+1. Restart the server and home the robot using `stretch_body_server --restart` and `stretch_robot_home`, if you did not do it during `stretch_configure_tool`.
 1. Run `stretch_collision_viz` and make sure the robot model looks correct.
 1. Run `stretch_gripper_jog` and use `x` and `y` to open and close your tool. Make sure the tool on the robot matches the collision visualization from the previous step.
 1. Run `stretch_gamepad_teleop` and move the wrist and your tool. Make sure the tool on the robot matches the collision visualization from the previous step.
+
+Client tools read parameters once at startup, so relaunch them after any parameter change.
 
 Your custom tool is now active, registered, and ready for use!
 
