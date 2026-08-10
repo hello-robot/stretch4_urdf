@@ -11,6 +11,7 @@
   <xacro:arg name="pkg_path" default="none"/>
   <xacro:arg name="model_dir" default="$(arg pkg_path)/${version_id}"/>
   <xacro:arg name="tool_dir" default="$(arg pkg_path)/${model}_tools/$(arg tool)"/>
+  <xacro:arg name="tool_urdf" default="$(arg tool)"/>
   <xacro:arg name="model_mesh_dir" default="file://$(arg model_dir)/meshes"/>
   <xacro:arg name="tool_mesh_dir" default="file://$(arg tool_dir)/meshes"/>
 
@@ -18,7 +19,7 @@
 
   <xacro:if value="${'$(arg tool)' != 'eoa_wrist_dw4_tool_nil'}">
     
-    <xacro:include filename="$(arg tool_dir)/$(arg tool).urdf" />
+    <xacro:include filename="$(arg tool_dir)/$(arg tool_urdf).urdf" />
 
     <joint name="tool_connection_joint" type="fixed">
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />

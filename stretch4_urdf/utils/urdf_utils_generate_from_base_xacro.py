@@ -19,11 +19,37 @@ from .calibration_utils import apply_calibration_to_urdf
 
 logger = logging.getLogger("urdf_utils")
 
+def _get_user_tools_dirs():
+    dirs = []
+    fleet_path = os.environ.get('HELLO_FLEET_PATH')
+    fleet_id = os.environ.get('HELLO_FLEET_ID')
+    if fleet_path:
+        if fleet_id:
+            specific_dir = os.path.join(fleet_path, fleet_id, 'user_tools')
+            if os.path.exists(specific_dir):
+                dirs.append(specific_dir)
+        shared_dir = os.path.join(fleet_path, 'user_tools')
+        if os.path.exists(shared_dir):
+            dirs.append(shared_dir)
+    else:
+        default_dir = os.path.expanduser('~/stretch_user/user_tools')
+        if os.path.exists(default_dir):
+            dirs.append(default_dir)
+    return dirs
+
 def get_available_tools(model_name:str):
 
     tools_dir = os.path.join(importlib_resources.files("stretch4_urdf"), f"{model_name}_tools")
     # Only include directories, so we ignore .md files or random files
     available_tools = [d for d in os.listdir(tools_dir) if os.path.isdir(os.path.join(tools_dir, d))]
+    
+    # Automatically scan for custom user tools using environment variables/fallbacks
+    user_tools_dirs = _get_user_tools_dirs()
+    for user_tools_dir in user_tools_dirs:
+        if os.path.exists(user_tools_dir):
+            user_tools = [d for d in os.listdir(user_tools_dir) if os.path.isdir(os.path.join(user_tools_dir, d))]
+            available_tools += user_tools
+
     if model_name in ["SE4"]:
         available_tools += ['eoa_wrist_dw4_tool_nil']
 
@@ -49,10 +75,26 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
     if not os.path.exists(model_mesh_dir):
         raise FileNotFoundError(f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}")
 
+    is_user_tool = False
     if 'nil' in tool_name:
+        tool_dir = None
         tool_mesh_dir = None
     else:
-        tool_mesh_dir = os.path.join(urdf_pkg_path, f"{model_name}_tools/{tool_name}/meshes")
+        # Check if the tool is a user tool
+        tool_dir = None
+        for u_dir in _get_user_tools_dirs():
+            candidate_path = os.path.join(u_dir, tool_name)
+            if os.path.exists(candidate_path):
+                tool_dir = candidate_path
+                is_user_tool = True
+                break
+        
+        if tool_dir:
+            tool_mesh_dir = os.path.join(tool_dir, "meshes")
+        else:
+            tool_dir = os.path.join(urdf_pkg_path, f"{model_name}_tools/{tool_name}")
+            tool_mesh_dir = os.path.join(tool_dir, "meshes")
+
         if not os.path.exists(tool_mesh_dir):
             raise FileNotFoundError(f"Failed to resolve tool mesh directory:\n\t{tool_mesh_dir}")
 
@@ -61,10 +103,13 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
     mappings = {
         "batch": batch_name,
         "tool": tool_name,
+        "tool_urdf": "tool" if is_user_tool else tool_name,
         "pkg_path": urdf_pkg_path,
         "model_mesh_dir": f"{prefix}{model_mesh_dir}",
         "tool_mesh_dir": f"{prefix}{tool_mesh_dir}" if tool_mesh_dir else "none"
     }
+    if tool_dir:
+        mappings["tool_dir"] = tool_dir
 
     with open(xacro_file, 'r') as f:
         doc = xacro.parse(f)
