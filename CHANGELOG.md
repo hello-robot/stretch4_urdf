@@ -2,6 +2,12 @@
 
 The changes between releases of Stretch 4 URDF are documented here.
 
+## [2026.08.21](https://pypi.org/project/hello-robot-stretch4-urdf/2026.8.21)
+
+ - Collision mesh for new calibration board
+ - Custom tools via `stretch_add_user_tool` CLI
+ - Documentation for new user tools API
+
 ## [2026.07.31](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.31)
 
  - Updated head camera sensor link frames to all share the same orientation with z pointing up
