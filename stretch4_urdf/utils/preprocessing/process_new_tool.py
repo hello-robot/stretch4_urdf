@@ -151,11 +151,19 @@ def process_tool_urdf(model_name, root_dir):
 
     create_collision_config_if_missing(target_file, root_dir)
     generate_collision_meshes(model_name)
+<<<<<<< HEAD
 
     print("Updating the URDF/XACRO with collision mesh filepaths...")
     update_urdf_collision_meshes(target_file, target_file)
     remove_collision_from_optical_links(target_file, target_file)
     update_urdf_joint_limits(target_file, target_file)
+=======
+
+    print('Updating the URDF with collision mesh filepaths...')
+    update_urdf_collision_meshes(base_urdf, base_urdf)
+    remove_collision_from_optical_links(base_urdf, base_urdf)
+    update_urdf_joint_limits(base_urdf, base_urdf)
+>>>>>>> 35f69a4438d8e534b3ae773b3b825fea7c2ab291
 
     # Convert mesh paths to use $(arg tool_mesh_dir)
     print(f"Converting mesh paths to use $(arg tool_mesh_dir)...")
