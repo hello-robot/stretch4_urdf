@@ -5,57 +5,75 @@ import os
 import xml.etree.ElementTree as ET
 
 import yaml
+
 try:
-    from stretch4_body.core.robot_params import RobotParams
     import stretch4_body.core.hello_utils as hello_utils
+    from stretch4_body.core.robot_params import RobotParams
 except Exception:
     RobotParams = None
     hello_utils = None
+import logging
+
 import xacro
 from yourdfpy import URDF
-import logging
-from .calibration_utils import apply_calibration_to_urdf
 
+from .calibration_utils import apply_calibration_to_urdf
 
 logger = logging.getLogger("urdf_utils")
 
+
 def _get_user_tools_dirs():
     dirs = []
-    fleet_path = os.environ.get('HELLO_FLEET_PATH')
-    fleet_id = os.environ.get('HELLO_FLEET_ID')
+    fleet_path = os.environ.get("HELLO_FLEET_PATH")
+    fleet_id = os.environ.get("HELLO_FLEET_ID")
     if fleet_path:
         if fleet_id:
-            specific_dir = os.path.join(fleet_path, fleet_id, 'user_tools')
+            specific_dir = os.path.join(fleet_path, fleet_id, "user_tools")
             if os.path.exists(specific_dir):
                 dirs.append(specific_dir)
-        shared_dir = os.path.join(fleet_path, 'user_tools')
+        shared_dir = os.path.join(fleet_path, "user_tools")
         if os.path.exists(shared_dir):
             dirs.append(shared_dir)
     else:
-        default_dir = os.path.expanduser('~/stretch_user/user_tools')
+        default_dir = os.path.expanduser("~/stretch_user/user_tools")
         if os.path.exists(default_dir):
             dirs.append(default_dir)
     return dirs
 
-def get_available_tools(model_name:str):
 
-    tools_dir = os.path.join(importlib_resources.files("stretch4_urdf"), f"{model_name}_tools")
+def get_available_tools(model_name: str):
+
+    tools_dir = os.path.join(
+        importlib_resources.files("stretch4_urdf"), f"{model_name}_tools"
+    )
     # Only include directories, so we ignore .md files or random files
-    available_tools = [d for d in os.listdir(tools_dir) if os.path.isdir(os.path.join(tools_dir, d))]
-    
+    available_tools = [
+        d for d in os.listdir(tools_dir) if os.path.isdir(os.path.join(tools_dir, d))
+    ]
+
     # Automatically scan for custom user tools using environment variables/fallbacks
     user_tools_dirs = _get_user_tools_dirs()
     for user_tools_dir in user_tools_dirs:
         if os.path.exists(user_tools_dir):
-            user_tools = [d for d in os.listdir(user_tools_dir) if os.path.isdir(os.path.join(user_tools_dir, d))]
+            user_tools = [
+                d
+                for d in os.listdir(user_tools_dir)
+                if os.path.isdir(os.path.join(user_tools_dir, d))
+            ]
             available_tools += user_tools
 
     if model_name in ["SE4"]:
-        available_tools += ['eoa_wrist_dw4_tool_nil']
+        available_tools += ["eoa_wrist_dw4_tool_nil"]
 
     return available_tools
 
-def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, do_add_file_prefix_to_absolute_paths: bool = True) -> str:
+
+def generate_urdf_from_xacro(
+    model_name: str,
+    batch_name: str,
+    tool_name: str,
+    do_add_file_prefix_to_absolute_paths: bool = True,
+) -> str:
     """
     Generates Robot URDF contents from the SE4 xacro.
 
@@ -73,10 +91,12 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
     model_mesh_dir = os.path.join(urdf_pkg_path, f"{model_name}_{batch_name}/meshes")
 
     if not os.path.exists(model_mesh_dir):
-        raise FileNotFoundError(f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}")
+        raise FileNotFoundError(
+            f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}"
+        )
 
     is_user_tool = False
-    if 'nil' in tool_name:
+    if "nil" in tool_name:
         tool_dir = None
         tool_mesh_dir = None
     else:
@@ -88,7 +108,7 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
                 tool_dir = candidate_path
                 is_user_tool = True
                 break
-        
+
         if tool_dir:
             tool_mesh_dir = os.path.join(tool_dir, "meshes")
         else:
@@ -96,7 +116,9 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
             tool_mesh_dir = os.path.join(tool_dir, "meshes")
 
         if not os.path.exists(tool_mesh_dir):
-            raise FileNotFoundError(f"Failed to resolve tool mesh directory:\n\t{tool_mesh_dir}")
+            raise FileNotFoundError(
+                f"Failed to resolve tool mesh directory:\n\t{tool_mesh_dir}"
+            )
 
     # Format paths conditionally based on the prefix flag
     prefix = "file://" if do_add_file_prefix_to_absolute_paths else ""
@@ -106,15 +128,16 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
         "tool_urdf": "tool" if is_user_tool else tool_name,
         "pkg_path": urdf_pkg_path,
         "model_mesh_dir": f"{prefix}{model_mesh_dir}",
-        "tool_mesh_dir": f"{prefix}{tool_mesh_dir}" if tool_mesh_dir else "none"
+        "tool_mesh_dir": f"{prefix}{tool_mesh_dir}" if tool_mesh_dir else "none",
     }
     if tool_dir:
         mappings["tool_dir"] = tool_dir
 
-    with open(xacro_file, 'r') as f:
+    with open(xacro_file, "r") as f:
         doc = xacro.parse(f)
     xacro.process_doc(doc, mappings=mappings)
     return doc.toprettyxml(indent="  ")
+
 
 def get_robot_params():
     """
@@ -124,7 +147,9 @@ def get_robot_params():
         tuple[str | None, str | None, str | None]: model_name, batch_name, tool_name
     """
     if RobotParams is None:
-        logger.warning("stretch4_body not found. Cannot automatically fetch robot parameters.")
+        logger.warning(
+            "stretch4_body not found. Cannot automatically fetch robot parameters."
+        )
         return None, None, None
 
     try:
@@ -137,7 +162,10 @@ def get_robot_params():
         logger.warning(f"Failed to fetch robot parameters from stretch4_body: {e}")
         return None, None, None
 
-def generate_urdf_file(urdf_contents: str, output_prefix: str, output_dir: str, description: str):
+
+def generate_urdf_file(
+    urdf_contents: str, output_prefix: str, output_dir: str, description: str
+):
     """
     Generate the Robot URDF file from the raw string.
 
@@ -163,7 +191,13 @@ def generate_urdf_file(urdf_contents: str, output_prefix: str, output_dir: str, 
 
     return filename
 
-def get_urdf_from_robot_params(apply_calibration: bool = True, do_add_file_prefix_to_absolute_paths: bool = True, output_dir: str|None = None, prefix: str|None = None,):
+
+def get_urdf_from_robot_params(
+    apply_calibration: bool = True,
+    do_add_file_prefix_to_absolute_paths: bool = True,
+    output_dir: str | None = None,
+    prefix: str | None = None,
+):
     """
     Generates Robot URDF contents from the model's base xacro, and optionally saves it to a file if a directory is provided.
 
@@ -186,19 +220,34 @@ def get_urdf_from_robot_params(apply_calibration: bool = True, do_add_file_prefi
         )
 
     if apply_calibration:
-        return get_urdf_calibrated(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
+        return get_urdf_calibrated(
+            model_name,
+            batch_name,
+            tool_name,
+            do_add_file_prefix_to_absolute_paths,
+            output_dir=output_dir,
+            prefix=prefix,
+        )
     else:
-        return get_urdf(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths, output_dir=output_dir, prefix=prefix)
+        return get_urdf(
+            model_name,
+            batch_name,
+            tool_name,
+            do_add_file_prefix_to_absolute_paths,
+            output_dir=output_dir,
+            prefix=prefix,
+        )
+
 
 def get_urdf_calibrated(
-    model_name:str,
-    batch_name:str,
-    tool_name:str,
+    model_name: str,
+    batch_name: str,
+    tool_name: str,
     do_add_file_prefix_to_absolute_paths: bool = True,
-    output_dir: str|None = None,
-    prefix: str|None = None,
-    description: str = "calibrated"
-    ):
+    output_dir: str | None = None,
+    prefix: str | None = None,
+    description: str = "calibrated",
+):
     """
     Generates Robot URDF contents from the base xacro, applies joint calibration values
     from stretch_calibration_values.yaml if available, and optionally saves it.
@@ -209,7 +258,7 @@ def get_urdf_calibrated(
         batch_name,
         tool_name,
         do_add_file_prefix_to_absolute_paths=do_add_file_prefix_to_absolute_paths,
-        output_dir=None
+        output_dir=None,
     )
 
     urdf_contents = apply_calibration_to_urdf(urdf_contents, logger)
@@ -223,14 +272,14 @@ def get_urdf_calibrated(
 
 
 def get_urdf(
-    model_name:str,
-    batch_name:str,
-    tool_name:str,
+    model_name: str,
+    batch_name: str,
+    tool_name: str,
     do_add_file_prefix_to_absolute_paths: bool = True,
-    output_dir: str|None = None,
-    prefix: str|None = None,
-    description: str = "unmodified"
-    ):
+    output_dir: str | None = None,
+    prefix: str | None = None,
+    description: str = "unmodified",
+):
     """
     Generates Robot URDF contents from the base xacro, and optionally saves it to a file if a directory is provided.
 
@@ -256,15 +305,21 @@ def get_urdf(
     str
         raw urdf contents or the filepath the contents were saved to if an output_dir is provided
     """
-    logger.info(f"Loading robot model: {model_name}, batch: {batch_name}, tool: {tool_name}")
+    logger.info(
+        f"Loading robot model: {model_name}, batch: {batch_name}, tool: {tool_name}"
+    )
 
     available_tools = get_available_tools(model_name)
     if tool_name not in available_tools:
-        raise ValueError(f"Unexpected tool for model {model_name}: {tool_name}\nTools available for {model_name}:\n"
+        raise ValueError(
+            f"Unexpected tool for model {model_name}: {tool_name}\nTools available for {model_name}:\n"
             + "\n".join([f"\t{tool}" for tool in available_tools])
-            + f"\nCheck robot model and tool settings or add a new tool to stretch4_urdf/{model_name}_tools")
+            + f"\nCheck robot model and tool settings or add a new tool to stretch4_urdf/{model_name}_tools"
+        )
 
-    urdf_contents = generate_urdf_from_xacro(model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths)
+    urdf_contents = generate_urdf_from_xacro(
+        model_name, batch_name, tool_name, do_add_file_prefix_to_absolute_paths
+    )
 
     if output_dir is not None:
         if prefix is None:
@@ -300,7 +355,9 @@ def get_joint_limits(urdf_contents: str):
         return {}
 
 
-def get_accessory(accessory_name: str, do_add_file_prefix_to_absolute_paths: bool = True) -> str:
+def get_accessory(
+    accessory_name: str, do_add_file_prefix_to_absolute_paths: bool = True
+) -> str:
     """
     Get the URDF contents of a given accessory.
 
@@ -326,27 +383,56 @@ def get_accessory(accessory_name: str, do_add_file_prefix_to_absolute_paths: boo
             raise FileNotFoundError(f"Accessory URDF not found at {urdf_path}")
 
         prefix = "file://" if do_add_file_prefix_to_absolute_paths else ""
-        mappings = {
-            "accessory_mesh_dir": f"{prefix}{accessory_mesh_dir}"
-        }
+        mappings = {"accessory_mesh_dir": f"{prefix}{accessory_mesh_dir}"}
 
-        with open(urdf_path, 'r') as f:
+        with open(urdf_path, "r") as f:
             doc = xacro.parse(f)
         xacro.process_doc(doc, mappings=mappings)
         return doc.toprettyxml(indent="  ")
     except Exception as e:
-        logger.error(f"Failed to get accessory URDF for SE4_accessories/{accessory_name}: {e}")
+        logger.error(
+            f"Failed to get accessory URDF for SE4_accessories/{accessory_name}: {e}"
+        )
         raise
+
+
+def get_joint_velocity_limits(urdf_contents: str):
+    """
+    Parses the URDF contents and extracts maximum velocity limits for all joints that have them.
+
+    Parameters
+    ----------
+    urdf_contents : str
+        raw urdf contents
+
+    Returns
+    -------
+    dict
+        A dictionary mapping joint names to their maximum velocity (float).
+    """
+    try:
+        urdf = URDF.load(io.StringIO(urdf_contents))
+        limits = {}
+        for joint in urdf.robot.joints:
+            if joint.limit and joint.limit.velocity is not None:
+                limits[joint.name] = float(joint.limit.velocity)
+        return limits
+    except Exception as e:
+        logger.warning(f"Failed to parse URDF for joint velocity limits: {e}")
+        return {}
 
 
 def setup_logging():
     if RobotParams is not None and hello_utils is not None:
         try:
             _, robot_params = RobotParams.get_params()
-            logging_params = robot_params['logging'].copy()
+            logging_params = robot_params["logging"].copy()
             # Update filename to be specific to this tool
-            if 'file_handler' in logging_params['handlers']:
-                logging_params['handlers']['file_handler']['filename'] = hello_utils.get_stretch_directory('log/stretch_body_logger/') + 'stretch4_urdf.log'
+            if "file_handler" in logging_params["handlers"]:
+                logging_params["handlers"]["file_handler"]["filename"] = (
+                    hello_utils.get_stretch_directory("log/stretch_body_logger/")
+                    + "stretch4_urdf.log"
+                )
             logging.config.dictConfig(logging_params)
             return
         except Exception as e:
@@ -356,8 +442,9 @@ def setup_logging():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(asctime)s] [%(name)s] [%(levelname)s]: %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S"
+        datefmt="%m/%d/%Y %H:%M:%S",
     )
+
 
 def main():
     setup_logging()
@@ -372,38 +459,44 @@ def main():
         help="Prefix for the output URDF files",
     )
     parser.add_argument(
-        "--output-dir",
-        type=str,
-        default=None,
-        help="Folder to save the output"
+        "--output-dir", type=str, default=None, help="Folder to save the output"
     )
 
     model_name_param, batch_name_param, tool_name_param = get_robot_params()
 
     parser.add_argument(
-        "--model", type=str, default=model_name_param, required=model_name_param is None, help="robot model name"
-
+        "--model",
+        type=str,
+        default=model_name_param,
+        required=model_name_param is None,
+        help="robot model name",
     )
 
     parser.add_argument(
-        "--batch", type=str, default=batch_name_param, required=batch_name_param is None, help="robot batch name"
-
+        "--batch",
+        type=str,
+        default=batch_name_param,
+        required=batch_name_param is None,
+        help="robot batch name",
     )
 
     parser.add_argument(
-        "--tool", type=str, default=tool_name_param, required=tool_name_param is None, help="robot tool name"
-
+        "--tool",
+        type=str,
+        default=tool_name_param,
+        required=tool_name_param is None,
+        help="robot tool name",
     )
 
     args = parser.parse_args()
 
     return get_urdf(
-                model_name=args.model,
-                batch_name=args.batch,
-                tool_name=args.tool,
-                output_dir=args.output_dir,
-                prefix=args.prefix
-            )
+        model_name=args.model,
+        batch_name=args.batch,
+        tool_name=args.tool,
+        output_dir=args.output_dir,
+        prefix=args.prefix,
+    )
 
 
 if __name__ == "__main__":
