@@ -191,39 +191,21 @@
     <child link="head_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="lidar_right_link">
-    <inertial>
-      <origin xyz="0.0766909452916593 0.0306840664060523 -0.123358114205567" rpy="0 0 0" />
-      <mass value="5.62562935738041" />
-      <inertia ixx="0.0492829863501233" ixy="-0.0015644794553125" ixz="0.0149316959819942" iyy="0.0349356509390749" iyz="0.00380036135309891" izz="0.0486907192779151" />
-    </inertial>
-    </link>
+  <link name="lidar_right_link"></link>
   <joint name="lidar_right_joint" type="fixed">
     <origin xyz="0.131744211811827 -0.0264137425448753 -0.0583279884119643" rpy="-3.05465659239941 0.781600065124168 2.39203005564319" />
     <parent link="head_link" />
     <child link="lidar_right_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="lidar_left_link">
-    <inertial>
-      <origin xyz="-0.0761200642618001 0.0298724095594048 -0.122718664995054" rpy="0 0 0" />
-      <mass value="5.62562935738041" />
-      <inertia ixx="0.0495631508318921" ixy="0.00150375867091917" ixz="-0.0147241234604212" iyy="0.034541985578385" iyz="0.00388339874636519" izz="0.0488042201568361" />
-    </inertial>
-    </link>
+  <link name="lidar_left_link"></link>
   <joint name="lidar_left_joint" type="fixed">
     <origin xyz="0.131744211811846 0.222413742544858 -0.0583279884119634" rpy="-3.05465659239939 -0.781600065124167 0.749562597946573" />
     <parent link="head_link" />
     <child link="lidar_left_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="camera_right_link">
-    <inertial>
-      <origin xyz="-0.0693850700494765 -0.0909126816993031 -0.0755902514887177" rpy="0 0 0" />
-      <mass value="5.62562935738041" />
-      <inertia ixx="0.0518045670378195" ixy="-0.0128492794593393" ixz="-9.71150764633997E-05" iyy="0.0504717539658347" iyz="-0.000186491771284797" izz="0.0306330355634591" />
-    </inertial>
-    </link>
+  <link name="camera_right_link"></link>
   <joint name="camera_right_joint" type="fixed">
     <origin xyz="0.171840602787894 0.0230000000000032 -0.0157566987072475" rpy="1.5707963267949 0.820304748437337 0" />
     <parent link="head_link" />
@@ -238,13 +220,7 @@
     <child link="camera_right_optical_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="camera_left_link">
-    <inertial>
-      <origin xyz="-0.0693850700494769 0.0909126816993033 -0.0744097485112792" rpy="0 0 0" />
-      <mass value="5.62562935738041" />
-      <inertia ixx="0.0518045670378195" ixy="0.0128492794593393" ixz="9.71150764634412E-05" iyy="0.0504717539658347" iyz="-0.000186491771284767" izz="0.0306330355634591" />
-    </inertial>
-    </link>
+  <link name="camera_left_link"></link>
   <joint name="camera_left_joint" type="fixed">
     <origin xyz="0.171840602787895 0.173 -0.0157566987072475" rpy="-1.5707963267949 0.820304748437337 0" />
     <parent link="head_link" />
@@ -259,13 +235,7 @@
     <child link="camera_left_optical_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="camera_center_link">
-    <inertial>
-      <origin xyz="-0.0958729354978766 0.0709239731668887 0.000590251488720675" rpy="0 0 0" />
-      <mass value="5.62562935738041" />
-      <inertia ixx="0.0465206803724917" ixy="0.0120094528414331" ixz="0.000133766698529184" iyy="0.0557556406311624" iyz="-0.000162225118887392" izz="0.0306330355634591" />
-    </inertial>
-    </link>
+  <link name="camera_center_link"></link>
   <joint name="camera_center_joint" type="fixed">
     <origin xyz="0.177245603402412 0.0980000000000004 -0.0239069097938973" rpy="1.5707963267949 0.610865238198018 0" />
     <parent link="head_link" />
