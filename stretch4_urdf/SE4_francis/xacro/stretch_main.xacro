@@ -864,28 +864,7 @@
     <child link="wheel_0_link" />
     <axis xyz="0 0 1" />
   </joint>
-  <link name="docking_contact_link">
-    <inertial>
-      <origin xyz="0.000438848617413434 -0.178577146715673 -0.0110316356083883" rpy="0 0 0" />
-      <mass value="18.9261039673325" />
-      <inertia ixx="0.214992663147159" ixy="0.00083386140340347" ixz="-0.000588720101362879" iyy="0.22301041696344" iyz="-0.00155067556464412" izz="0.327845792807285" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/docking_contact_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
-      </material>
-    </visual>
-    <collision name="docking_contact_collision_link">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="$(arg model_mesh_dir)/docking_contact_link.STL" />
-      </geometry>
-    </collision>
-  </link>
+  <link name="docking_contact_link"></link>
   <joint name="docking_contact_frame" type="fixed">
     <origin xyz="0 0.1768 0.107500004308165" rpy="0 0 0" />
     <parent link="base_link" />
