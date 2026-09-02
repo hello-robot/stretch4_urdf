@@ -66,7 +66,7 @@ def generate_collision_meshes(model_name):
         print(f"Error generating collision meshes for {model_name}: {e}")
 
 
-def process_tool_urdf(model_name, root_dir):
+def process_tool_urdf(model_name, root_dir, tool_name=None):
     # Find the base URDF file or Xacro files
     urdf_files = glob.glob(os.path.join(root_dir, "*.urdf"))
     xacro_files = glob.glob(os.path.join(root_dir, "*.xacro")) + glob.glob(
@@ -155,7 +155,7 @@ def process_tool_urdf(model_name, root_dir):
     print("Updating the URDF with collision mesh filepaths...")
     update_urdf_collision_meshes(target_file, target_file)
     remove_collision_from_optical_links(target_file, target_file)
-    update_urdf_joint_limits(target_file, target_file)
+    update_urdf_joint_limits(target_file, target_file, tool_name=tool_name)
 
     # Convert mesh paths to use $(arg tool_mesh_dir)
     print(f"Converting mesh paths to use $(arg tool_mesh_dir)...")
@@ -254,7 +254,10 @@ def main(model_names_to_generate: list[str] | None = None):
     for model_name in models_to_process:
         print("Generating tool URDF for", model_name)
         root_dir = "./stretch4_urdf/" + model_name + "/"
-        process_tool_urdf(model_name, root_dir)
+        # model_name is "{category}_tools/{tool_name}" (see get_tools()); the tool directory name
+        # itself is what ToolMetadata/robot_params key motion and effort limits under.
+        tool_name = os.path.basename(model_name)
+        process_tool_urdf(model_name, root_dir, tool_name=tool_name)
 
 
 if __name__ == "__main__":
