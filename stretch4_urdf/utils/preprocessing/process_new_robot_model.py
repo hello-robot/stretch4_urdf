@@ -20,10 +20,10 @@ def _get_joint_to_tool_param_key_map(robot_params, tool_name=None):
     """
     Returns a map from the joint names for a tool to the key in the robot parameter dictionary that holds
     the motion/effort limits, e.g. {"finger_left_joint": "parallel_gripper", "finger_right_joint": "parallel_gripper"}.
-    
+
     This is necessary because built-in tools and their aliases, (e.g. "eoa_wrist_dw4_tool_pg4") key their motion/effort
     params under a canonical name ("parallel_gripper") that can differ from tool_name
-    
+
     Custom/user tools declare their own joints directly in robot_params[tool_name]["tool_joints"]
     (see LinearToolMetadata), so no per-tool special-casing is needed here.
     """
@@ -92,11 +92,15 @@ def update_urdf_joint_limits(input_file, output_file, tool_name=None):
 
     for joint in root.findall("joint"):
         if joint.get("type") == "fixed":
+            limit = joint.find("limit")
+            if limit is not None and not limit.attrib:
+                joint.remove(limit)
             continue
 
         limit = joint.find("limit")
         is_vel_zero = False
         is_eff_zero = False
+        new_limit = False
 
         if limit is not None:
             vel = limit.get("velocity")
@@ -112,7 +116,8 @@ def update_urdf_joint_limits(input_file, output_file, tool_name=None):
             except (ValueError, TypeError):
                 is_eff_zero = False
         else:
-            limit = ET.SubElement(joint, "limit")
+            limit = ET.Element("limit")
+            new_limit = True
             is_vel_zero = True
             is_eff_zero = True
 
@@ -159,10 +164,24 @@ def update_urdf_joint_limits(input_file, output_file, tool_name=None):
                         f"Updated {joint_name} limits from params: vel={max_vel if is_vel_zero else 'unchanged'}, effort={max_eff if is_eff_zero else 'unchanged'}"
                     )
 
+        if new_limit:
+            if "velocity" in limit.attrib and "effort" in limit.attrib:
+                joint.append(limit)
+            elif "velocity" in limit.attrib or "effort" in limit.attrib:
+                if "velocity" not in limit.attrib:
+                    limit.set("velocity", "0")
+                if "effort" not in limit.attrib:
+                    limit.set("effort", "0")
+                joint.append(limit)
+        else:
+            if not limit.attrib:
+                joint.remove(limit)
+
     if hasattr(ET, "indent"):
         ET.indent(tree, space="  ")
     tree.write(output_file, encoding="utf-8", xml_declaration=False)
     print(f"Updated URDF limits saved to: {output_file}")
+
 
 
 def create_collision_config_if_missing(base_urdf, root_dir):
