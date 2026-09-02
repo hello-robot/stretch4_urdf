@@ -2,13 +2,13 @@
 import glob
 import importlib.resources as importlib_resources
 import os
+import re
 import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
 import yaml
-from stretch4_body.core.robot_params import RobotParams
 
 from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath import (
     remove_collision_from_optical_links,
@@ -16,107 +16,76 @@ from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath 
 )
 
 
-def update_urdf_joint_limits(input_file, output_file):
-    print("Updating URDF joint limits from robot parameters...")
+def _get_joint_to_tool_param_key_map(robot_params, tool_name=None):
+    """
+    Returns a map from the joint names for a tool to the key in the robot parameter dictionary that holds
+    the motion/effort limits, e.g. {"finger_left_joint": "parallel_gripper", "finger_right_joint": "parallel_gripper"}.
+    
+    This is necessary because built-in tools and their aliases, (e.g. "eoa_wrist_dw4_tool_pg4") key their motion/effort
+    params under a canonical name ("parallel_gripper") that can differ from tool_name
+    
+    Custom/user tools declare their own joints directly in robot_params[tool_name]["tool_joints"]
+    (see LinearToolMetadata), so no per-tool special-casing is needed here.
+    """
     try:
-        _, robot_params = RobotParams.get_params()
+        # import here to avoid circular dependencies
+        from stretch4_body.utils.tool_metadata import (
+            BUILTIN_TOOL_MODELS,
+            ToolConfigurationError,
+            get_tool_metadata,
+        )
     except Exception as e:
-        print(f"Failed to fetch robot parameters for limits: {e}")
-        return
+        print(f"Tool metadata unavailable, falling back to joint-name heuristics: {e}")
+        return {}, tool_name
 
-    tree = ET.parse(input_file)
-    root = tree.getroot()
+    if tool_name:
+        try:
+            tool_meta = get_tool_metadata(tool_name)
+        except ToolConfigurationError as e:
+            print(
+                f"Tool metadata incomplete for '{tool_name}' ({e}); using '{tool_name}' as the "
+                "robot_params key directly for every joint in its URDF."
+            )
+            return {}, tool_name
 
-    for joint in root.findall("joint"):
-        if joint.get("type") == "fixed":
+        param_key = (
+            BUILTIN_TOOL_MODELS[tool_name].joint_name
+            if tool_name in BUILTIN_TOOL_MODELS
+            else tool_name
+        )
+        return {joint: param_key for joint in tool_meta.tool_joints}, tool_name
+
+    joint_to_param_key = {}
+
+    for param_key, tool_meta in BUILTIN_TOOL_MODELS.items():
+        if tool_meta.joint_name != param_key:
             continue
-
-        limit = joint.find("limit")
-        is_vel_zero = False
-        is_eff_zero = False
-        new_limit = False
-
-        if limit is not None:
-            vel = limit.get("velocity")
-            eff = limit.get("effort")
-
-            try:
-                is_vel_zero = float(vel) == 0.0
-            except (ValueError, TypeError):
-                is_vel_zero = False
-
-            try:
-                is_eff_zero = float(eff) == 0.0
-            except (ValueError, TypeError):
-                is_eff_zero = False
-        else:
-            limit = ET.Element("limit")
-            new_limit = True
-            is_vel_zero = True
-            is_eff_zero = True
-
-        if is_vel_zero or is_eff_zero:
-            joint_name = joint.get("name")
-            if joint_name is None:
-                continue
-            param_key = joint_name.replace("_joint", "")
-            if "finger" in param_key or "gripper" in param_key:
-                param_key = "parallel_gripper"
-            elif "arm" in param_key:
-                param_key = "arm"
-            elif "lift" in param_key:
-                param_key = "lift"
-            elif "head" in param_key:
-                param_key = "head"
-
-            if param_key in robot_params:
-                p = robot_params[param_key]
-                max_vel = None
-                max_eff = None
-
-                if is_vel_zero and "motion" in p and "max" in p["motion"]:
-                    max_vel = p["motion"]["max"].get(
-                        "vel", p["motion"]["max"].get("vel_m")
-                    )
-
-                if is_eff_zero and "stall_max_effort" in p:
-                    max_eff = p["stall_max_effort"]
-
-                if max_vel is not None:
-                    limit.set("velocity", str(max_vel))
-                if max_eff is not None:
-                    limit.set("effort", str(max_eff))
-
-                if max_vel is not None or max_eff is not None:
-                    print(
-                        f"Updated {joint_name} limits from params: vel={max_vel if is_vel_zero else 'unchanged'}, effort={max_eff if is_eff_zero else 'unchanged'}"
-                    )
-
-        if new_limit:
-            if "velocity" in limit.attrib and "effort" in limit.attrib:
-                joint.append(limit)
-            elif "velocity" in limit.attrib or "effort" in limit.attrib:
-                if "velocity" not in limit.attrib:
-                    limit.set("velocity", "0")
-                if "effort" not in limit.attrib:
-                    limit.set("effort", "0")
-                joint.append(limit)
-
-    if hasattr(ET, "indent"):
-        ET.indent(tree, space="  ")
-    tree.write(output_file, encoding="utf-8", xml_declaration=False)
-    print(f"Updated URDF limits saved to: {output_file}")
+        for joint in tool_meta.tool_joints:
+            joint_to_param_key[joint] = param_key
 
 
-def update_urdf_joint_limits(input_file, output_file):
+    for param_key, params in robot_params.items():
+        if isinstance(params, dict) and params.get("tool_joints"):
+            for joint in params["tool_joints"]:
+                joint_to_param_key[joint] = param_key
+
+    return joint_to_param_key, None
+
+
+def update_urdf_joint_limits(input_file, output_file, tool_name=None):
     print("Updating URDF joint limits from robot parameters...")
     try:
+        # avoid a global stretch4_body dependency in stretch4_urdf
         from stretch4_body.core.robot_params import RobotParams
 
         _, robot_params = RobotParams.get_params()
     except Exception as e:
         print(f"Failed to fetch robot parameters for limits: {e}")
         return
+
+    joint_to_tool_param_key, default_tool_param_key = _get_joint_to_tool_param_key_map(
+        robot_params, tool_name=tool_name
+    )
 
     tree = ET.parse(input_file)
     root = tree.getroot()
@@ -152,27 +121,33 @@ def update_urdf_joint_limits(input_file, output_file):
             if joint_name is None:
                 continue
             param_key = joint_name.replace("_joint", "")
-            if "finger" in param_key or "gripper" in param_key:
-                param_key = "parallel_gripper"
+            if joint_name in joint_to_tool_param_key:
+                param_key = joint_to_tool_param_key[joint_name]
             elif "arm" in param_key:
                 param_key = "arm"
             elif "lift" in param_key:
                 param_key = "lift"
             elif "head" in param_key:
                 param_key = "head"
+            elif default_tool_param_key:
+                param_key = default_tool_param_key
 
             if param_key in robot_params:
                 p = robot_params[param_key]
+                device_params = p.get("devices", {}).get(param_key, {})
+                motion = p.get("motion", device_params.get("motion"))
+                stall_max_effort = p.get(
+                    "stall_max_effort", device_params.get("stall_max_effort")
+                )
+
                 max_vel = None
                 max_eff = None
 
-                if is_vel_zero and "motion" in p and "max" in p["motion"]:
-                    max_vel = p["motion"]["max"].get(
-                        "vel", p["motion"]["max"].get("vel_m")
-                    )
+                if is_vel_zero and motion and "max" in motion:
+                    max_vel = motion["max"].get("vel", motion["max"].get("vel_m"))
 
-                if is_eff_zero and "stall_max_effort" in p:
-                    max_eff = p["stall_max_effort"]
+                if is_eff_zero and stall_max_effort is not None:
+                    max_eff = stall_max_effort
 
                 if max_vel is not None:
                     limit.set("velocity", str(max_vel))
@@ -302,7 +277,6 @@ def remove_visual_and_collision_from_sensors_in_base_and_head(urdf_path):
 def finalize_xacro_and_cleanup_meshes(
     stretch_main_xacro, model_name, root_dir, content
 ):
-    import re
 
     print(f"Converting mesh paths to use $(arg model_mesh_dir)...")
 
