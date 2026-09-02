@@ -5,17 +5,19 @@ import os
 import xml.etree.ElementTree as ET
 
 import yaml
+
 try:
-    from stretch4_body.core.robot_params import RobotParams
     import stretch4_body.core.hello_utils as hello_utils
+    from stretch4_body.core.robot_params import RobotParams
 except Exception:
     RobotParams = None
     hello_utils = None
+import logging
+
 import xacro
 from yourdfpy import URDF
-import logging
-from .calibration_utils import apply_calibration_to_urdf
 
+from .calibration_utils import apply_calibration_to_urdf
 
 logger = logging.getLogger("urdf_utils")
 
@@ -42,7 +44,7 @@ def get_available_tools(model_name:str):
     tools_dir = os.path.join(importlib_resources.files("stretch4_urdf"), f"{model_name}_tools")
     # Only include directories, so we ignore .md files or random files
     available_tools = [d for d in os.listdir(tools_dir) if os.path.isdir(os.path.join(tools_dir, d))]
-    
+
     # Automatically scan for custom user tools using environment variables/fallbacks
     user_tools_dirs = _get_user_tools_dirs()
     for user_tools_dir in user_tools_dirs:
@@ -88,7 +90,7 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
                 tool_dir = candidate_path
                 is_user_tool = True
                 break
-        
+
         if tool_dir:
             tool_mesh_dir = os.path.join(tool_dir, "meshes")
         else:
@@ -299,6 +301,30 @@ def get_joint_limits(urdf_contents: str):
         logger.warning(f"Failed to parse URDF for joint limits: {e}")
         return {}
 
+def get_joint_velocity_limits(urdf_contents: str):
+    """
+    Parses the URDF contents and extracts velocity limits for all joints that have them.
+
+    Parameters
+    ----------
+    urdf_contents : str
+        raw urdf contents
+
+    Returns
+    -------
+    dict
+        A dictionary mapping joint names to their velocity limit.
+    """
+    try:
+        urdf = URDF.load(io.StringIO(urdf_contents))
+        limits = {}
+        for joint in urdf.robot.joints:
+            if joint.limit:
+                limits[joint.name] = joint.limit.velocity
+        return limits
+    except Exception as e:
+        logger.warning(f"Failed to parse URDF for joint velocity limits: {e}")
+        return {}
 
 def get_accessory(accessory_name: str, do_add_file_prefix_to_absolute_paths: bool = True) -> str:
     """
