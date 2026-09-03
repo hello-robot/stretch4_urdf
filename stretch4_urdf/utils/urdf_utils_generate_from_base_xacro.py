@@ -300,6 +300,32 @@ def get_joint_limits(urdf_contents: str):
         return {}
 
 
+def get_joint_velocity_limits(urdf_contents: str):
+    """
+    Parses the URDF contents and extracts velocity limits for all joints that have them.
+
+    Parameters
+    ----------
+    urdf_contents : str
+        raw urdf contents
+
+    Returns
+    -------
+    dict
+        A dictionary mapping joint names to their velocity limit.
+    """
+    try:
+        urdf = URDF.load(io.StringIO(urdf_contents))
+        limits = {}
+        for joint in urdf.robot.joints:
+            if joint.limit:
+                limits[joint.name] = joint.limit.velocity
+        return limits
+    except Exception as e:
+        logger.warning(f"Failed to parse URDF for joint velocity limits: {e}")
+        return {}
+
+
 def get_accessory(accessory_name: str, do_add_file_prefix_to_absolute_paths: bool = True) -> str:
     """
     Get the URDF contents of a given accessory.
