@@ -112,6 +112,21 @@ class TestUrdfGeneration(unittest.TestCase):
                     self.assertGreater(len(ik_filepaths), 0, f"Could not generate IK URDFs for {model}_{batch}_{tool}")
                     for ik_path in ik_filepaths:
                         self.assertTrue(os.path.exists(ik_path), f"IK URDF not generated for {ik_path}")
+                        import xml.etree.ElementTree as ET
+                        tree = ET.parse(ik_path)
+                        for j in tree.getroot().findall("joint"):
+                            lim = j.find("limit")
+                            if lim is not None:
+                                self.assertTrue(
+                                    len(lim.attrib) > 0,
+                                    f"Joint {j.get('name')} in {ik_path} has an empty <limit/> tag"
+                                )
+                        try:
+                            import pinocchio as pin
+                            pin_model = pin.buildModelFromUrdf(ik_path)
+                            self.assertIsNotNone(pin_model)
+                        except ImportError:
+                            pass
                         
                     generated_count += 1
             
