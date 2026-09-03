@@ -7,7 +7,11 @@ import io
 
 from yourdfpy import urdf as ud
 from stretch4_urdf.utils.urdf_utils_generate_from_base_xacro import (
-    get_available_tools, get_urdf, get_urdf_calibrated)
+    get_available_tools,
+    get_joint_velocity_limits,
+    get_urdf,
+    get_urdf_calibrated,
+)
 from stretch4_urdf.utils.urdf_utils_generate_ik_urdfs import generate_ik_urdfs
 
 class TestUrdfGeneration(unittest.TestCase):
@@ -149,6 +153,21 @@ class TestUrdfGeneration(unittest.TestCase):
 
         urdf_model = ud.URDF.load(io.StringIO(urdf_calibrated_contents))
         self.assertTrue(isinstance(urdf_model, ud.URDF), "Calibrated urdf string is not a valid URDF")
+
+    def test_get_joint_velocity_limits(self):
+        """
+        Tests parsing joint velocity limits from URDF contents.
+        """
+        urdf_contents = get_urdf(
+            model_name="SE4",
+            batch_name="francis",
+            tool_name="eoa_wrist_dw4_tool_sg4",
+        )
+        velocity_limits = get_joint_velocity_limits(urdf_contents)
+        self.assertIsInstance(velocity_limits, dict)
+        # Verify fallback on invalid XML
+        self.assertEqual(get_joint_velocity_limits("invalid xml"), {})
+
 
 if __name__ == '__main__':
     unittest.main()
