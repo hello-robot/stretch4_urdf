@@ -55,7 +55,7 @@ def generate_collision_meshes(model_name):
         print(f"Error generating collision meshes for {model_name}: {e}")
 
 
-def process_tool_urdf(model_name, root_dir):
+def process_tool_urdf(model_name, root_dir, tool_name=None):
     # Find the base URDF file or Xacro files
     urdf_files = glob.glob(os.path.join(root_dir, '*.urdf'))
     xacro_files = glob.glob(os.path.join(root_dir, '*.xacro')) + glob.glob(os.path.join(root_dir, 'xacro', '*.xacro'))
@@ -200,7 +200,8 @@ def main(model_names_to_generate:list[str]|None = None):
     for model_name in models_to_process:
         print('Generating tool URDF for', model_name)
         root_dir = './stretch4_urdf/' + model_name + '/'
-        process_tool_urdf(model_name, root_dir)
+        tool_name = os.path.basename(model_name)
+        process_tool_urdf(model_name, root_dir, tool_name=tool_name)
 
 
 if __name__ == '__main__':
