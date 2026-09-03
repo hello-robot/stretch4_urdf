@@ -1024,7 +1024,7 @@ def process_single_tool(tool_name, tool_path):
         except ImportError:
             sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
             from stretch4_urdf.utils.preprocessing.process_new_tool import process_tool_urdf
-        process_tool_urdf(tool_path, tool_path)
+        process_tool_urdf(tool_path, tool_path, tool_name=tool_name)
     except Exception as e:
         print(f"Error during URDF and mesh preprocessing: {e}")
         sys.exit(1)
