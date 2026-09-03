@@ -369,7 +369,7 @@ def get_all_model_names():
     urdf_map = {}
     for entry in entries:
         full_path = os.path.join(urdf_pkg_path, entry)
-        if os.path.isdir(full_path) and not entry.startswith("__") and not entry.endswith("_tools") and entry not in ["tools", "utils"]:
+        if os.path.isdir(full_path) and not entry.startswith("__") and not entry.endswith("_tools") and entry not in ["tools", "utils", "SE4_accessories"]:
             models.append(entry)
             urdfs = glob.glob(os.path.join(full_path, "*.urdf"))
             if len(urdfs) > 0:
@@ -383,12 +383,12 @@ def get_all_model_names():
 
 
 def main(model_names_to_generate:list[str]|None = None):
-    all_models, urdf_map, _ = get_all_model_names()
+    all_models, urdf_map, pkg_path = get_all_model_names()
     models_to_process = model_names_to_generate if model_names_to_generate else list(urdf_map.keys())
-    
+
     for model_name in models_to_process:
         print('Generating URDF for', model_name)
-        root_dir = './stretch4_urdf/' + model_name + '/'
+        root_dir = os.path.join(pkg_path, model_name) + '/'
         xacro_dir = root_dir + 'xacro/'
         generate_xacro_from_base_urdf(model_name, root_dir, xacro_dir)
 
