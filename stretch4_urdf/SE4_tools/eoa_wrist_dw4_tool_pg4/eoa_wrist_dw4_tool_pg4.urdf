@@ -48,7 +48,7 @@
     <parent link="pjg_body_link" />
     <child link="finger_right_link" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.04" upper="0" effort="0" velocity="0" />
+    <limit lower="-0.04" upper="0" effort="20.0" velocity="6.0" />
   </joint>
   <link name="aruco_fingertip_right_link">
     <inertial>
@@ -105,7 +105,7 @@
     <parent link="pjg_body_link" />
     <child link="finger_left_link" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.04" upper="0" effort="0" velocity="0" />
+    <limit lower="-0.04" upper="0" effort="20.0" velocity="6.0" />
   </joint>
   <link name="aruco_fingertip_left_link">
     <inertial>
