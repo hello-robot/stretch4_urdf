@@ -1,0 +1,11 @@
+links:
+  base_link:
+    action: convex_hull
+  wheel_0_link:
+    action: convex_hull
+  wheel_1_link:
+    action: convex_hull
+  wheel_2_link:
+    action: convex_hull
+  base_footprint:
+    action: bounding_box

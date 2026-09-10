@@ -1,0 +1,344 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="stretch">
+  <link name="base_footprint">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.001 0.001 0.001" /></geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    </link>
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.000438848617413435 -0.00177714671567261 0.0964683686997768" rpy="0 0 0" />
+      <mass value="18.9261039673325" />
+      <inertia ixx="0.214992663147159" ixy="0.00083386140340347" ixz="-0.000588720101362878" iyy="0.22301041696344" iyz="-0.00155067556464412" izz="0.327845792807285" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/base_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="base_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/base_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="base_ref" type="fixed">
+    <origin xyz="0 0 0.027999995691835" rpy="0 0 0" />
+    <parent link="base_footprint" />
+    <child link="base_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_5_link">
+    <inertial>
+      <origin xyz="0.00114502070313141 -0.000126774756058545 0.0119761602719026" rpy="0 0 0" />
+      <mass value="0.00213836003346436" />
+      <inertia ixx="2.88698160050487E-07" ixy="-5.64135957062421E-10" ixz="-7.07831726662328E-09" iyy="2.34959277592962E-07" iyz="-2.73972720709966E-10" izz="6.64615782289848E-08" />
+    </inertial>
+    </link>
+  <joint name="line_sensor_5_joint" type="fixed">
+    <origin xyz="0.0613832011662534 0.178318823151171 0.0527013981430276" rpy="0 0.453785605518531 1.04719755119659" />
+    <parent link="base_link" />
+    <child link="line_sensor_5_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_5_optical_link">
+    </link>
+  <joint name="line_sensor_5_optical_joint" type="fixed">
+    <origin xyz="0.00286000000000003 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="line_sensor_5_link" />
+    <child link="line_sensor_5_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_4_link">
+    <inertial>
+      <origin xyz="0.00114502070313144 -0.000126774756058601 0.0119761602719027" rpy="0 0 0" />
+      <mass value="0.00213836003346436" />
+      <inertia ixx="2.88698160050488E-07" ixy="-5.64135957060042E-10" ixz="-7.07831726662323E-09" iyy="2.34959277592962E-07" iyz="-2.73972720708353E-10" izz="6.6461578228985E-08" />
+    </inertial>
+    </link>
+  <joint name="line_sensor_4_joint" type="fixed">
+    <origin xyz="-0.0613832011662525 0.178318823151171 0.0527013981430276" rpy="0 0.453785605518532 2.09439510239319" />
+    <parent link="base_link" />
+    <child link="line_sensor_4_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_4_optical_link">
+    </link>
+  <joint name="line_sensor_4_optical_joint" type="fixed">
+    <origin xyz="0.00286 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="line_sensor_4_link" />
+    <child link="line_sensor_4_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_3_link">
+    <inertial>
+      <origin xyz="0.00114502070313158 -0.000126774756058573 0.0119761602719024" rpy="0 0 0" />
+      <mass value="0.00213836003346444" />
+      <inertia ixx="2.88698160050477E-07" ixy="-5.64135957061257E-10" ixz="-7.07831726660265E-09" iyy="2.34959277592965E-07" iyz="-2.73972720709266E-10" izz="6.64615782289998E-08" />
+    </inertial>
+    </link>
+  <joint name="line_sensor_3_joint" type="fixed">
+    <origin xyz="-0.185120231404985 -0.036 0.0527013981430276" rpy="0 0.453785605518531 -3.14159265358979" />
+    <parent link="base_link" />
+    <child link="line_sensor_3_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_3_optical_link">
+    </link>
+  <joint name="line_sensor_3_optical_joint" type="fixed">
+    <origin xyz="0.00286 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="line_sensor_3_link" />
+    <child link="line_sensor_3_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_2_link">
+    <inertial>
+      <origin xyz="0.00114502070313144 -0.000126774756058518 0.0119761602719027" rpy="0 0 0" />
+      <mass value="0.00213836003346437" />
+      <inertia ixx="2.88698160050489E-07" ixy="-5.64135957062399E-10" ixz="-7.07831726662342E-09" iyy="2.34959277592963E-07" iyz="-2.73972720710027E-10" izz="6.64615782289852E-08" />
+    </inertial>
+    </link>
+  <joint name="line_sensor_2_joint" type="fixed">
+    <origin xyz="-0.123737030238733 -0.14231882315117 0.0527013981430276" rpy="0 0.453785605518531 -2.0943951023932" />
+    <parent link="base_link" />
+    <child link="line_sensor_2_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_2_optical_link">
+    </link>
+  <joint name="line_sensor_2_optical_joint" type="fixed">
+    <origin xyz="0.00286 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="line_sensor_2_link" />
+    <child link="line_sensor_2_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_1_link">
+    <inertial>
+      <origin xyz="0.00114502070313141 -0.000126774756058601 0.0119761602719027" rpy="0 0 0" />
+      <mass value="0.00213836003346436" />
+      <inertia ixx="2.88698160050487E-07" ixy="-5.64135957060014E-10" ixz="-7.0783172666233E-09" iyy="2.34959277592961E-07" iyz="-2.73972720708438E-10" izz="6.64615782289849E-08" />
+    </inertial>
+    </link>
+  <joint name="line_sensor_1_joint" type="fixed">
+    <origin xyz="0.123737030238732 -0.142318823151171 0.0527013981430276" rpy="0 0.453785605518531 -1.0471975511966" />
+    <parent link="base_link" />
+    <child link="line_sensor_1_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_1_optical_link">
+    </link>
+  <joint name="line_sensor_1_optical_joint" type="fixed">
+    <origin xyz="0.00286 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="line_sensor_1_link" />
+    <child link="line_sensor_1_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_0_link">
+    <inertial>
+      <origin xyz="0.00114502070313158 -0.000126774756058566 0.0119761602719025" rpy="0 0 0" />
+      <mass value="0.00213836003346444" />
+      <inertia ixx="2.88698160050477E-07" ixy="-5.64135957061259E-10" ixz="-7.07831726660262E-09" iyy="2.34959277592965E-07" iyz="-2.73972720709195E-10" izz="6.6461578229E-08" />
+    </inertial>
+    </link>
+  <joint name="line_sensor_0_joint" type="fixed">
+    <origin xyz="0.185120231404985 -0.0360000000000004 0.0527013981430276" rpy="0 0.453785605518531 0" />
+    <parent link="base_link" />
+    <child link="line_sensor_0_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="line_sensor_0_optical_link">
+    </link>
+  <joint name="line_sensor_0_optical_joint" type="fixed">
+    <origin xyz="0.00286000000000003 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="line_sensor_0_link" />
+    <child link="line_sensor_0_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="head_link">
+    <inertial>
+      <origin xyz="0.0578831450711746 0.0985910072575783 -0.0270263437535101" rpy="0 0 0" />
+      <mass value="5.61843540939406" />
+      <inertia ixx="0.038273162260088" ixy="0.000202623770136025" ixz="0.000231642210610366" iyy="0.030632670593406" iyz="5.61616115268112E-05" izz="0.06400207843788" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/head_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="head_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/head_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="head_joint" type="fixed">
+    <origin xyz="-0.0930000000000002 -0.0979999999999998 1.55900000430817" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="head_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="lidar_right_link"></link>
+  <joint name="lidar_right_joint" type="fixed">
+    <origin xyz="0.131744211811827 -0.0264137425448753 -0.0583279884119643" rpy="-3.05465659239941 0.781600065124168 2.39203005564319" />
+    <parent link="head_link" />
+    <child link="lidar_right_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="lidar_left_link"></link>
+  <joint name="lidar_left_joint" type="fixed">
+    <origin xyz="0.131744211811846 0.222413742544858 -0.0583279884119634" rpy="-3.05465659239939 -0.781600065124167 0.749562597946573" />
+    <parent link="head_link" />
+    <child link="lidar_left_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="camera_right_link"></link>
+  <joint name="camera_right_joint" type="fixed">
+    <origin xyz="0.171840602787894 0.0230000000000032 -0.0157566987072475" rpy="1.5707963267949 0.820304748437337 0" />
+    <parent link="head_link" />
+    <child link="camera_right_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="camera_right_optical_link">
+    </link>
+  <joint name="camera_right_optical_joint" type="fixed">
+    <origin xyz="0.0212000000000001 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="camera_right_link" />
+    <child link="camera_right_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="camera_left_link"></link>
+  <joint name="camera_left_joint" type="fixed">
+    <origin xyz="0.171840602787895 0.173 -0.0157566987072475" rpy="-1.5707963267949 0.820304748437337 0" />
+    <parent link="head_link" />
+    <child link="camera_left_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="camera_left_optical_link">
+    </link>
+  <joint name="camera_left_optical_joint" type="fixed">
+    <origin xyz="0.0211999999999999 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="camera_left_link" />
+    <child link="camera_left_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="camera_center_link"></link>
+  <joint name="camera_center_joint" type="fixed">
+    <origin xyz="0.177245603402412 0.0980000000000004 -0.0239069097938973" rpy="1.5707963267949 0.610865238198018 0" />
+    <parent link="head_link" />
+    <child link="camera_center_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="camera_center_optical_link">
+    </link>
+  <joint name="camera_center_optical_joint" type="fixed">
+    <origin xyz="0.00170000000000003 0 0" rpy="-1.5707963267949 0 -1.5707963267949" />
+    <parent link="camera_center_link" />
+    <child link="camera_center_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="wheel_2_link">
+    <inertial>
+      <origin xyz="1.25476756894564E-05 5.22307168604463E-06 -0.000275017600766314" rpy="0 0 0" />
+      <mass value="6.0682081887272" />
+      <inertia ixx="0.0154034644119385" ixy="-2.22604627484544E-06" ixz="5.21108774702054E-09" iyy="0.0154080256643557" iyz="5.27262855356307E-09" izz="0.029708346400951" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/wheel_2_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="wheel_2_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/wheel_2_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="wheel_2_joint" type="continuous">
+    <origin xyz="0 -0.174 0.0720000043081651" rpy="-1.5707963267949 0 0" />
+    <parent link="base_link" />
+    <child link="wheel_2_link" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="wheel_1_link">
+    <inertial>
+      <origin xyz="1.2547806012661E-05 5.22294298857529E-06 -0.00027501693981774" rpy="0 0 0" />
+      <mass value="6.06820810020002" />
+      <inertia ixx="0.0154034651258547" ixy="-2.22604258305555E-06" ixz="5.22035462340732E-09" iyy="0.0154080256614685" iyz="5.28562094397411E-09" izz="0.0297083471319844" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/wheel_1_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="wheel_1_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/wheel_1_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="wheel_1_joint" type="continuous">
+    <origin xyz="-0.150688420258493 0.087000000000001 0.072000004308165" rpy="-1.5707963267949 0 -2.09439510239321" />
+    <parent link="base_link" />
+    <child link="wheel_1_link" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="wheel_0_link">
+    <inertial>
+      <origin xyz="1.25474646742035E-05 5.22291550456022E-06 -0.000275016877356288" rpy="0 0 0" />
+      <mass value="6.06820808425982" />
+      <inertia ixx="0.0154034651445229" ixy="-2.22601000971664E-06" ixz="5.20622353301233E-09" iyy="0.0154080256540422" iyz="5.28522507559181E-09" izz="0.0297083471441777" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/wheel_0_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="wheel_0_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/wheel_0_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="wheel_0_joint" type="continuous">
+    <origin xyz="0.150688420258492 0.0869999999999999 0.072000004308165" rpy="-1.5707963267949 0 2.09439510239319" />
+    <parent link="base_link" />
+    <child link="wheel_0_link" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <link name="docking_contact_link"></link>
+  <joint name="docking_contact_frame" type="fixed">
+    <origin xyz="0 0.1768 0.107500004308165" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="docking_contact_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+</robot>

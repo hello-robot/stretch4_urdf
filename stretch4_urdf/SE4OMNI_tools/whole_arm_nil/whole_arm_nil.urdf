@@ -1,0 +1,6 @@
+<robot name="stretch_tool_tablet">
+
+  <link name="nop">
+  </link>
+
+</robot>
