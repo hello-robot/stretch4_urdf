@@ -250,6 +250,34 @@
     <child link="camera_center_optical_link" />
     <axis xyz="0 0 0" />
   </joint>
+  <link name="mast_link">
+    <inertial>
+      <origin xyz="2.77555756156289E-17 -0.00165282700965368 0.815" rpy="0 0 0" />
+      <mass value="10.8924861076487" />
+      <inertia ixx="1.96276319417158" ixy="-4.74739862687269E-18" ixz="-1.24526930733894E-16" iyy="1.96594229514087" iyz="-1.7420761023809E-18" izz="0.00577661764276332" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/mast_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision name="mast_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg model_mesh_dir)/mast_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="mast_joint" type="fixed">
+    <origin xyz="-0.0930000000000002 -0.0979999999999998 0.00400000430816486" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="mast_link" />
+    <axis xyz="0 0 0" />
+  </joint>
   <link name="wheel_2_link">
     <inertial>
       <origin xyz="1.25476756894564E-05 5.22307168604463E-06 -0.000275017600766314" rpy="0 0 0" />

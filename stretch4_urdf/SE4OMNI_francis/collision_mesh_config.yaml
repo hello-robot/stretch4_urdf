@@ -1,6 +1,8 @@
 links:
   base_link:
     action: convex_hull
+  mast_link:
+    action: convex_hull
   wheel_0_link:
     action: convex_hull
   wheel_1_link:
