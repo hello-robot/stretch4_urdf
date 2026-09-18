@@ -1,4 +1,5 @@
 import argparse
+import glob
 import importlib.resources as importlib_resources
 import io
 import os
@@ -36,6 +37,26 @@ def _get_user_tools_dirs():
         if os.path.exists(default_dir):
             dirs.append(default_dir)
     return dirs
+
+def resolve_tool_urdf(tool_dir: str) -> str:
+    """
+    Returns the path to the tool's URDF file.
+
+    `tool_dir` must contain exactly one .urdf file; its name is otherwise unconstrained. Raises
+    ValueError for zero or several.
+    """
+    urdf_files = sorted(glob.glob(os.path.join(tool_dir, "*.urdf")))
+    if len(urdf_files) != 1:
+        found = "\n".join(f"\t{os.path.basename(f)}" for f in urdf_files) or "\t(none)"
+        raise ValueError(
+            f"Expected exactly one .urdf file in the tool directory, found {len(urdf_files)}:"
+            f"\n\t{tool_dir}\n{found}"
+        )
+    return urdf_files[0]
+
+def _resolve_tool_urdf_stem(tool_dir: str) -> str:
+    """Name of the tool's URDF without its .urdf extension, for the xacro's include path."""
+    return os.path.splitext(os.path.basename(resolve_tool_urdf(tool_dir)))[0]
 
 def get_available_tools(model_name:str):
 
@@ -75,7 +96,6 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
     if not os.path.exists(model_mesh_dir):
         raise FileNotFoundError(f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}")
 
-    is_user_tool = False
     if 'nil' in tool_name:
         tool_dir = None
         tool_mesh_dir = None
@@ -86,7 +106,6 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
             candidate_path = os.path.join(u_dir, tool_name)
             if os.path.exists(candidate_path):
                 tool_dir = candidate_path
-                is_user_tool = True
                 break
         
         if tool_dir:
@@ -103,13 +122,13 @@ def generate_urdf_from_xacro(model_name: str, batch_name: str, tool_name: str, d
     mappings = {
         "batch": batch_name,
         "tool": tool_name,
-        "tool_urdf": "tool" if is_user_tool else tool_name,
         "pkg_path": urdf_pkg_path,
         "model_mesh_dir": f"{prefix}{model_mesh_dir}",
         "tool_mesh_dir": f"{prefix}{tool_mesh_dir}" if tool_mesh_dir else "none"
     }
     if tool_dir:
         mappings["tool_dir"] = tool_dir
+        mappings["tool_urdf"] = _resolve_tool_urdf_stem(tool_dir)
 
     with open(xacro_file, 'r') as f:
         doc = xacro.parse(f)
