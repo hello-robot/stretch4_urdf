@@ -58,6 +58,59 @@ def generate_collision_meshes(model_name):
         print(f"Error generating collision meshes for {model_name}: {e}")
 
 
+def ensure_quick_connect_root_link(target_file):
+    """
+    Checks that `target_file`'s root link is named 'quick_connect_interface_link', which is the link
+    SE4.xacro attaches the tool to the wrist by. Offers to insert one above the existing root link
+    with a fixed identity joint, and exits if the user declines.
+    """
+    tree = ET.parse(target_file)
+    root = tree.getroot()
+    links = [link.get('name') for link in root.findall('link')]
+    child_links = {joint.find('child').get('link') for joint in root.findall('joint') if joint.find('child') is not None}
+    root_links = [l for l in links if l not in child_links]
+
+    if not root_links:
+        sys.exit(f"Error: No root link found in: {target_file}")
+
+    root_link = root_links[0]
+    if root_link == "quick_connect_interface_link":
+        return
+
+    print(f"Issue: Root link in '{target_file}' is '{root_link}', but it must be named 'quick_connect_interface_link'.")
+    try:
+        ans = input(f"Would you like to add 'quick_connect_interface_link' as the root link with a fixed identity joint to '{root_link}'? (y/N): ").strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        print("\nExiting.")
+        sys.exit(1)
+    if ans != 'y':
+        sys.exit(f"Error: Root link must be named 'quick_connect_interface', found '{root_link}' in {target_file}")
+
+    new_link = ET.Element('link')
+    new_link.set('name', 'quick_connect_interface_link')
+    root.append(new_link)
+
+    new_joint = ET.Element('joint')
+    new_joint.set('name', 'quick_connect_interface_joint')
+    new_joint.set('type', 'fixed')
+
+    parent_el = ET.SubElement(new_joint, 'parent')
+    parent_el.set('link', 'quick_connect_interface_link')
+
+    child_el = ET.SubElement(new_joint, 'child')
+    child_el.set('link', root_link)
+
+    origin_el = ET.SubElement(new_joint, 'origin')
+    origin_el.set('xyz', '0 0 0')
+    origin_el.set('rpy', '0 0 0')
+
+    root.append(new_joint)
+
+    ET.indent(tree, space="  ")
+    tree.write(target_file, encoding='utf-8', xml_declaration=False)
+    print(f"Successfully added 'quick_connect_interface' as the root link to {target_file}.")
+
+
 def process_tool_urdf(model_name, root_dir, tool_name=None):
     # Find the base URDF file or Xacro files
     urdf_files = glob.glob(os.path.join(root_dir, '*.urdf'))
@@ -73,51 +126,7 @@ def process_tool_urdf(model_name, root_dir, tool_name=None):
         print(f"Error: Expected exactly one base URDF or XACRO file in {root_dir}, found {len(urdf_files)} URDFs and {len(xacro_files)} XACROs")
         return
 
-    # Check that the root link is named quick_connect_interface
-    tree = ET.parse(target_file)
-    root = tree.getroot()
-    links = [link.get('name') for link in root.findall('link')]
-    child_links = {joint.find('child').get('link') for joint in root.findall('joint') if joint.find('child') is not None}
-    root_links = [l for l in links if l not in child_links]
-    
-    if not root_links:
-        sys.exit(f"Error: No root link found in: {target_file}")
-    
-    root_link = root_links[0]
-    if root_link != "quick_connect_interface_link":
-        print(f"Issue: Root link in '{target_file}' is '{root_link}', but it must be named 'quick_connect_interface_link'.")
-        try:
-            ans = input(f"Would you like to add 'quick_connect_interface_link' as the root link with a fixed identity joint to '{root_link}'? (y/N): ").strip().lower()
-        except (KeyboardInterrupt, EOFError):
-            print("\nExiting.")
-            sys.exit(1)
-        if ans == 'y':
-            new_link = ET.Element('link')
-            new_link.set('name', 'quick_connect_interface_link')
-            root.append(new_link)
-            
-            new_joint = ET.Element('joint')
-            new_joint.set('name', 'quick_connect_interface_joint')
-            new_joint.set('type', 'fixed')
-            
-            parent_el = ET.SubElement(new_joint, 'parent')
-            parent_el.set('link', 'quick_connect_interface_link')
-            
-            child_el = ET.SubElement(new_joint, 'child')
-            child_el.set('link', root_link)
-            
-            origin_el = ET.SubElement(new_joint, 'origin')
-            origin_el.set('xyz', '0 0 0')
-            origin_el.set('rpy', '0 0 0')
-            
-            root.append(new_joint)
-            
-            # Format and write back to target_file
-            ET.indent(tree, space="  ")
-            tree.write(target_file, encoding='utf-8', xml_declaration=False)
-            print(f"Successfully added 'quick_connect_interface' as the root link to {target_file}.")
-        else:
-            sys.exit(f"Error: Root link must be named 'quick_connect_interface', found '{root_link}' in {target_file}")
+    ensure_quick_connect_root_link(target_file)
 
     create_collision_config_if_missing(target_file, root_dir)
     generate_collision_meshes(model_name)
