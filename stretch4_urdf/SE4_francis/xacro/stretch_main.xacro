@@ -205,6 +205,18 @@
     <child link="lidar_left_link" />
     <axis xyz="0 0 0" />
   </joint>
+  <link name="lidar_left_imu_link"/>
+  <joint name="lidar_left_imu_joint" type="fixed">
+    <origin xyz="0.00862 -0.00914 -0.03916" rpy="0 0 0"/>
+    <parent link="lidar_left_link"/>
+    <child link="lidar_left_imu_link"/>
+  </joint>
+  <link name="lidar_right_imu_link"/>
+  <joint name="lidar_right_imu_joint" type="fixed">
+    <origin xyz="0.00862 -0.00914 -0.03916" rpy="0 0 0"/>
+    <parent link="lidar_right_link"/>
+    <child link="lidar_right_imu_link"/>
+  </joint>
   <link name="camera_right_link"></link>
   <joint name="camera_right_joint" type="fixed">
     <origin xyz="0.171840602787894 0.0230000000000032 -0.0157566987072475" rpy="1.5707963267949 0.820304748437337 0" />
