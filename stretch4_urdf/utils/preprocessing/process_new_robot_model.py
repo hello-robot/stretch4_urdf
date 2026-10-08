@@ -46,7 +46,7 @@ def _get_joint_to_tool_param_key_map(robot_params, tool_name=None):
             return {}, tool_name
 
         param_key = (
-            BUILTIN_TOOL_MODELS[tool_name].joint_name
+            BUILTIN_TOOL_MODELS[tool_name].tool_name
             if tool_name in BUILTIN_TOOL_MODELS
             else tool_name
         )
@@ -55,7 +55,7 @@ def _get_joint_to_tool_param_key_map(robot_params, tool_name=None):
     joint_to_param_key = {}
 
     for param_key, tool_meta in BUILTIN_TOOL_MODELS.items():
-        if tool_meta.joint_name != param_key:
+        if tool_meta.tool_name != param_key:
             continue
         for joint in tool_meta.tool_joints:
             joint_to_param_key[joint] = param_key
