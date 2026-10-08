@@ -125,12 +125,15 @@ def merge_arm(robot):
     near_proximal_arm_joint = robot.joint_map[all_arm_joints[1]]
     distal_arm_joint = robot.joint_map[all_arm_joints[-1]]
 
-    # Calculate aggregate joint characteristics
-    xyz_total = np.array([0.0, 0.0, 0.0])
+    # Calculate aggregate joint characteristics: the distal joint's origin becomes all four
+    # telescoping joints' origins composed, so with the merged joint at the sum of their
+    # extensions the arm's end is where the four joints put it.
+    origin_total = np.eye(4)
     limit_upper_total = 0.0
     for j in prismatic_arm_joints:
         joint = robot.joint_map[j]
-        xyz_total = xyz_total + joint.origin[3, :3]
+        if joint.origin is not None:
+            origin_total = origin_total @ joint.origin
         if joint.limit is None:
             continue
         limit_upper_total = limit_upper_total + joint.limit.upper
@@ -139,7 +142,7 @@ def merge_arm(robot):
     distal_arm_joint.parent = near_proximal_arm_joint.parent
 
     # Make the distal prismatic joint act like the full arm
-    distal_arm_joint.origin[3, :3] = xyz_total
+    distal_arm_joint.origin = origin_total
     distal_arm_joint.limit.upper = limit_upper_total
 
     # Mark the eliminated joints as "fixed"
