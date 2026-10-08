@@ -12,7 +12,9 @@ from stretch4_urdf.utils.urdf_utils_generate_from_base_xacro import (
     get_urdf,
     get_urdf_calibrated,
 )
-from stretch4_urdf.utils.urdf_utils_generate_ik_urdfs import generate_ik_urdfs
+import numpy as np
+
+from stretch4_urdf.utils.urdf_utils_generate_ik_urdfs import _make_ik_urdf, generate_ik_urdfs
 
 class TestUrdfGeneration(unittest.TestCase):
     def _get_all_combinations(self):
@@ -131,6 +133,46 @@ class TestUrdfGeneration(unittest.TestCase):
                     generated_count += 1
             
             self.assertGreater(generated_count, 0, "No IK URDFs were generated during the test.")
+
+    def test_merged_arm_matches_the_telescoping_arm(self):
+        """
+        In the IK URDF the four telescoping arm joints become one; with it at their summed
+        extension, every link must be where the original URDF puts it. (merge_arm() used to sum
+        `joint.origin[3, :3]`, the homogeneous row, dropping the inner links' offsets: the tool
+        ended up ~41 mm further out.)
+        """
+        rng = np.random.default_rng(0)
+        combinations = self._get_all_combinations()
+        self.assertGreater(len(combinations), 0, "Expected to find at least one valid combination")
+        for model, batch, tool in combinations:
+            with self.subTest(model=model, batch=batch, tool=tool):
+                urdf_string = get_urdf(model_name=model, batch_name=batch, tool_name=tool)
+                original = ud.URDF.load(io.StringIO(urdf_string))
+                merged = _make_ik_urdf(ud.URDF.load(io.StringIO(urdf_string)), is_merge_arm=True)
+                merged = ud.URDF.load(io.BytesIO(merged.write_xml_string()))
+
+                for _ in range(5):
+                    lift, arm = rng.uniform(0.1, 1.0), rng.uniform(0.0, 0.5)
+                    wrist = {j: rng.uniform(-0.5, 0.5) for j in ("wrist_yaw_joint", "wrist_pitch_joint", "wrist_roll_joint")}
+                    original.update_cfg({
+                        "lift_joint": lift,
+                        **{f"arm_l{i}_joint": arm / 4 for i in range(1, 5)},
+                        **{j: q for j, q in wrist.items() if j in original.actuated_joint_names},
+                    })
+                    merged.update_cfg({
+                        "lift_joint": lift,
+                        "arm_l4_joint": arm,
+                        **{j: q for j, q in wrist.items() if j in merged.actuated_joint_names},
+                    })
+                    for link in ("arm_l4_link", "wrist_roll_link", "grasp_center_link"):
+                        if link not in original.link_map:
+                            continue
+                        np.testing.assert_allclose(
+                            merged.get_transform(link, original.base_link),
+                            original.get_transform(link, original.base_link),
+                            atol=1e-6,
+                            err_msg=f"{link} of {model}_{batch}_{tool}",
+                        )
 
     def test_get_urdf_calibrated_file_output(self):
         """
