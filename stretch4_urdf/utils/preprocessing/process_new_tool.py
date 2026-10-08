@@ -11,6 +11,9 @@ import sys
 import xml.etree.ElementTree as ET
 import yaml
 
+from stretch4_urdf.utils.preprocessing.process_new_robot_model import (
+    update_urdf_joint_limits,
+)
 from stretch4_urdf.utils.preprocessing.update_urdf_with_collision_mesh_filepath import (
     remove_collision_from_optical_links, update_urdf_collision_meshes)
 
@@ -122,6 +125,7 @@ def process_tool_urdf(model_name, root_dir, tool_name=None):
     print('Updating the URDF/XACRO with collision mesh filepaths...')
     update_urdf_collision_meshes(target_file, target_file)
     remove_collision_from_optical_links(target_file, target_file)
+    update_urdf_joint_limits(target_file, target_file, tool_name=tool_name)
 
     # Convert mesh paths to use $(arg tool_mesh_dir)
     print(f'Converting mesh paths to use $(arg tool_mesh_dir)...')
