@@ -2,6 +2,12 @@
 
 The changes between releases of Stretch 4 URDF are documented here.
 
+## [2026.10.08](https://pypi.org/project/hello-robot-stretch4-urdf/2026.10.8)
+
+ - `get_joint_velocity_limits()` util
+ - URDF joint velocity and effort limits populated from robot params during preprocessing
+ - Add utilities for new user tools. `process_new_user_tool <tool_dir>` replaces `stretch_add_user_tool` CLI
+
 ## [2026.08.21](https://pypi.org/project/hello-robot-stretch4-urdf/2026.8.21)
 
  - Collision mesh for new calibration board
@@ -21,7 +27,7 @@ The changes between releases of Stretch 4 URDF are documented here.
  - Add `get_tranform()` method to get TF between 2 links
  - Organize preprocessing scripts and deps
  - Improve fetching of calibrated URDF
- 
+
 ## [2026.07.02](https://pypi.org/project/hello-robot-stretch4-urdf/2026.7.2)
 
  - Fix to head collision mesh
