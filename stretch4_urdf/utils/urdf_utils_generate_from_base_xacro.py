@@ -1,4 +1,5 @@
 import argparse
+import glob
 import importlib.resources as importlib_resources
 import io
 import os
@@ -40,6 +41,30 @@ def _get_user_tools_dirs():
             dirs.append(default_dir)
     return dirs
 
+<<<<<<< HEAD
+=======
+def resolve_tool_urdf(tool_dir: str) -> str:
+    """
+    Returns the path to the tool's URDF file.
+
+    `tool_dir` must contain exactly one .urdf file; its name is otherwise unconstrained. Raises
+    ValueError for zero or several.
+    """
+    urdf_files = sorted(glob.glob(os.path.join(tool_dir, "*.urdf")))
+    if len(urdf_files) != 1:
+        found = "\n".join(f"\t{os.path.basename(f)}" for f in urdf_files) or "\t(none)"
+        raise ValueError(
+            f"Expected exactly one .urdf file in the tool directory, found {len(urdf_files)}:"
+            f"\n\t{tool_dir}\n{found}"
+        )
+    return urdf_files[0]
+
+def _resolve_tool_urdf_stem(tool_dir: str) -> str:
+    """Name of the tool's URDF without its .urdf extension, for the xacro's include path."""
+    return os.path.splitext(os.path.basename(resolve_tool_urdf(tool_dir)))[0]
+
+def get_available_tools(model_name:str):
+>>>>>>> 12a53ccdb1282336cfa9bf2a2c5cb7fd2bb500fd
 
 def get_available_tools(model_name: str):
 
@@ -95,8 +120,12 @@ def generate_urdf_from_xacro(
             f"Failed to resolve model mesh directory:\n\t{model_mesh_dir}"
         )
 
+<<<<<<< HEAD
     is_user_tool = False
     if "nil" in tool_name:
+=======
+    if 'nil' in tool_name:
+>>>>>>> 12a53ccdb1282336cfa9bf2a2c5cb7fd2bb500fd
         tool_dir = None
         tool_mesh_dir = None
     else:
@@ -106,7 +135,6 @@ def generate_urdf_from_xacro(
             candidate_path = os.path.join(u_dir, tool_name)
             if os.path.exists(candidate_path):
                 tool_dir = candidate_path
-                is_user_tool = True
                 break
 
         if tool_dir:
@@ -125,13 +153,13 @@ def generate_urdf_from_xacro(
     mappings = {
         "batch": batch_name,
         "tool": tool_name,
-        "tool_urdf": "tool" if is_user_tool else tool_name,
         "pkg_path": urdf_pkg_path,
         "model_mesh_dir": f"{prefix}{model_mesh_dir}",
         "tool_mesh_dir": f"{prefix}{tool_mesh_dir}" if tool_mesh_dir else "none",
     }
     if tool_dir:
         mappings["tool_dir"] = tool_dir
+        mappings["tool_urdf"] = _resolve_tool_urdf_stem(tool_dir)
 
     with open(xacro_file, "r") as f:
         doc = xacro.parse(f)
@@ -355,9 +383,39 @@ def get_joint_limits(urdf_contents: str):
         return {}
 
 
+<<<<<<< HEAD
 def get_accessory(
     accessory_name: str, do_add_file_prefix_to_absolute_paths: bool = True
 ) -> str:
+=======
+def get_joint_velocity_limits(urdf_contents: str):
+    """
+    Parses the URDF contents and extracts velocity limits for all joints that have them.
+
+    Parameters
+    ----------
+    urdf_contents : str
+        raw urdf contents
+
+    Returns
+    -------
+    dict
+        A dictionary mapping joint names to their velocity limit.
+    """
+    try:
+        urdf = URDF.load(io.StringIO(urdf_contents))
+        limits = {}
+        for joint in urdf.robot.joints:
+            if joint.limit:
+                limits[joint.name] = joint.limit.velocity
+        return limits
+    except Exception as e:
+        logger.warning(f"Failed to parse URDF for joint velocity limits: {e}")
+        return {}
+
+
+def get_accessory(accessory_name: str, do_add_file_prefix_to_absolute_paths: bool = True) -> str:
+>>>>>>> 12a53ccdb1282336cfa9bf2a2c5cb7fd2bb500fd
     """
     Get the URDF contents of a given accessory.
 

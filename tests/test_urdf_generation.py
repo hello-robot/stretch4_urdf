@@ -7,7 +7,11 @@ import io
 
 from yourdfpy import urdf as ud
 from stretch4_urdf.utils.urdf_utils_generate_from_base_xacro import (
-    get_available_tools, get_urdf, get_urdf_calibrated)
+    get_available_tools,
+    get_joint_velocity_limits,
+    get_urdf,
+    get_urdf_calibrated,
+)
 from stretch4_urdf.utils.urdf_utils_generate_ik_urdfs import generate_ik_urdfs
 
 class TestUrdfGeneration(unittest.TestCase):
@@ -108,6 +112,21 @@ class TestUrdfGeneration(unittest.TestCase):
                     self.assertGreater(len(ik_filepaths), 0, f"Could not generate IK URDFs for {model}_{batch}_{tool}")
                     for ik_path in ik_filepaths:
                         self.assertTrue(os.path.exists(ik_path), f"IK URDF not generated for {ik_path}")
+                        import xml.etree.ElementTree as ET
+                        tree = ET.parse(ik_path)
+                        for j in tree.getroot().findall("joint"):
+                            lim = j.find("limit")
+                            if lim is not None:
+                                self.assertTrue(
+                                    len(lim.attrib) > 0,
+                                    f"Joint {j.get('name')} in {ik_path} has an empty <limit/> tag"
+                                )
+                        try:
+                            import pinocchio as pin
+                            pin_model = pin.buildModelFromUrdf(ik_path)
+                            self.assertIsNotNone(pin_model)
+                        except ImportError:
+                            pass
                         
                     generated_count += 1
             
@@ -149,6 +168,21 @@ class TestUrdfGeneration(unittest.TestCase):
 
         urdf_model = ud.URDF.load(io.StringIO(urdf_calibrated_contents))
         self.assertTrue(isinstance(urdf_model, ud.URDF), "Calibrated urdf string is not a valid URDF")
+
+    def test_get_joint_velocity_limits(self):
+        """
+        Tests parsing joint velocity limits from URDF contents.
+        """
+        urdf_contents = get_urdf(
+            model_name="SE4",
+            batch_name="francis",
+            tool_name="eoa_wrist_dw4_tool_sg4",
+        )
+        velocity_limits = get_joint_velocity_limits(urdf_contents)
+        self.assertIsInstance(velocity_limits, dict)
+        # Verify fallback on invalid XML
+        self.assertEqual(get_joint_velocity_limits("invalid xml"), {})
+
 
 if __name__ == '__main__':
     unittest.main()
