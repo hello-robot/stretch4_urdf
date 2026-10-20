@@ -2,11 +2,14 @@
 
 The changes between releases of Stretch 4 URDF are documented here.
 
-## [2026.10.08](https://pypi.org/project/hello-robot-stretch4-urdf/2026.10.8)
+## [2026.10.20](https://pypi.org/project/hello-robot-stretch4-urdf/2026.10.20)
 
- - `get_joint_velocity_limits()` util
+ - V2 of standard gripper (#65)
+ - `get_joint_velocity_limits()` util (#57)
  - URDF joint velocity and effort limits populated from robot params during preprocessing
  - Add utilities for new user tools. `process_new_user_tool <tool_dir>` replaces `stretch_add_user_tool` CLI
+ - IMU links for the LiDARs (#63)
+ - Removed incorrect masses for cameras, lidars, and docking station (#55)
 
 ## [2026.08.21](https://pypi.org/project/hello-robot-stretch4-urdf/2026.8.21)
 
