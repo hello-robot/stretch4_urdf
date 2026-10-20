@@ -10,6 +10,7 @@ The changes between releases of Stretch 4 URDF are documented here.
  - Add utilities for new user tools. `process_new_user_tool <tool_dir>` replaces `stretch_add_user_tool` CLI
  - IMU links for the LiDARs (#63)
  - Removed incorrect masses for cameras, lidars, and docking station (#55)
+ - Fix for origin of merged arm links (#64)
 
 ## [2026.08.21](https://pypi.org/project/hello-robot-stretch4-urdf/2026.8.21)
 
