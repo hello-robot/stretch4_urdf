@@ -1,0 +1,9 @@
+<robot name="stretch_tool_tablet">
+
+  <link name="nop">
+  </link>
+  <joint name="nop_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="nop" />
+  </joint>
+</robot>
