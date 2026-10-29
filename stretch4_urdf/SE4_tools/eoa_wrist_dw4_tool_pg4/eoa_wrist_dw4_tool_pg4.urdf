@@ -1,9 +1,9 @@
-<robot name="URDF_FRANCIS_ASSEM_Parallel_Jaw_Gripper_V3">
+<robot name="URDF_FRANCIS_ASSEM_Parallel_Jaw_Gripper_V4">
   <link name="pjg_body_link">
     <inertial>
-      <origin xyz="0.0402105559601423 6.82990180219775E-06 6.21368335599834E-05" rpy="0 0 0" />
-      <mass value="0.381434237025036" />
-      <inertia ixx="0.000503295100541258" ixy="3.79871976925095E-08" ixz="-1.7090715231261E-08" iyy="0.000186567551889182" iyz="-2.42662963518357E-08" izz="0.000530331947560273" />
+      <origin xyz="0.0398306085599072 1.96210977372467E-05 -0.000457087865085625" rpy="0 0 0" />
+      <mass value="0.392020130813208" />
+      <inertia ixx="0.000517570989593688" ixy="1.79643950390405E-07" ixz="-1.55154618879592E-06" iyy="0.000198357570788461" iyz="3.14085733892799E-10" izz="0.000543476429060308" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -23,9 +23,9 @@
   </link>
   <link name="finger_right_link">
     <inertial>
-      <origin xyz="-0.0147376535872763 0.0878098966581815 4.2410611834065E-08" rpy="0 0 0" />
-      <mass value="0.0246520031759402" />
-      <inertia ixx="6.72897321360021E-06" ixy="-6.08946889250578E-08" ixz="1.43463025461354E-11" iyy="5.38961935228557E-06" iyz="-4.68490098110155E-12" izz="4.61768017461667E-06" />
+      <origin xyz="-0.0153471684909367 0.0836878950033816 0.00137896385009943" rpy="0 0 0" />
+      <mass value="0.0284304100497672" />
+      <inertia ixx="9.01556838608522E-06" ixy="1.39885198313295E-08" ixz="-1.07403102415257E-07" iyy="6.43862328040711E-06" iyz="5.4211300365036E-07" izz="6.28679130290647E-06" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -44,17 +44,17 @@
     </collision>
   </link>
   <joint name="finger_right_joint" type="prismatic">
-    <origin xyz="0.166855269271506 0 0" rpy="0 0 1.5707963267949" />
+    <origin xyz="0.16688 0.0005 0" rpy="0 0 1.5708" />
     <parent link="pjg_body_link" />
     <child link="finger_right_link" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.04" upper="0" effort="20.0" velocity="6.0" />
+    <limit lower="-0.0385" upper="0" effort="0" velocity="0" />
   </joint>
   <link name="aruco_fingertip_right_link">
     <inertial>
-      <origin xyz="-3.30439794460173E-06 -9.90743941899075E-06 -0.000211787813161998" rpy="0 0 0" />
-      <mass value="0.000123521493853863" />
-      <inertia ixx="3.33209068564966E-09" ixy="3.38901369078053E-15" ixz="7.62400928007288E-14" iyy="3.32883778612981E-09" iyz="2.28587510762229E-13" izz="6.65796010218534E-09" />
+      <origin xyz="1.73472347597681E-18 1.38777878078145E-17 -0.000200000000000002" rpy="0 0 0" />
+      <mass value="0.000132188497698027" />
+      <inertia ixx="3.57066423200758E-09" ixy="-3.76629819094878E-24" ixz="-1.72524508164695E-25" iyy="3.57066423200758E-09" iyz="3.6189151799195E-25" izz="7.13780343740988E-09" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -73,16 +73,16 @@
     </collision>
   </link>
   <joint name="aruco_fingertip_right_joint" type="fixed">
-    <origin xyz="-0.0122499999999998 0.0670400491408858 0.0169999999999987" rpy="0 0 -3.14159265358979" />
+    <origin xyz="-0.01325 0.0705221070892628 0.0197477319374859" rpy="0.174532925199433 0 -3.14159265358979" />
     <parent link="finger_right_link" />
     <child link="aruco_fingertip_right_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="finger_left_link">
     <inertial>
-      <origin xyz="-0.0147376535872763 -0.0878098966581815 -4.24106113818627E-08" rpy="0 0 0" />
-      <mass value="0.0246520031759402" />
-      <inertia ixx="6.72897321360021E-06" ixy="6.08946889250469E-08" ixz="-1.43463025447666E-11" iyy="5.38961935228542E-06" iyz="-4.68490098025683E-12" izz="4.61768017461652E-06" />
+      <origin xyz="-0.0153471507280217 -0.0836878572819353 0.00137899394037041" rpy="0 0 0" />
+      <mass value="0.0284304473699516" />
+      <inertia ixx="9.01558902308676E-06" ixy="-1.39838278175091E-08" ixz="-1.07404079025255E-07" iyy="6.4386201405076E-06" iyz="-5.42117071994351E-07" izz="6.28680764305592E-06" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -101,17 +101,17 @@
     </collision>
   </link>
   <joint name="finger_left_joint" type="prismatic">
-    <origin xyz="0.166855269271506 0 0" rpy="0 0 -1.5707963267949" />
+    <origin xyz="0.16688 -0.0005 0" rpy="0 0 -1.5708" />
     <parent link="pjg_body_link" />
     <child link="finger_left_link" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.04" upper="0" effort="20.0" velocity="6.0" />
+    <limit lower="-0.0385" upper="0" effort="0" velocity="0" />
   </joint>
   <link name="aruco_fingertip_left_link">
     <inertial>
-      <origin xyz="-3.30439794459479E-06 -9.90743941897687E-06 -0.000211787813161998" rpy="0 0 0" />
-      <mass value="0.000123521493853863" />
-      <inertia ixx="3.33209068564964E-09" ixy="3.38901369261042E-15" ixz="7.62400928004572E-14" iyy="3.32883778612979E-09" iyz="2.28587510767485E-13" izz="6.65796010218529E-09" />
+      <origin xyz="1.21430643318376E-17 0 -0.000199999999999999" rpy="0 0 0" />
+      <mass value="0.000132188497698026" />
+      <inertia ixx="3.57066423200756E-09" ixy="3.3015679161479E-25" ixz="-1.39442368753489E-25" iyy="3.57066423200757E-09" iyz="1.03397576569128E-25" izz="7.13780343740985E-09" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -130,16 +130,16 @@
     </collision>
   </link>
   <joint name="aruco_fingertip_left_joint" type="fixed">
-    <origin xyz="-0.01225 -0.0670400491408859 0.0170000000000008" rpy="0 0 0" />
+    <origin xyz="-0.0132499999999998 -0.0705221070892628 0.0197477319374844" rpy="0.174532925199433 0 0" />
     <parent link="finger_left_link" />
     <child link="aruco_fingertip_left_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="grasp_center_link" />
-  <joint name="grasp_center_joint" type="fixed">
-    <origin xyz="0.166855269271506 0 0" rpy="0 0 0" />
+  <link name="grasp_frame_link" />
+  <joint name="grasp_frame_joint" type="fixed">
+    <origin xyz="0.166875269271506 0 0" rpy="0 0 0" />
     <parent link="pjg_body_link" />
-    <child link="grasp_center_link" />
+    <child link="grasp_frame_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="quick_connect_interface_link" />
