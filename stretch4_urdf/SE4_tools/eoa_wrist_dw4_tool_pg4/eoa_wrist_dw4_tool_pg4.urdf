@@ -135,11 +135,11 @@
     <child link="aruco_fingertip_left_link" />
     <axis xyz="0 0 0" />
   </joint>
-  <link name="grasp_frame_link" />
-  <joint name="grasp_frame_joint" type="fixed">
+  <link name="grasp_center_link" />
+  <joint name="grasp_center_joint" type="fixed">
     <origin xyz="0.166875269271506 0 0" rpy="0 0 0" />
     <parent link="pjg_body_link" />
-    <child link="grasp_frame_link" />
+    <child link="grasp_center_link" />
     <axis xyz="0 0 0" />
   </joint>
   <link name="quick_connect_interface_link" />
