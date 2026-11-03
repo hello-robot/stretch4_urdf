@@ -5,12 +5,14 @@ We do batch production, and minor changes are introduced batch to batch. Most ar
 ## Known Batches and Kinematic Changes
 
 - **francis**: Initial batch. No kinematic changes from baseline SE4.
+- **gaugin**: No kinematic changes from francis. Meshes and `stretch_main.xacro` are currently identical to francis.
 
 ## Organization
 
 The folder organization separates the base configurations from batch-specific assets and end-of-arm tools:
 
 - `SE4_francis/`: Contains the meshes and specific `stretch_main.xacro` for the `francis` batch.
+- `SE4_gaugin/`: Contains the meshes and specific `stretch_main.xacro` for the `gaugin` batch.
 - `SE4_tools/`: Contains available tools for the SE4 model.
 
 ## Getting a URDF

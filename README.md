@@ -33,7 +33,7 @@ Currently supported options for the `model_name`, `batch_name`, and `tool_name` 
 
 ```python
 supported_model_names = ["SE4"]
-supported_batch_names = ["francis"]
+supported_batch_names = ["francis", "gaugin"]
 supported_tool_names = ["eoa_wrist_dw4_tool_sg4"]
 ```
 
@@ -81,7 +81,7 @@ Key features:
 
 Options:
 - `--model`: Specify the robot model (e.g., `SE4`).
-- `--batch`: Specify the robot batch (e.g., `francis`).
+- `--batch`: Specify the robot batch (e.g., `francis`, `gaugin`).
 - `--tool`: Specify the end-of-arm tool (e.g., `eoa_wrist_dw4_tool_sg4`).
 
 ## Bringing in URDF's from CAD

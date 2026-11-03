@@ -2,6 +2,10 @@
 
 The changes between releases of Stretch 4 URDF are documented here.
 
+## Unreleased
+
+ - New `gaugin` batch (`SE4_gaugin`), identical to `francis`
+
 ## [2026.10.20](https://pypi.org/project/hello-robot-stretch4-urdf/2026.10.20)
 
  - V2 of standard gripper (#65)
